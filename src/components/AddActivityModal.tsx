@@ -174,7 +174,7 @@ export default function AddActivityModal({ isOpen, onClose, onAddActivity, selec
                 <button
                   key={type.value}
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, type: type.value as any }))}
+                  onClick={() => setFormData(prev => ({ ...prev, type: type.value as 'flight' | 'hotel' | 'activity' | 'meeting' | 'other' }))}
                   className={`p-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2 ${
                     formData.type === type.value
                       ? `border-${type.color}-500 bg-${type.color}-50 text-${type.color}-700`

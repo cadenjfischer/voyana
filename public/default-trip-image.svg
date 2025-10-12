@@ -1,0 +1,10 @@
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#F3F4F6"/>
+  <g opacity="0.5">
+    <path d="M150 120L175 95L225 145L275 95L350 170V250H50V170L150 120Z" fill="#D1D5DB"/>
+    <circle cx="125" cy="100" r="20" fill="#D1D5DB"/>
+  </g>
+  <text x="200" y="200" text-anchor="middle" fill="#6B7280" font-family="Arial, sans-serif" font-size="16" font-weight="500">
+    Trip Placeholder
+  </text>
+</svg>

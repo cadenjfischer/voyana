@@ -6,7 +6,6 @@ import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
 import AddActivityModal from '@/components/AddActivityModal';
 import Link from 'next/link';
-import Image from 'next/image';
 
 interface Activity {
   id: string;

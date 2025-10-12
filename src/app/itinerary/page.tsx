@@ -1,5 +1,25 @@
 'use client';
 
+interface Activity {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+}
+
+interface Trip {
+  id: string;
+  title: string;
+  destination: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+  photo: string;
+  activities: Activity[];
+}
+
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Header from '@/components/Header';
@@ -9,13 +29,13 @@ import Image from 'next/image';
 
 interface Trip {
   id: string;
-  name: string;
+  title: string;
   destination: string;
   startDate: string;
   endDate: string;
   description: string;
   photo: string;
-  activities: any[];
+  activities: Activity[];
 }
 
 export default function ItineraryPage() {
@@ -148,7 +168,7 @@ export default function ItineraryPage() {
                     {trip.photo ? (
                       <Image
                         src={trip.photo}
-                        alt={trip.name}
+                        alt={trip.title}
                         fill
                         className="object-cover"
                       />
@@ -175,7 +195,7 @@ export default function ItineraryPage() {
                   {/* Trip Info */}
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className="text-xl font-bold text-gray-900 truncate">{trip.name}</h3>
+                      <h3 className="text-xl font-bold text-gray-900 truncate">{trip.title}</h3>
                       <span className="text-sm text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-lg ml-2">
                         {getDaysCount(trip.startDate, trip.endDate)} days
                       </span>
