@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 
 interface AirlineDatePickerProps {
@@ -23,268 +24,283 @@ export default function AirlineDatePicker({
   const [selectingStart, setSelectingStart] = useState(true);
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLButtonElement>(null);
+  const [inputPosition, setInputPosition] = useState({ top: 0, left: 0, width: 0 });
 
   const today = new Date();
-  const selectedStartDate = startDate ? new Date(startDate) : null;
-  const selectedEndDate = endDate ? new Date(endDate) : null;
+  today.setHours(12, 0, 0, 0); // Set to noon for consistent comparison
+  
+  const selectedStartDate = startDate ? new Date(startDate + 'T12:00:00') : null;
+  const selectedEndDate = endDate ? new Date(endDate + 'T12:00:00') : null;
+
+  // Update input position when opening
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      const rect = inputRef.current.getBoundingClientRect();
+      setInputPosition({
+        top: rect.top,
+        left: rect.left,
+        width: rect.width
+      });
+    }
+  }, [isOpen]);
 
   // Close picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node) &&
+          inputRef.current && !inputRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
 
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+  // Format date for display
+  const formatDateRange = () => {
+    if (!startDate) return 'Select departure date';
+    
+    const start = new Date(startDate);
+    const end = endDate ? new Date(endDate) : null;
+    
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: 'numeric'
+      });
     };
-  }, [isOpen]);
-
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-
-  const weekDays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-
-  const getDaysInMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    
+    if (end) {
+      return `${formatDate(start)} - ${formatDate(end)}`;
+    }
+    return formatDate(start);
   };
 
-  const getFirstDayOfMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  // Get month name and year
+  const getMonthYear = (date: Date) => {
+    return date.toLocaleDateString('en-US', { 
+      month: 'long', 
+      year: 'numeric' 
+    });
   };
 
+  // Get next month
+  const getNextMonth = (date: Date) => {
+    const next = new Date(date);
+    next.setMonth(next.getMonth() + 1);
+    return next;
+  };
+
+  // Navigate months
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    const newMonth = new Date(currentMonth);
+    newMonth.setMonth(newMonth.getMonth() + (direction === 'next' ? 1 : -1));
+    setCurrentMonth(newMonth);
+  };
+
+  // Check if two dates are the same day
   const isSameDay = (date1: Date, date2: Date) => {
     return date1.getDate() === date2.getDate() &&
            date1.getMonth() === date2.getMonth() &&
            date1.getFullYear() === date2.getFullYear();
   };
 
+  // Check if date is in selected range
   const isDateInRange = (date: Date) => {
     if (!selectedStartDate || !selectedEndDate) return false;
     return date >= selectedStartDate && date <= selectedEndDate;
   };
 
+  // Check if date is in hover range
   const isDateInHoverRange = (date: Date) => {
-    if (!hoveredDate || !selectedStartDate || selectedEndDate) return false;
+    if (!selectedStartDate || !hoveredDate || selectedEndDate) return false;
     const start = selectedStartDate;
     const end = hoveredDate;
-    const minTime = Math.min(start.getTime(), end.getTime());
-    const maxTime = Math.max(start.getTime(), end.getTime());
-    return date.getTime() >= minTime && date.getTime() <= maxTime;
+    const minDate = start < end ? start : end;
+    const maxDate = start < end ? end : start;
+    return date >= minDate && date <= maxDate;
   };
 
+  // Handle date click
   const handleDateClick = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    
+    const isPastDate = date < today;
+    if (isPastDate) return;
+
+    // Use local timezone to avoid date shifts
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+
     if (selectingStart || !selectedStartDate) {
-      onStartDateChange(dateStr);
+      onStartDateChange(dateString);
       onEndDateChange('');
       setSelectingStart(false);
     } else {
       if (date < selectedStartDate) {
-        onStartDateChange(dateStr);
-        onEndDateChange(selectedStartDate.toISOString().split('T')[0]);
+        onStartDateChange(dateString);
+        onEndDateChange('');
       } else {
-        onEndDateChange(dateStr);
+        onEndDateChange(dateString);
+        setIsOpen(false);
+        setSelectingStart(true);
       }
-      setSelectingStart(true);
-      setIsOpen(false);
     }
   };
 
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    setCurrentMonth(prev => {
-      const newMonth = new Date(prev);
-      if (direction === 'prev') {
-        newMonth.setMonth(prev.getMonth() - 1);
-      } else {
-        newMonth.setMonth(prev.getMonth() + 1);
-      }
-      return newMonth;
-    });
-  };
-
-  const renderMonth = (monthOffset: number) => {
-    const monthDate = new Date(currentMonth);
-    monthDate.setMonth(currentMonth.getMonth() + monthOffset);
+  // Generate calendar days for a month
+  const generateCalendarDays = (month: Date) => {
+    const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
+    const lastDay = new Date(month.getFullYear(), month.getMonth() + 1, 0);
     
-    const daysInMonth = getDaysInMonth(monthDate);
-    const firstDay = getFirstDayOfMonth(monthDate);
     const days = [];
-
-    // Empty cells for days before the first day of the month
-    for (let i = 0; i < firstDay; i++) {
-      days.push(
-        <div key={`empty-${i}`} className="w-6 h-6"></div>
-      );
+    
+    // Only generate days that are actually in this month
+    // Create dates at noon to avoid timezone issues
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      const date = new Date(month.getFullYear(), month.getMonth(), day, 12, 0, 0);
+      days.push(date);
     }
 
-    // Days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
-      const isToday = isSameDay(date, today);
-      const isStartDate = selectedStartDate && isSameDay(date, selectedStartDate);
-      const isEndDate = selectedEndDate && isSameDay(date, selectedEndDate);
-      const isInRange = isDateInRange(date);
-      const isInHoverRange = isDateInHoverRange(date);
-      const isPastDate = date < today;
+    return days;
+  };
 
-      let dayClasses = 'w-6 h-6 flex items-center justify-center text-xs font-bold cursor-pointer transition-all duration-200 rounded-full relative';
-
-      if (isPastDate) {
-        dayClasses += ' text-gray-300 cursor-not-allowed';
-      } else if (isStartDate || isEndDate) {
-        dayClasses += ' bg-blue-600 text-white';
-      } else if (isInRange || isInHoverRange) {
-        dayClasses += ' bg-blue-100 text-blue-700';
-      } else if (isToday) {
-        dayClasses += ' border-2 border-blue-600 text-blue-600';
-      } else {
-        dayClasses += ' text-gray-800 hover:bg-blue-50 hover:text-blue-600';
-      }
-
-      days.push(
-        <div
-          key={day}
-          className={dayClasses}
-          onClick={() => !isPastDate && handleDateClick(date)}
-          onMouseEnter={() => !isPastDate && setHoveredDate(date)}
-          onMouseLeave={() => setHoveredDate(null)}
-        >
-          {day}
-        </div>
-      );
-    }
+  // Render a single month
+  const renderMonth = (month: Date) => {
+    const days = generateCalendarDays(month);
+    const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
+    const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
 
     return (
-      <div className="flex-1 p-3">
-        <div className="text-center mb-2">
-          <h3 className="text-sm font-bold text-gray-900 tracking-tight">
-            {monthNames[monthDate.getMonth()]} {monthDate.getFullYear()}
+      <div className="flex-1 min-w-0">
+        {/* Month header */}
+        <div className="text-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">
+            {getMonthYear(month)}
           </h3>
         </div>
-        
-        {/* Week day headers */}
-        <div className="grid grid-cols-7 gap-0.5 mb-1">
-          {weekDays.map(day => (
-            <div key={day} className="w-6 h-5 flex items-center justify-center text-xs font-bold text-gray-500 uppercase">
-              {day}
+
+        {/* Day headers */}
+        <div className="grid grid-cols-7 mb-3">
+          {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((day) => (
+            <div key={day} className="h-8 flex items-center justify-center">
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                {day}
+              </span>
             </div>
           ))}
         </div>
-        
-        {/* Days grid - Equal spacing horizontally and vertically */}
-        <div className="grid grid-cols-7 gap-0.5">
-          {days}
+
+        {/* Calendar grid - Only actual month dates */}
+        <div className="grid grid-cols-7 gap-2">
+          {days.map((date, index) => {
+            const isToday = isSameDay(date, today);
+            const isStartDate = selectedStartDate && isSameDay(date, selectedStartDate);
+            const isEndDate = selectedEndDate && isSameDay(date, selectedEndDate);
+            const isInRange = isDateInRange(date);
+            const isInHoverRange = isDateInHoverRange(date);
+            const isPastDate = date < today;
+            
+            // Simple grid cell - all dates are current month now
+            let buttonClass = 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors';
+            
+            if (isPastDate) {
+              buttonClass += ' text-gray-300 cursor-not-allowed';
+            } else if (isStartDate || isEndDate) {
+              buttonClass += ' bg-blue-500 text-white font-semibold';
+            } else if (isInRange || isInHoverRange) {
+              buttonClass += ' bg-blue-100 text-blue-700';
+            } else if (isToday) {
+              buttonClass += ' text-blue-700 font-semibold bg-white';
+            } else {
+              buttonClass += ' text-gray-700 hover:bg-blue-50 cursor-pointer';
+            }
+
+            return (
+              <button
+                key={index}
+                type="button"
+                className={buttonClass}
+                onClick={() => !isPastDate && handleDateClick(date)}
+                onMouseEnter={() => !isPastDate && setHoveredDate(date)}
+                onMouseLeave={() => setHoveredDate(null)}
+                disabled={isPastDate}
+              >
+                {date.getDate()}
+              </button>
+            );
+          })}
         </div>
       </div>
     );
   };
 
-  const formatDateRange = () => {
-    if (!selectedStartDate && !selectedEndDate) {
-      return 'Select dates';
-    }
-    
-    if (selectedStartDate && !selectedEndDate) {
-      return selectedStartDate.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-    }
-    
-    if (selectedStartDate && selectedEndDate) {
-      const start = selectedStartDate.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric'
-      });
-      const end = selectedEndDate.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-      return `${start} - ${end}`;
-    }
-    
-    return 'Select dates';
-  };
-
   return (
-    <div className={`relative ${className}`} ref={pickerRef}>
-      {/* Date Input Display */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 text-left bg-white hover:bg-gray-50"
-      >
-        <div className="flex items-center justify-between">
+    <>
+      <div className={`relative ${className}`}>
+        {/* Input field */}
+        <button
+          ref={inputRef}
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-xl bg-white hover:border-gray-400 transition-colors duration-200"
+        >
           <div className="flex items-center gap-3">
             <Calendar className="w-5 h-5 text-gray-400" />
-            <div>
-              <div className="text-gray-900 font-medium">
-                {formatDateRange()}
-              </div>
-              <div className="text-xs text-gray-500 mt-0.5">
-                {selectingStart ? 'Select departure date' : 'Select return date'}
-              </div>
-            </div>
+            <span className={`text-sm ${startDate ? 'text-gray-900' : 'text-gray-500'}`}>
+              {formatDateRange()}
+            </span>
           </div>
           <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
-        </div>
-      </button>
+        </button>
+      </div>
 
-      {/* Calendar Dropdown */}
-      {isOpen && (
-        <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden" style={{width: '500px'}}>
-          {/* Header */}
-          <div className="flex items-center justify-between px-3 py-1 border-b border-gray-100 bg-gray-50">
+      {/* Calendar dropdown - rendered in portal */}
+      {isOpen && typeof window !== 'undefined' && createPortal(
+        <div 
+          ref={pickerRef}
+          className="fixed bg-white rounded-xl shadow-xl border border-gray-200 z-[9999] p-6"
+          style={{
+            top: inputPosition.top - 20,
+            left: inputPosition.left,
+            width: Math.max(inputPosition.width, 600),
+            transform: 'translateY(-100%)'
+          }}
+        >
+          {/* Navigation header */}
+          <div className="flex items-center justify-between mb-6">
             <button
+              type="button"
               onClick={() => navigateMonth('prev')}
-              className="p-1 rounded hover:bg-white transition-colors duration-200"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
             >
-              <ChevronLeft className="w-4 h-4 text-gray-600" />
+              <ChevronLeft className="w-5 h-5 text-gray-600" />
             </button>
             
             <div className="text-center">
-              <div className="text-sm text-gray-600">
-                {selectingStart ? 'Select departure date' : 'Select return date'}
-              </div>
+              <span className="text-sm text-gray-500">Select departure date</span>
             </div>
             
             <button
+              type="button"
               onClick={() => navigateMonth('next')}
-              className="p-1 rounded hover:bg-white transition-colors duration-200"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
             >
-              <ChevronRight className="w-4 h-4 text-gray-600" />
+              <ChevronRight className="w-5 h-5 text-gray-600" />
             </button>
           </div>
 
-          {/* Side-by-side months */}
-          <div className="flex divide-x divide-gray-100">
-            {renderMonth(0)}
-            {renderMonth(1)}
+          {/* Two month view */}
+          <div className="flex gap-8">
+            {renderMonth(currentMonth)}
+            {renderMonth(getNextMonth(currentMonth))}
           </div>
-
-          {/* Footer */}
-          <div className="px-3 py-1 border-t border-gray-100 bg-gray-50">
-            <div className="text-xs text-gray-500 text-center">
-              {selectedStartDate && !selectedEndDate ? (
-                <span className="font-medium text-blue-600">Now select your return date</span>
-              ) : (
-                `Click to select ${selectingStart ? 'departure' : 'return'} date`
-              )}
-            </div>
-          </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }

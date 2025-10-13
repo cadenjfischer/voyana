@@ -64,38 +64,14 @@ export const fetchDestinationPhoto = async (
     // Get seasonal keywords
     const seasonalKeywords = getSeason(startDate, endDate, destination);
     
-    // Build search query with seasonal context and fallback strategy
-    let searchQuery;
-    
-    // For specific ski resorts or places with state/country, keep it simple
-    if (destination.includes(',')) {
-      const [place, region] = destination.split(',').map(s => s.trim());
-      
-      // Expand state abbreviations for better search results
-      const stateMap: { [key: string]: string } = {
-        'VT': 'Vermont', 'NY': 'New York', 'CA': 'California', 'CO': 'Colorado',
-        'MT': 'Montana', 'WY': 'Wyoming', 'UT': 'Utah', 'ID': 'Idaho',
-        'WA': 'Washington', 'OR': 'Oregon', 'NH': 'New Hampshire', 'ME': 'Maine',
-        'MA': 'Massachusetts', 'CT': 'Connecticut', 'RI': 'Rhode Island',
-        'NV': 'Nevada', 'AZ': 'Arizona', 'NM': 'New Mexico', 'TX': 'Texas',
-        'FL': 'Florida', 'NC': 'North Carolina', 'SC': 'South Carolina'
-      };
-      
-      const fullRegionName = stateMap[region] || region;
-      
-      // Simple search: just "Vermont Jay Peak" instead of complex queries
-      searchQuery = `${fullRegionName} ${place}`;
-    } else {
-      // Standard search for cities/general destinations  
-      searchQuery = seasonalKeywords 
-        ? `${destination} ${seasonalKeywords}`
-        : destination;
+    // Build search query
+    let searchQuery = destination;
+    if (seasonalKeywords) {
+      searchQuery = `${destination} ${seasonalKeywords}`;
     }
-    
-    // Use search endpoint for better variety and add random page for different results
-    const page = randomSeed ? (randomSeed % 10) + 1 : 1;
+
     const response = await fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchQuery)}&orientation=landscape&content_filter=high&per_page=30&page=${page}`,
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchQuery)}&per_page=1`,
       {
         headers: {
           'Authorization': `Client-ID ${UNSPLASH_ACCESS_KEY}`,
@@ -109,68 +85,12 @@ export const fetchDestinationPhoto = async (
 
     const data: UnsplashSearchResponse = await response.json();
     
-    // Always try fallback if we have few results or if it's a specific place
-    if ((data.results.length < 5 || destination.toLowerCase().includes('peak') || destination.toLowerCase().includes('resort')) && destination.includes(',')) {
-      const parts = destination.split(',').map(s => s.trim());
-      
-      if (parts.length >= 2) {
-        const region = parts[1]; // "VT"
-        
-        // Expand state abbreviations
-        const stateMap: { [key: string]: string } = {
-          'VT': 'Vermont', 'NY': 'New York', 'CA': 'California', 'CO': 'Colorado',
-          'MT': 'Montana', 'WY': 'Wyoming', 'UT': 'Utah', 'ID': 'Idaho',
-          'WA': 'Washington', 'OR': 'Oregon', 'NH': 'New Hampshire', 'ME': 'Maine',
-          'MA': 'Massachusetts', 'CT': 'Connecticut', 'RI': 'Rhode Island',
-          'NV': 'Nevada', 'AZ': 'Arizona', 'NM': 'New Mexico', 'TX': 'Texas',
-          'FL': 'Florida', 'NC': 'North Carolina', 'SC': 'South Carolina'
-        };
-        
-        const fullStateName = stateMap[region] || region;
-        
-        // Try multiple fallback strategies for better state-specific results
-        const fallbackQueries = [
-          `${fullStateName} nature`,
-          `${fullStateName} mountains`,
-          fullStateName
-        ];
-        
-        for (const fallbackQuery of fallbackQueries) {
-          console.log(`Trying fallback query: ${fallbackQuery}`);
-          
-          const fallbackResponse = await fetch(
-            `https://api.unsplash.com/search/photos?query=${encodeURIComponent(fallbackQuery)}&orientation=landscape&content_filter=high&per_page=30&page=1`,
-            {
-              headers: {
-                'Authorization': `Client-ID ${UNSPLASH_ACCESS_KEY}`,
-              },
-            }
-          );
-          
-          if (fallbackResponse.ok) {
-            const fallbackData: UnsplashSearchResponse = await fallbackResponse.json();
-            console.log(`Fallback query "${fallbackQuery}" returned ${fallbackData.results.length} results`);
-            
-            if (fallbackData.results.length > 0) {
-              const randomIndex = randomSeed ? randomSeed % fallbackData.results.length : Math.floor(Math.random() * fallbackData.results.length);
-              const photo = fallbackData.results[randomIndex];
-              return photo.urls.regular;
-            }
-          }
-        }
-      }
-    }
-    
     if (data.results.length === 0) {
       return null;
     }
-    
-    // Pick a random photo from the results for more variety
-    const randomIndex = randomSeed ? randomSeed % data.results.length : Math.floor(Math.random() * data.results.length);
-    const photo = data.results[randomIndex];
-    
-    // Return the regular size image URL (good balance of quality and size)
-    return photo.urls.regular;
+
+    // Return single photo URL
+    return data.results[0].urls.regular;
   } catch (error) {
     console.error('Error fetching photo from Unsplash:', error);
     return null;
@@ -179,7 +99,7 @@ export const fetchDestinationPhoto = async (
 
 export const searchDestinationPhotos = async (
   destination: string, 
-  perPage: number = 10,
+  perPage: number = 9,
   startDate?: string,
   endDate?: string
 ): Promise<string[]> => {
@@ -189,17 +109,9 @@ export const searchDestinationPhotos = async (
   }
 
   try {
-    // Get seasonal keywords
-    const seasonalKeywords = getSeason(startDate, endDate, destination);
-    
-    // Build search query with seasonal context
-    const baseQuery = `${destination} travel destination landscape`;
-    const searchQuery = seasonalKeywords 
-      ? `${baseQuery} ${seasonalKeywords}`
-      : baseQuery;
-    
+    // Pure destination search - exactly like typing "Paris" into Unsplash
     const response = await fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(searchQuery)}&orientation=landscape&content_filter=high&per_page=${perPage}`,
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(destination)}&per_page=${perPage}`,
       {
         headers: {
           'Authorization': `Client-ID ${UNSPLASH_ACCESS_KEY}`,
@@ -213,7 +125,7 @@ export const searchDestinationPhotos = async (
 
     const data: UnsplashSearchResponse = await response.json();
     
-    // Return array of regular size image URLs
+    // Return Unsplash's top results - no filtering, no modification
     return data.results.map(photo => photo.urls.regular);
   } catch (error) {
     console.error('Error searching photos from Unsplash:', error);

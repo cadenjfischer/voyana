@@ -2,14 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
 import CustomAutocomplete from './CustomAutocomplete';
-import { fetchDestinationPhoto } from '../utils/unsplash';
-
-const AirlineDatePicker = dynamic(() => import('./AirlineDatePicker'), {
-  ssr: false,
-  loading: () => <div className="animate-pulse bg-gray-200 h-12 rounded-xl"></div>
-});
+import { searchDestinationPhotos } from '../utils/unsplash';
+import AirlineDatePicker from './AirlineDatePicker';
 
 interface AddTripModalProps {
   isOpen: boolean;
@@ -39,56 +34,58 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
   const [multipleCities, setMultipleCities] = useState(false);
   const [destinations, setDestinations] = useState<string[]>([]);
   const [currentDestination, setCurrentDestination] = useState('');
-  const [regenerateCount, setRegenerateCount] = useState(0);
-  const maxRegenerations = 3;
+  const [photoGallery, setPhotoGallery] = useState<string[]>([]);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
 
-  // Fetch photo when user selects a destination (only if both dates are available)
-  const fetchPhotoForDestination = async (destination: string, isRegenerate = false) => {
+  // Fetch photo gallery when user selects a destination
+  const fetchPhotoGallery = async (destination: string) => {
     if (destination && destination.length > 2 && formData.startDate && formData.endDate) {
       setIsLoadingPhoto(true);
       try {
-        // Pass the trip dates and random seed for regeneration to get seasonally appropriate photos
-        const randomSeed = isRegenerate ? Date.now() + regenerateCount : undefined;
-        const photoUrl = await fetchDestinationPhoto(
+        const photos = await searchDestinationPhotos(
           destination, 
+          9, // Get 9 photos for scrolling
           formData.startDate, 
-          formData.endDate,
-          randomSeed
+          formData.endDate
         );
-        if (photoUrl) {
-          setPhotoPreview(photoUrl);
-          setFormData(prev => ({ ...prev, photo: photoUrl }));
-          
-          // Increment regenerate count if this is a manual regeneration
-          if (isRegenerate) {
-            setRegenerateCount(prev => prev + 1);
-          }
+        
+        if (photos && photos.length > 0) {
+          setPhotoGallery(photos);
+          setSelectedPhotoIndex(0);
+          setPhotoPreview(photos[0]);
+          setFormData(prev => ({ ...prev, photo: photos[0] }));
         } else {
-          // Fallback to default image if no photo found
+          // Fallback to default image if no photos found
           setPhotoPreview('/default-trip-image.svg');
+          setPhotoGallery([]);
         }
       } catch (error) {
-        console.error('Error fetching destination photo:', error);
+        console.error('Error fetching photo gallery:', error);
         // Fallback to default image on error
         setPhotoPreview('/default-trip-image.svg');
+        setPhotoGallery([]);
       } finally {
         setIsLoadingPhoto(false);
       }
     }
   };
 
-  // Regenerate photo function with limit
-  const handleRegeneratePhoto = () => {
-    const currentDestination = multipleCities 
-      ? destinations[0] 
-      : formData.destination;
-      
-    if (regenerateCount < maxRegenerations && currentDestination) {
-      fetchPhotoForDestination(currentDestination, true);
-    }
+  // Select photo from gallery
+  const selectPhoto = (photoUrl: string, index: number) => {
+    setPhotoPreview(photoUrl);
+    setFormData(prev => ({ ...prev, photo: photoUrl }));
+    setSelectedPhotoIndex(index);
   };
 
-  // Fetch photo when dates change (only if we have both dates)
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setPhotoGallery([]);
+      setSelectedPhotoIndex(0);
+      setPhotoPreview('/default-trip-image.svg');
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     const currentDestination = multipleCities 
       ? destinations[0] // Use first destination for photo
@@ -98,8 +95,8 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
         currentDestination.length > 2 && 
         formData.startDate && 
         formData.endDate) {
-      // Fetch photo when we have destination AND both dates
-      fetchPhotoForDestination(currentDestination);
+      // Fetch photo gallery when we have destination AND both dates
+      fetchPhotoGallery(currentDestination);
     }
   }, [formData.startDate, formData.endDate, destinations]); // Only react to date changes and destinations array changes
 
@@ -128,15 +125,19 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
   };
 
   const handleAddDestination = (destination: string) => {
+    // Reset photo gallery for new destination
+    setPhotoGallery([]);
+    setSelectedPhotoIndex(0);
+    
     if (multipleCities) {
       // Add to destinations array if not already present
       if (!destinations.includes(destination)) {
         const newDestinations = [...destinations, destination];
         setDestinations(newDestinations);
         
-        // If this is the first destination, fetch photo for it
+        // If this is the first destination, fetch photos for it
         if (newDestinations.length === 1) {
-          fetchPhotoForDestination(destination);
+          fetchPhotoGallery(destination);
           setFormData(prev => ({ ...prev, destination: destination }));
         }
         
@@ -147,7 +148,7 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
       // Single city mode - set as main destination
       setFormData(prev => ({ ...prev, destination: destination }));
       setCurrentDestination(destination);
-      fetchPhotoForDestination(destination);
+      fetchPhotoGallery(destination);
     }
   };
 
@@ -160,10 +161,11 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
       const newMainDestination = newDestinations[0] || '';
       setFormData(prev => ({ ...prev, destination: newMainDestination }));
       if (newMainDestination) {
-        fetchPhotoForDestination(newMainDestination);
+        fetchPhotoGallery(newMainDestination);
       } else {
         setPhotoPreview('/default-trip-image.svg');
         setFormData(prev => ({ ...prev, photo: '' }));
+        setPhotoGallery([]);
       }
     }
   };
@@ -213,7 +215,7 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
     setMultipleCities(false);
     setDestinations([]);
     setCurrentDestination('');
-    setRegenerateCount(0); // Reset regenerate count
+    setPhotoGallery([]);
   };
 
   const handleClose = () => {
@@ -226,7 +228,7 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
       photo: ''
     });
     setPhotoPreview('/default-trip-image.jpg');
-    setRegenerateCount(0); // Reset regenerate count
+    setPhotoGallery([]);
     onClose();
   };
 
@@ -248,9 +250,9 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
         </div>
 
         <div className="p-4">
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="grid lg:grid-cols-3 gap-6">
             {/* Form Section */}
-            <div>
+            <div className="lg:col-span-2">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Trip Details</h3>
@@ -267,7 +269,26 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
                       value={formData.title}
                       onChange={handleInputChange}
                       placeholder="Enter trip name"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 text-gray-900 placeholder-gray-500"
+                      className="w-full border border-gray-300 rounded-xl transition-colors duration-200 text-gray-900 placeholder-gray-500"
+                      style={{ 
+                        boxShadow: 'none',
+                        outline: 'none',
+                        borderWidth: '1px',
+                        boxSizing: 'border-box',
+                        padding: '12px 16px'
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = '#3b82f6';
+                        e.target.style.borderWidth = '2px';
+                        e.target.style.padding = '11px 15px';
+                        e.target.style.boxShadow = 'none';
+                        e.target.style.outline = 'none';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = '#d1d5db';
+                        e.target.style.borderWidth = '1px';
+                        e.target.style.padding = '12px 16px';
+                      }}
                       required
                     />
                   </div>
@@ -323,7 +344,7 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
                         handleAddDestination(value);
                       }}
                       placeholder={multipleCities ? "Add another city..." : "Search for a city or ski resort..."}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 text-gray-900 placeholder-gray-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none transition-colors duration-200 text-gray-900 placeholder-gray-500"
                       required={!multipleCities}
                     />
                     
@@ -380,7 +401,26 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
                       onChange={handleInputChange}
                       placeholder="Enter Trip Description"
                       rows={6}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 resize-none text-gray-900 placeholder-gray-500"
+                      className="w-full border border-gray-300 rounded-xl transition-colors duration-200 resize-none text-gray-900 placeholder-gray-500"
+                      style={{ 
+                        boxShadow: 'none',
+                        outline: 'none',
+                        borderWidth: '1px',
+                        boxSizing: 'border-box',
+                        padding: '12px 16px'
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = '#3b82f6';
+                        e.target.style.borderWidth = '2px';
+                        e.target.style.padding = '11px 15px';
+                        e.target.style.boxShadow = 'none';
+                        e.target.style.outline = 'none';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = '#d1d5db';
+                        e.target.style.borderWidth = '1px';
+                        e.target.style.padding = '12px 16px';
+                      }}
                     />
                   </div>
                 </div>
@@ -404,77 +444,86 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
               </form>
             </div>
 
-            {/* Photo Section - Moved up */}
-            <div className="flex flex-col h-full">
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Trip Photo</h3>
-              
-              {/* Helper text */}
-              <p className="text-sm text-gray-500 mb-1">
-                Photo will appear once destination and dates are selected
-              </p>
-              <p className="text-xs text-gray-400 mb-3">
-                Images may show regional views for some destinations
-              </p>
-              
-              <div className="relative flex-1">
-                <div className="aspect-[4/3] bg-gray-50 rounded-2xl overflow-hidden border-2 border-dashed border-gray-400 hover:border-blue-500 transition-colors duration-200">
-                  {isLoadingPhoto ? (
-                    <div className="flex flex-col items-center justify-center h-full text-blue-600">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                      <p className="text-sm font-medium">Finding perfect photo for {formData.destination}...</p>
-                    </div>
-                  ) : photoPreview ? (
-                    <div className="relative w-full h-full">
-                      <Image
-                        src={photoPreview}
-                        alt={`Trip preview for ${formData.destination}`}
-                        fill
-                        className="object-cover"
-                      />
-                      {formData.destination && (
-                        <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                          {formData.destination}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-600">
-                      <svg className="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <p className="text-sm font-medium">
-                        {formData.destination ? 'Auto-loading destination photo...' : 'Enter destination to see photo'}
-                      </p>
-                    </div>
-                  )}
+            {/* Photo Section */}
+            <div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-900 mb-1">
+                  Trip Photo
+                </label>
+                <div className="relative">
+                  <div className="aspect-[3/2] bg-gray-50 rounded-xl overflow-hidden border border-gray-300 hover:border-blue-500 transition-colors duration-200 max-w-sm">
+                    {isLoadingPhoto ? (
+                      <div className="flex flex-col items-center justify-center h-full text-blue-600">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                        <p className="text-sm font-medium">Loading photos for {formData.destination}...</p>
+                      </div>
+                    ) : photoPreview !== '/default-trip-image.svg' && photoPreview ? (
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={photoPreview}
+                          alt={`Trip preview for ${formData.destination}`}
+                          fill
+                          className="object-cover"
+                        />
+                        
+                        {/* Destination Label */}
+                        {formData.destination && (
+                          <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                            {formData.destination}
+                          </div>
+                        )}
+
+                        {/* Photo navigation arrows */}
+                        {photoGallery.length > 1 && (
+                          <>
+                            <button
+                              onClick={() => {
+                                const prevIndex = selectedPhotoIndex > 0 ? selectedPhotoIndex - 1 : photoGallery.length - 1;
+                                selectPhoto(photoGallery[prevIndex], prevIndex);
+                              }}
+                              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full flex items-center justify-center transition-all duration-200"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => {
+                                const nextIndex = selectedPhotoIndex < photoGallery.length - 1 ? selectedPhotoIndex + 1 : 0;
+                                selectPhoto(photoGallery[nextIndex], nextIndex);
+                              }}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full flex items-center justify-center transition-all duration-200"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </button>
+                            
+                            {/* Photo counter */}
+                            <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                              {selectedPhotoIndex + 1} / {photoGallery.length}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-600">
+                        <svg className="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-sm font-medium">
+                          {formData.destination ? 'Loading photos...' : 'Enter destination to see photos'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className="mt-4 space-y-2">
-                  {/* Regenerate Photo Button - only show if photo exists and regenerations available */}
-                  {photoPreview !== '/default-trip-image.svg' && regenerateCount < maxRegenerations && (
-                    <button
-                      onClick={handleRegeneratePhoto}
-                      disabled={isLoadingPhoto}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      Generate New Photo ({maxRegenerations - regenerateCount} left)
-                    </button>
-                  )}
-                  
-                  {/* Show limit reached message */}
-                  {regenerateCount >= maxRegenerations && photoPreview !== '/default-trip-image.svg' && (
-                    <p className="text-xs text-gray-500 text-center">
-                      Regeneration limit reached ({maxRegenerations}/{maxRegenerations} used)
-                    </p>
-                  )}
-
-                  {/* Change Photo Button */}
-                  <label className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors duration-200">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                {/* Upload Photo Button */}
+                <div className="mt-3">
+                  <label className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors duration-200 text-sm max-w-sm">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     Upload Photo

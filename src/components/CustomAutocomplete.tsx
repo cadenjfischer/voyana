@@ -48,22 +48,79 @@ export default function CustomAutocomplete({
     }
 
     // Use fuzzy search for smart matching
-    const results = fuse.search(query, { limit: 8 });
+    const results = fuse.search(query, { limit: 15 }); // Get more results for smart ranking
     
     // Extract the destinations from search results
-    const matchedDestinations = results.map(result => result.item);
+    let matchedDestinations = results.map(result => result.item);
     
     // If no fuzzy matches, try simple includes search as fallback
     if (matchedDestinations.length === 0) {
-      const simpleMatches = destinations.filter(dest => 
+      matchedDestinations = destinations.filter(dest => 
         dest.name.toLowerCase().includes(query.toLowerCase()) ||
         dest.displayName.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 8);
-      
-      setSuggestions(simpleMatches);
-    } else {
-      setSuggestions(matchedDestinations);
+      ).slice(0, 15);
     }
+    
+    // Smart ranking: prioritize exact word matches first
+    const smartRanked = matchedDestinations.sort((a, b) => {
+      const aName = a.name.toLowerCase();
+      const bName = b.name.toLowerCase();
+      const queryLower = query.toLowerCase();
+      
+      // Check if name starts with the query (perfect matches)
+      const aStartsWithQuery = aName.startsWith(queryLower);
+      const bStartsWithQuery = bName.startsWith(queryLower);
+      
+      if (aStartsWithQuery && !bStartsWithQuery) return -1;
+      if (!aStartsWithQuery && bStartsWithQuery) return 1;
+      
+      // For names that start with query, prioritize major cities
+      if (aStartsWithQuery && bStartsWithQuery) {
+        const majorCities = [
+          'london, united kingdom', 'paris, france', 'new york, ny, united states',
+          'tokyo, japan', 'sydney, australia', 'rome, italy', 'madrid, spain',
+          'berlin, germany', 'amsterdam, netherlands', 'barcelona, spain',
+          'moscow, russia', 'beijing, china', 'mumbai, india', 'istanbul, turkey',
+          'los angeles, ca, united states', 'chicago, il, united states',
+          'toronto, on, canada', 'vancouver, bc, canada', 'montreal, qc, canada'
+        ];
+        
+        const aIsMajor = majorCities.some(city => city === a.displayName.toLowerCase());
+        const bIsMajor = majorCities.some(city => city === b.displayName.toLowerCase());
+        
+        if (aIsMajor && !bIsMajor) return -1;
+        if (!aIsMajor && bIsMajor) return 1;
+        
+        // If both or neither are major cities, sort alphabetically
+        return a.displayName.localeCompare(b.displayName);
+      }
+      
+      // For non-starting matches, prioritize by how well they contain the query
+      const aContainsQuery = aName.includes(queryLower);
+      const bContainsQuery = bName.includes(queryLower);
+      
+      if (aContainsQuery && !bContainsQuery) return -1;
+      if (!aContainsQuery && bContainsQuery) return 1;
+      
+      // Countries get priority over cities/regions for partial matches
+      const aIsCountry = a.type === 'country';
+      const bIsCountry = b.type === 'country';
+      
+      if (aIsCountry && !bIsCountry) return -1;
+      if (!aIsCountry && bIsCountry) return 1;
+      
+      // Cities get priority over ski resorts for partial matches
+      const aIsCity = a.type === 'city';
+      const bIsCity = b.type === 'city';
+      
+      if (aIsCity && !bIsCity) return -1;
+      if (!aIsCity && bIsCity) return 1;
+      
+      // Alphabetical order as final tiebreaker
+      return a.displayName.localeCompare(b.displayName);
+    });
+    
+    setSuggestions(smartRanked.slice(0, 8)); // Limit to 8 final results
   }, []);
 
   useEffect(() => {
@@ -122,7 +179,12 @@ export default function CustomAutocomplete({
     }
   };
 
-  const handleBlur = () => {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Reset border color and width
+    e.target.style.borderColor = '#d1d5db';
+    e.target.style.borderWidth = '1px';
+    e.target.style.padding = '12px 16px';
+    
     // Delay hiding suggestions to allow for clicks
     setTimeout(() => {
       setShowSuggestions(false);
@@ -160,9 +222,23 @@ export default function CustomAutocomplete({
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        onFocus={handleFocus}
+        onFocus={(e) => {
+          handleFocus();
+          e.target.style.borderColor = '#3b82f6';
+          e.target.style.borderWidth = '2px';
+          e.target.style.padding = '11px 15px';
+          e.target.style.boxShadow = 'none';
+          e.target.style.outline = 'none';
+        }}
         placeholder={placeholder}
-        className={className}
+        className={className.replace(/focus:[^\s]+/g, '').replace(/px-4/g, '').replace(/py-3/g, '')}
+        style={{ 
+          boxShadow: 'none',
+          outline: 'none',
+          borderWidth: '1px',
+          boxSizing: 'border-box',
+          padding: '12px 16px'
+        }}
         required={required}
         autoComplete="off"
       />

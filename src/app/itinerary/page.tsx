@@ -162,7 +162,7 @@ export default function ItineraryPage() {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {trips.map((trip) => (
-                <div key={trip.id} className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+                <div key={trip.id} className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 flex flex-col h-full">
                   {/* Trip Image */}
                   <div className="relative h-48 bg-gradient-to-br from-blue-400 to-blue-600">
                     {trip.photo ? (
@@ -193,7 +193,7 @@ export default function ItineraryPage() {
                   </div>
 
                   {/* Trip Info */}
-                  <div className="p-6">
+                  <div className="p-6 flex flex-col flex-grow">
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="text-xl font-bold text-gray-900 truncate">{trip.title}</h3>
                       <span className="text-sm text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-lg ml-2">
@@ -216,15 +216,21 @@ export default function ItineraryPage() {
                       <span className="text-sm">{formatDateRange(trip.startDate, trip.endDate)}</span>
                     </div>
 
-                    {trip.description && (
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                        {trip.description}
-                      </p>
-                    )}
+                    {/* Description with fixed height to maintain consistency */}
+                    <div className="flex-grow mb-4">
+                      {trip.description ? (
+                        <p className="text-gray-600 text-sm line-clamp-2">
+                          {trip.description}
+                        </p>
+                      ) : (
+                        <div className="h-10"></div>
+                      )}
+                    </div>
 
+                    {/* Button pushed to bottom */}
                     <Link
                       href={`/itinerary/${trip.id}`}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2 mt-auto"
                     >
                       View Itinerary
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
