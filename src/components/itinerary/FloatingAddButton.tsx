@@ -205,7 +205,7 @@ export default function FloatingAddButton({
 
       {/* Keyboard shortcut hint */}
       <div className="absolute -top-10 right-0 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-        Press 'A' to add quickly
+        Press &apos;A&apos; to add quickly
       </div>
 
       <style jsx>{`

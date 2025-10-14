@@ -2,7 +2,7 @@
 
 import { useRef, useCallback } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Trip, Day, Activity, ACTIVITY_TYPES, formatDate, formatCurrency } from '@/types/itinerary';
+import { Trip, Destination, Day, Activity, ACTIVITY_TYPES, formatDate, formatCurrency } from '@/types/itinerary';
 import { getDestinationColors, isTransferDay } from '@/utils/colors';
 
 interface TimelineViewProps {
@@ -133,7 +133,7 @@ export default function TimelineView({
       acc['unassigned'].days.push(day);
     }
     return acc;
-  }, {} as { [key: string]: { destination: any; days: Day[] } });
+  }, {} as { [key: string]: { destination: Destination | null; days: Day[] } });
 
   return (
     <div className="px-6 py-4 pb-[800px] space-y-6">

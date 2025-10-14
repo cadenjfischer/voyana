@@ -2,7 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Destination as TripDestination } from '@/types/itinerary';
-import { destinations } from '@/data/destinations';
+import { 
+  createDebouncedSearch, 
+  formatGooglePlace, 
+  getFormattedAddress,
+  getCountryFromGooglePlace, 
+  getGooglePlaceType,
+  GooglePlace 
+} from '@/utils/google-places';
 
 interface AddDestinationModalProps {
   isOpen: boolean;
@@ -11,6 +18,9 @@ interface AddDestinationModalProps {
   existingDestinations: TripDestination[];
 }
 
+// Create debounced search function
+const debouncedSearch = createDebouncedSearch(300);
+
 export default function AddDestinationModal({
   isOpen,
   onClose,
@@ -18,8 +28,9 @@ export default function AddDestinationModal({
   existingDestinations
 }: AddDestinationModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredDestinations, setFilteredDestinations] = useState<typeof destinations>([]);
+  const [places, setPlaces] = useState<GooglePlace[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Focus input when modal opens
@@ -29,90 +40,51 @@ export default function AddDestinationModal({
     }
   }, [isOpen]);
 
-  // Filter destinations based on search query
+  // Search Google Places with debouncing
   useEffect(() => {
-    if (searchQuery.trim().length < 2) {
-      setFilteredDestinations([]);
-      return;
-    }
-
-    setIsLoading(true);
-    
-    // Debounce search
-    const timer = setTimeout(() => {
-      const query = searchQuery.toLowerCase();
-      
-      // Smart scoring system for better relevance
-      const scored = destinations
-        .map(dest => {
-          const displayName = dest.displayName.toLowerCase();
-          const name = dest.name.toLowerCase();
-          const country = dest.country.toLowerCase();
-          const state = dest.state?.toLowerCase() || '';
-          
-          let score = 0;
-          
-          // Exact match gets highest score
-          if (displayName === query || name === query) {
-            score = 1000;
-          }
-          // Starts with query gets high score
-          else if (displayName.startsWith(query) || name.startsWith(query)) {
-            score = 100;
-          }
-          // Word boundary match gets medium score
-          else if (
-            displayName.includes(' ' + query) || 
-            name.includes(' ' + query) ||
-            displayName.startsWith(query) ||
-            name.startsWith(query)
-          ) {
-            score = 50;
-          }
-          // Contains query gets lower score
-          else if (displayName.includes(query) || name.includes(query)) {
-            score = 10;
-          }
-          // Country/state match gets lowest score
-          else if (country.includes(query) || state.includes(query)) {
-            score = 1;
-          }
-          
-          // Boost score for shorter names (more likely to be what user wants)
-          if (score > 0) {
-            score += Math.max(0, 50 - displayName.length);
-          }
-          
-          return { ...dest, score };
+    if (searchQuery && searchQuery.trim().length >= 2) {
+      setIsLoading(true);
+      setError('');
+      debouncedSearch(searchQuery.trim())
+        .then((results) => {
+          setPlaces(results);
+          setIsLoading(false);
         })
-        .filter(dest => dest.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 10); // Limit to 10 results
-      
-      setFilteredDestinations(scored);
+        .catch((error) => {
+          console.error('Search error:', error);
+          setPlaces([]);
+          setError('Search failed. Please try again.');
+          setIsLoading(false);
+        });
+    } else {
+      setPlaces([]);
       setIsLoading(false);
-    }, 300);
-
-    return () => clearTimeout(timer);
+      setError('');
+    }
   }, [searchQuery]);
 
   // Handle destination selection
-  const handleDestinationSelect = (destination: typeof destinations[0]) => {
-    // Create a trip destination from the database destination
+  const handleDestinationSelect = (place: GooglePlace) => {
+    // Create a trip destination from the Google Place
     const newTripDestination: Omit<TripDestination, 'id' | 'order'> = {
-      name: destination.displayName,
+      name: formatGooglePlace(place),
       startDate: '', // Will be set by user later
       endDate: '', // Will be set by user later
       nights: 0, // Will be set by user using night counters
       lodging: '',
-      estimatedCost: 0
+      estimatedCost: 0,
+      // Include coordinates from Google Places API
+      coordinates: {
+        lat: place.geometry.location.lat,
+        lng: place.geometry.location.lng
+      }
     };
 
     onAddDestination(newTripDestination);
     
     // Reset and close
     setSearchQuery('');
-    setFilteredDestinations([]);
+    setPlaces([]);
     onClose();
   };
 
@@ -168,33 +140,34 @@ export default function AddDestinationModal({
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
               <span className="ml-2 text-gray-600">Searching...</span>
             </div>
-          ) : filteredDestinations.length > 0 ? (
+          ) : places.length > 0 ? (
             <div className="divide-y divide-gray-100">
-              {filteredDestinations.map((destination, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleDestinationSelect(destination)}
-                  className="w-full px-6 py-4 text-left hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium text-gray-900">
-                        {destination.displayName}
+              {places.map((place, index) => {
+                const placeType = getGooglePlaceType(place);
+                const country = getCountryFromGooglePlace(place);
+                
+                return (
+                  <button
+                    key={place.place_id}
+                    onClick={() => handleDestinationSelect(place)}
+                    className="w-full px-6 py-4 text-left hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {place.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {getFormattedAddress(place)}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {destination.country}
-                        {destination.state && ` • ${destination.state}`}
-                        <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
-                          {destination.type}
-                        </span>
-                      </div>
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
                     </div>
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           ) : searchQuery.length >= 2 ? (
             <div className="text-center py-8">
@@ -203,7 +176,7 @@ export default function AddDestinationModal({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <p className="text-gray-600">No destinations found for "{searchQuery}"</p>
+              <p className="text-gray-600">No destinations found for &quot;{searchQuery}&quot;</p>
               <p className="text-gray-400 text-sm mt-1">Try searching for a city or country</p>
             </div>
           ) : searchQuery.length > 0 ? (
