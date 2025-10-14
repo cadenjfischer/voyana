@@ -1,25 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Trip, generateDays } from '@/types/itinerary';
+import CustomAutocomplete from '@/components/CustomAutocomplete';
+import AirlineDatePicker from '@/components/AirlineDatePicker';
 import Image from 'next/image';
-import CustomAutocomplete from './CustomAutocomplete';
-import { searchDestinationPhotos } from '../utils/unsplash';
-import AirlineDatePicker from './AirlineDatePicker';
+import { searchDestinationPhotos } from '@/utils/unsplash';
 
-interface AddTripModalProps {
+interface EditTripModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddTrip: (trip: {
-    title: string;
-    destination: string | string[];
-    startDate: string;
-    endDate: string;
-    description: string;
-    photo: string;
-  }) => void;
+  onUpdateTrip: (updatedTrip: Trip) => void;
+  trip: Trip;
 }
 
-export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModalProps) {
+export default function EditTripModal({ isOpen, onClose, onUpdateTrip, trip }: EditTripModalProps) {
   const [formData, setFormData] = useState({
     title: '',
     destination: '',
@@ -29,13 +24,37 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
     photo: ''
   });
 
-  const [photoPreview, setPhotoPreview] = useState<string>('/default-trip-image.svg');
-  const [isLoadingPhoto, setIsLoadingPhoto] = useState(false);
   const [multipleCities, setMultipleCities] = useState(false);
   const [destinations, setDestinations] = useState<string[]>([]);
   const [currentDestination, setCurrentDestination] = useState('');
+  const [photoPreview, setPhotoPreview] = useState<string>('/default-trip-image.svg');
+  const [isLoadingPhoto, setIsLoadingPhoto] = useState(false);
   const [photoGallery, setPhotoGallery] = useState<string[]>([]);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+
+  // Initialize form data when trip or modal opens
+  useEffect(() => {
+    if (isOpen && trip) {
+      // Check if trip has multiple destinations
+      const hasMultipleDestinations = trip.destinations && trip.destinations.length > 1;
+      
+      setFormData({
+        title: trip.title || '',
+        destination: hasMultipleDestinations ? '' : (trip.destinations?.[0]?.name || ''),
+        startDate: trip.startDate || '',
+        endDate: trip.endDate || '',
+        description: trip.description || '',
+        photo: trip.photo || ''
+      });
+      
+      setMultipleCities(hasMultipleDestinations);
+      setDestinations(hasMultipleDestinations ? trip.destinations.map(d => d.name) : []);
+      setCurrentDestination('');
+      setPhotoPreview(trip.photo || '/default-trip-image.svg');
+      setPhotoGallery([]);
+      setSelectedPhotoIndex(0);
+    }
+  }, [isOpen, trip]);
 
   // Fetch photo gallery when user selects a destination
   const fetchPhotoGallery = async (destination: string) => {
@@ -77,15 +96,7 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
     setSelectedPhotoIndex(index);
   };
 
-  // Reset state when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setPhotoGallery([]);
-      setSelectedPhotoIndex(0);
-      setPhotoPreview('/default-trip-image.svg');
-    }
-  }, [isOpen]);
-
+  // Effect to fetch photos when destination or dates change
   useEffect(() => {
     const currentDestination = multipleCities 
       ? destinations[0] // Use first destination for photo
@@ -98,7 +109,7 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
       // Fetch photo gallery when we have destination AND both dates
       fetchPhotoGallery(currentDestination);
     }
-  }, [formData.startDate, formData.endDate, destinations]); // Only react to date changes and destinations array changes
+  }, [formData.startDate, formData.endDate, destinations, formData.destination, multipleCities]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -106,22 +117,6 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
       ...prev,
       [name]: value
     }));
-  };
-
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setPhotoPreview(result);
-        setFormData(prev => ({
-          ...prev,
-          photo: result
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const handleAddDestination = (destination: string) => {
@@ -141,7 +136,6 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
           setFormData(prev => ({ ...prev, destination: destination }));
         }
         
-        // Clear the current input
         setCurrentDestination('');
       }
     } else {
@@ -149,6 +143,22 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
       setFormData(prev => ({ ...prev, destination: destination }));
       setCurrentDestination(destination);
       fetchPhotoGallery(destination);
+    }
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        setPhotoPreview(result);
+        setFormData(prev => ({
+          ...prev,
+          photo: result
+        }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -194,31 +204,79 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
       return;
     }
 
-    // Prepare the trip data with proper destination handling
-    const tripData = {
-      ...formData,
-      destination: multipleCities && destinations.length > 0 
-        ? destinations // Pass array of destinations instead of joined string
-        : formData.destination
-    };
+    // Calculate if dates have changed to regenerate days
+    const datesChanged = trip.startDate !== formData.startDate || trip.endDate !== formData.endDate;
     
-    onAddTrip(tripData);
-    setFormData({
-      title: '',
-      destination: '',
-      startDate: '',
-      endDate: '',
-      description: '',
-      photo: ''
-    });
-    setPhotoPreview('/default-trip-image.jpg');
-    setMultipleCities(false);
-    setDestinations([]);
-    setCurrentDestination('');
-    setPhotoGallery([]);
+    // Prepare updated destinations
+    let updatedDestinations = trip.destinations || [];
+    
+    if (multipleCities && destinations.length > 0) {
+      // Update destinations based on the list
+      updatedDestinations = destinations.map((destName, index) => {
+        const existingDest = trip.destinations?.find(d => d.name === destName);
+        return existingDest || {
+          id: `destination-${Date.now()}-${index}`,
+          name: destName,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          nights: 0,
+          lodging: '',
+          estimatedCost: 0,
+          order: index
+        };
+      });
+    } else if (formData.destination) {
+      // Single destination
+      const existingDest = trip.destinations?.[0];
+      updatedDestinations = [{
+        id: existingDest?.id || `destination-${Date.now()}`,
+        name: formData.destination,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        nights: existingDest?.nights || 0,
+        lodging: existingDest?.lodging || '',
+        estimatedCost: existingDest?.estimatedCost || 0,
+        order: 0,
+        customColor: existingDest?.customColor
+      }];
+    }
+
+    // Generate new days if dates changed
+    let updatedDays = trip.days || [];
+    if (datesChanged) {
+      const newDays = generateDays(formData.startDate, formData.endDate);
+      updatedDays = newDays.map((date, index) => {
+        const existingDay = trip.days?.[index];
+        return {
+          id: existingDay?.id || `day-${index}`,
+          date,
+          destinationId: existingDay?.destinationId,
+          notes: existingDay?.notes || '',
+          activities: existingDay?.activities || [],
+          totalCost: existingDay?.totalCost || 0
+        };
+      });
+    }
+
+    // Create updated trip
+    const updatedTrip: Trip = {
+      ...trip,
+      title: formData.title,
+      description: formData.description,
+      photo: formData.photo,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      destinations: updatedDestinations,
+      days: updatedDays,
+      updatedAt: new Date().toISOString()
+    };
+
+    onUpdateTrip(updatedTrip);
+    onClose();
   };
 
   const handleClose = () => {
+    // Reset form data
     setFormData({
       title: '',
       destination: '',
@@ -227,8 +285,9 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
       description: '',
       photo: ''
     });
-    setPhotoPreview('/default-trip-image.jpg');
-    setPhotoGallery([]);
+    setDestinations([]);
+    setCurrentDestination('');
+    setMultipleCities(false);
     onClose();
   };
 
@@ -236,9 +295,9 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Add Trip</h2>
+      <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900">Edit Trip</h2>
           <button
             onClick={handleClose}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors duration-200"
@@ -249,196 +308,155 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
           </button>
         </div>
 
-        <div className="p-4">
+        <div className="p-6">
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Form Section */}
             <div className="lg:col-span-2">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Trip Details</h3>
-                  
-                  {/* Trip Name */}
-                  <div className="mb-3">
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-900 mb-1">
-                      Trip Name
-                    </label>
-                    <input
-                      type="text"
-                      id="title"
-                      name="title"
-                      value={formData.title}
-                      onChange={handleInputChange}
-                      placeholder="Enter trip name"
-                      className="w-full border border-gray-300 rounded-xl transition-colors duration-200 text-gray-900 placeholder-gray-500"
-                      style={{ 
-                        boxShadow: 'none',
-                        outline: 'none',
-                        borderWidth: '1px',
-                        boxSizing: 'border-box',
-                        padding: '12px 16px'
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = '#3b82f6';
-                        e.target.style.borderWidth = '2px';
-                        e.target.style.padding = '11px 15px';
-                        e.target.style.boxShadow = 'none';
-                        e.target.style.outline = 'none';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = '#d1d5db';
-                        e.target.style.borderWidth = '1px';
-                        e.target.style.padding = '12px 16px';
-                      }}
-                      required
-                    />
-                  </div>
+              <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Trip Name */}
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-gray-900 mb-2">
+                Trip Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="Enter trip name"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                required
+              />
+            </div>
 
-                  {/* Destination */}
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <label htmlFor="destination" className="block text-sm font-medium text-gray-900">
-                        Destination City <span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-600">Multiple Cities</span>
+            {/* Destinations */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="destination" className="block text-sm font-medium text-gray-900">
+                  Destination <span className="text-red-500">*</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-600">Multiple Cities</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newMultipleCities = !multipleCities;
+                      setMultipleCities(newMultipleCities);
+                      
+                      // If turning ON multiple cities and there's a current destination, add it to the list
+                      if (newMultipleCities && formData.destination && formData.destination.trim()) {
+                        setDestinations([formData.destination]);
+                        setCurrentDestination('');
+                      }
+                      // If turning OFF multiple cities, clear the destinations array and set the first one as main
+                      else if (!newMultipleCities && destinations.length > 0) {
+                        setFormData(prev => ({ ...prev, destination: destinations[0] }));
+                        setDestinations([]);
+                        setCurrentDestination('');
+                      }
+                    }}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ${
+                      multipleCities ? 'bg-blue-600' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ${
+                        multipleCities ? 'translate-x-5' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+              
+              <CustomAutocomplete
+                value={multipleCities ? currentDestination : formData.destination}
+                onChange={(value) => {
+                  if (multipleCities) {
+                    setCurrentDestination(value);
+                  } else {
+                    setFormData(prev => ({ ...prev, destination: value }));
+                  }
+                }}
+                onSelect={(value) => {
+                  handleAddDestination(value);
+                }}
+                placeholder={multipleCities ? "Add another city..." : "Search for a city or ski resort..."}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition-colors duration-200 text-gray-900 placeholder-gray-500"
+                required={!multipleCities}
+              />
+              
+              {/* Multiple Cities List */}
+              {multipleCities && destinations.length > 0 && (
+                <div className="mt-3">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Destinations</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {destinations.map((dest, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm border border-blue-200"
+                      >
+                        <span className="text-sm font-medium">{dest}</span>
                         <button
                           type="button"
-                          onClick={() => {
-                            const newMultipleCities = !multipleCities;
-                            setMultipleCities(newMultipleCities);
-                            
-                            // If turning ON multiple cities and there's a current destination, add it to the list
-                            if (newMultipleCities && formData.destination && formData.destination.trim()) {
-                              setDestinations([formData.destination]);
-                              setCurrentDestination('');
-                            }
-                            // If turning OFF multiple cities, clear the destinations array and set the first one as main
-                            else if (!newMultipleCities && destinations.length > 0) {
-                              setFormData(prev => ({ ...prev, destination: destinations[0] }));
-                              setDestinations([]);
-                              setCurrentDestination('');
-                            }
-                          }}
-                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ${
-                            multipleCities ? 'bg-blue-600' : 'bg-gray-300'
-                          }`}
+                          onClick={() => handleRemoveDestination(index)}
+                          className="ml-1 text-blue-500 hover:text-red-600 transition-colors duration-150"
+                          title="Remove destination"
                         >
-                          <span
-                            className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ${
-                              multipleCities ? 'translate-x-5' : 'translate-x-1'
-                            }`}
-                          />
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
                         </button>
                       </div>
-                    </div>
-                    <CustomAutocomplete
-                      value={multipleCities ? currentDestination : formData.destination}
-                      onChange={(value) => {
-                        if (multipleCities) {
-                          setCurrentDestination(value);
-                        } else {
-                          setFormData(prev => ({ ...prev, destination: value }));
-                        }
-                      }}
-                      onSelect={(value) => {
-                        handleAddDestination(value);
-                      }}
-                      placeholder={multipleCities ? "Add another city..." : "Search for a city or ski resort..."}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none transition-colors duration-200 text-gray-900 placeholder-gray-500"
-                      required={!multipleCities}
-                    />
-                    
-                    {/* Multiple Cities List */}
-                    {multipleCities && destinations.length > 0 && (
-                      <div className="mt-3">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Destinations</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {destinations.map((dest, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm border border-blue-200"
-                            >
-                              <span className="text-sm font-medium">{dest}</span>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveDestination(index)}
-                                className="ml-1 text-blue-500 hover:text-red-600 transition-colors duration-150"
-                                title="Remove destination"
-                              >
-                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                </svg>
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Dates */}
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-900 mb-1">
-                      Travel Dates <span className="text-red-500">*</span>
-                    </label>
-                    <AirlineDatePicker
-                      startDate={formData.startDate}
-                      endDate={formData.endDate}
-                      onStartDateChange={(date: string) => setFormData(prev => ({ ...prev, startDate: date }))}
-                      onEndDateChange={(date: string) => setFormData(prev => ({ ...prev, endDate: date }))}
-                    />
-                  </div>
-
-                  {/* Description */}
-                  <div className="mb-4">
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-900 mb-1">
-                      Trip Description
-                    </label>
-                    <textarea
-                      id="description"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleInputChange}
-                      placeholder="Enter Trip Description"
-                      rows={6}
-                      className="w-full border border-gray-300 rounded-xl transition-colors duration-200 resize-none text-gray-900 placeholder-gray-500"
-                      style={{ 
-                        boxShadow: 'none',
-                        outline: 'none',
-                        borderWidth: '1px',
-                        boxSizing: 'border-box',
-                        padding: '12px 16px'
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = '#3b82f6';
-                        e.target.style.borderWidth = '2px';
-                        e.target.style.padding = '11px 15px';
-                        e.target.style.boxShadow = 'none';
-                        e.target.style.outline = 'none';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = '#d1d5db';
-                        e.target.style.borderWidth = '1px';
-                        e.target.style.padding = '12px 16px';
-                      }}
-                    />
+                    ))}
                   </div>
                 </div>
+              )}
+            </div>
+
+            {/* Dates */}
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                Travel Dates <span className="text-red-500">*</span>
+              </label>
+              <AirlineDatePicker
+                startDate={formData.startDate}
+                endDate={formData.endDate}
+                onStartDateChange={(date: string) => setFormData(prev => ({ ...prev, startDate: date }))}
+                onEndDateChange={(date: string) => setFormData(prev => ({ ...prev, endDate: date }))}
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-900 mb-2">
+                Trip Description
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Enter Trip Description"
+                rows={4}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900 placeholder-gray-500"
+              />
+            </div>
 
                 {/* Action Buttons */}
                 <div className="flex gap-4 pt-4">
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors duration-200"
+                    className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors duration-200"
+                    className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200"
                   >
-                    Save
+                    Save Changes
                   </button>
                 </div>
               </form>
@@ -523,7 +541,7 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
                 <div className="mt-3">
                   <label className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors duration-200 text-sm max-w-sm">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     Upload Photo

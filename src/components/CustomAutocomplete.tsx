@@ -4,28 +4,42 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Fuse from 'fuse.js';
 import { Search, MapPin, Globe, Mountain, Navigation } from 'lucide-react';
 import { destinations, Destination } from '@/data/destinations';
+import normalizeString from '@/utils/strings';
+const normalize = normalizeString;
 
+// Props for the autocomplete component
 interface CustomAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
-  onSelect?: (value: string) => void; // Called only when user selects from dropdown
+  onSelect?: (value: string) => void;
   placeholder?: string;
   className?: string;
   required?: boolean;
 }
 
-// Configure fuzzy search
+// Build a searchable copy of destinations that includes both normalized and original fields
+const searchableDestinations = destinations.map(dest => ({
+  ...dest,
+  searchName: normalize(dest.name || ''),
+  searchDisplayName: normalize(dest.displayName || ''),
+  originalName: (dest.name || '').toLowerCase(),
+  originalDisplayName: (dest.displayName || '').toLowerCase()
+}));
+
+// Configure fuzzy search to use both normalized and original fields
 const fuseOptions = {
   keys: [
-    { name: 'name', weight: 0.7 },
-    { name: 'displayName', weight: 0.3 }
+    { name: 'searchName', weight: 0.4 },          // normalized name (geneva->geneva, genève->geneve)
+    { name: 'originalName', weight: 0.4 },        // original name (geneva->geneva, genève->genève) 
+    { name: 'searchDisplayName', weight: 0.1 },   // normalized display
+    { name: 'originalDisplayName', weight: 0.1 }  // original display
   ],
-  threshold: 0.3, // Lower = more strict matching
+  threshold: 0.6, // more permissive to catch popular cities like Geneva/Genève
   includeScore: true,
   minMatchCharLength: 1
 };
 
-const fuse = new Fuse(destinations, fuseOptions);
+const fuse = new Fuse(searchableDestinations, fuseOptions);
 
 export default function CustomAutocomplete({
   value,
@@ -47,25 +61,67 @@ export default function CustomAutocomplete({
       return;
     }
 
-    // Use fuzzy search for smart matching
-    const results = fuse.search(query, { limit: 15 }); // Get more results for smart ranking
+    const qNorm = normalize(query);
+
+    // Use fuzzy search on normalized fields for smart matching
+    const results = fuse.search(qNorm, { limit: 30 }); // Get more results for smart ranking
     
-    // Extract the destinations from search results
-    let matchedDestinations = results.map(result => result.item);
+    // Extract the destinations from search results (strip added search fields)
+    let matchedDestinations = results.map(result => {
+      const { searchName, searchDisplayName, originalName, originalDisplayName, ...rest } = result.item as any;
+      return rest as Destination;
+    });
+
+    // Add fallback includes search to catch obvious matches fuzzy might miss
+    const includesMatches = destinations.filter(dest => {
+      const nameNorm = normalize(dest.name || '');
+      const displayNorm = normalize(dest.displayName || '');
+      const nameOrig = dest.name?.toLowerCase() || '';
+      const displayOrig = dest.displayName?.toLowerCase() || '';
+      
+      return nameNorm.includes(qNorm) || displayNorm.includes(qNorm) || 
+             // Also try startsWith for better matches
+             nameNorm.startsWith(qNorm) || displayNorm.startsWith(qNorm) ||
+             // Bidirectional accent matching: english "geneva" should find "Genève" 
+             nameOrig.includes(query.toLowerCase()) || displayOrig.includes(query.toLowerCase()) ||
+             nameOrig.startsWith(query.toLowerCase()) || displayOrig.startsWith(query.toLowerCase());
+    });
     
-    // If no fuzzy matches, try simple includes search as fallback
-    if (matchedDestinations.length === 0) {
-      matchedDestinations = destinations.filter(dest => 
-        dest.name.toLowerCase().includes(query.toLowerCase()) ||
-        dest.displayName.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 15);
+    // Combine fuzzy and includes results, removing duplicates
+    const allMatches = [...matchedDestinations];
+    for (const includeMatch of includesMatches) {
+      if (!allMatches.find(m => m.name === includeMatch.name && m.country === includeMatch.country)) {
+        allMatches.push(includeMatch);
+      }
     }
+    matchedDestinations = allMatches.slice(0, 30);
     
     // Smart ranking: prioritize exact word matches first
     const smartRanked = matchedDestinations.sort((a, b) => {
       const aName = a.name.toLowerCase();
       const bName = b.name.toLowerCase();
       const queryLower = query.toLowerCase();
+      
+      // FIRST: Special case prioritization for major international cities
+      // This handles cases like "geneva" -> should prioritize Switzerland over US
+      const internationalCityPriority: { [key: string]: string } = {
+        'geneva': 'Switzerland',
+        'geneve': 'Switzerland',  // also handle the normalized version
+        'paris': 'France', 
+        'london': 'United Kingdom',
+        'rome': 'Italy',
+        'madrid': 'Spain',
+        'berlin': 'Germany',
+        'vienna': 'Austria',
+        'zurich': 'Switzerland'
+      };
+      
+      const preferredCountry = internationalCityPriority[queryLower];
+      if (preferredCountry) {
+        // Strongly prioritize the international city over local variants
+        if (a.country === preferredCountry && b.country !== preferredCountry) return -1;
+        if (a.country !== preferredCountry && b.country === preferredCountry) return 1;
+      }
       
       // Check if name starts with the query (perfect matches)
       const aStartsWithQuery = aName.startsWith(queryLower);
@@ -82,7 +138,13 @@ export default function CustomAutocomplete({
           'berlin, germany', 'amsterdam, netherlands', 'barcelona, spain',
           'moscow, russia', 'beijing, china', 'mumbai, india', 'istanbul, turkey',
           'los angeles, ca, united states', 'chicago, il, united states',
-          'toronto, on, canada', 'vancouver, bc, canada', 'montreal, qc, canada'
+          'toronto, on, canada', 'vancouver, bc, canada', 'montreal, qc, canada',
+          // Add more European capitals and major cities
+          'genève, switzerland', 'geneva, switzerland', 'zurich, switzerland',
+          'vienna, austria', 'brussels, belgium', 'budapest, hungary',
+          'prague, czech republic', 'warsaw, poland', 'stockholm, sweden',
+          'oslo, norway', 'helsinki, finland', 'copenhagen, denmark',
+          'dublin, ireland', 'lisbon, portugal', 'athens, greece'
         ];
         
         const aIsMajor = majorCities.some(city => city === a.displayName.toLowerCase());
@@ -90,6 +152,14 @@ export default function CustomAutocomplete({
         
         if (aIsMajor && !bIsMajor) return -1;
         if (!aIsMajor && bIsMajor) return 1;
+        
+        // If both or neither are major cities, prioritize by country (European/major countries first)
+        const majorCountries = ['switzerland', 'france', 'germany', 'united kingdom', 'italy', 'spain', 'netherlands', 'austria'];
+        const aIsMajorCountry = majorCountries.includes(a.country.toLowerCase());
+        const bIsMajorCountry = majorCountries.includes(b.country.toLowerCase());
+        
+        if (aIsMajorCountry && !bIsMajorCountry) return -1;
+        if (!aIsMajorCountry && bIsMajorCountry) return 1;
         
         // If both or neither are major cities, sort alphabetically
         return a.displayName.localeCompare(b.displayName);

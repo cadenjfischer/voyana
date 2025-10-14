@@ -1,6 +1,15 @@
 'use client';
 
-interface Activity {
+import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
+import Header from '@/components/Header';
+import AddTripModal from '@/components/AddTripModal';
+import EditTripModal from '@/components/itinerary/EditTripModal';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Trip } from '@/types/itinerary';
+
+interface LocalActivity {
   id: string;
   title: string;
   description: string;
@@ -9,7 +18,7 @@ interface Activity {
   location: string;
 }
 
-interface Trip {
+interface LocalTrip {
   id: string;
   title: string;
   destination: string;
@@ -17,31 +26,15 @@ interface Trip {
   endDate: string;
   description: string;
   photo: string;
-  activities: Activity[];
-}
-
-import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
-import Header from '@/components/Header';
-import AddTripModal from '@/components/AddTripModal';
-import Link from 'next/link';
-import Image from 'next/image';
-
-interface Trip {
-  id: string;
-  title: string;
-  destination: string;
-  startDate: string;
-  endDate: string;
-  description: string;
-  photo: string;
-  activities: Activity[];
+  activities: LocalActivity[];
 }
 
 export default function ItineraryPage() {
   const { user } = useUser();
-  const [trips, setTrips] = useState<Trip[]>([]);
+  const [trips, setTrips] = useState<LocalTrip[]>([]);
   const [isAddTripOpen, setIsAddTripOpen] = useState(false);
+  const [isEditTripOpen, setIsEditTripOpen] = useState(false);
+  const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Load trips from localStorage on component mount
@@ -62,10 +55,22 @@ export default function ItineraryPage() {
     }
   }, [trips, user]);
 
-  const addTrip = (newTrip: Omit<Trip, 'id' | 'activities'>) => {
-    const trip: Trip = {
-      ...newTrip,
+  const addTrip = (newTrip: { 
+    title: string; 
+    destination: string | string[]; 
+    startDate: string; 
+    endDate: string; 
+    description: string; 
+    photo: string; 
+  }) => {
+    const trip: LocalTrip = {
       id: Date.now().toString(),
+      title: newTrip.title,
+      destination: Array.isArray(newTrip.destination) ? newTrip.destination.join(', ') : newTrip.destination,
+      startDate: newTrip.startDate,
+      endDate: newTrip.endDate,
+      description: newTrip.description,
+      photo: newTrip.photo,
       activities: []
     };
     setTrips(prev => [...prev, trip]);
@@ -82,6 +87,58 @@ export default function ItineraryPage() {
         localStorage.setItem(`voyana_trips_${user.id}`, JSON.stringify(updatedTrips));
       }
     }
+  };
+
+  // Convert LocalTrip to Trip for EditTripModal
+  const convertToTrip = (localTrip: LocalTrip): Trip => {
+    return {
+      id: localTrip.id,
+      title: localTrip.title,
+      description: localTrip.description,
+      photo: localTrip.photo,
+      startDate: localTrip.startDate,
+      endDate: localTrip.endDate,
+      destinations: [{
+        id: '1',
+        name: localTrip.destination,
+        startDate: localTrip.startDate,
+        endDate: localTrip.endDate,
+        nights: 0,
+        lodging: '',
+        estimatedCost: 0,
+        order: 0
+      }],
+      days: [],
+      totalCost: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+  };
+
+  // Convert Trip back to LocalTrip
+  const convertToLocalTrip = (trip: Trip): LocalTrip => {
+    return {
+      id: trip.id,
+      title: trip.title,
+      destination: trip.destinations.map(d => d.name).join(', '),
+      startDate: trip.startDate,
+      endDate: trip.endDate,
+      description: trip.description,
+      photo: trip.photo,
+      activities: []
+    };
+  };
+
+  const handleEditTrip = (trip: LocalTrip) => {
+    setEditingTrip(convertToTrip(trip));
+    setIsEditTripOpen(true);
+  };
+
+  const handleUpdateTrip = (updatedTrip: Trip) => {
+    const localTrip = convertToLocalTrip(updatedTrip);
+    setTrips(prev => prev.map(trip => trip.id === updatedTrip.id ? localTrip : trip));
+    setIsEditTripOpen(false);
+    setEditingTrip(null);
   };
 
   const getDaysCount = (startDate: string, endDate: string) => {
@@ -181,15 +238,25 @@ export default function ItineraryPage() {
                       </div>
                     )}
                     
-                    {/* Delete Button */}
-                    <button
-                      onClick={() => deleteTrip(trip.id)}
-                      className="absolute top-3 right-3 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors duration-200 opacity-75 hover:opacity-100"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                    {/* Action Buttons */}
+                    <div className="absolute top-3 right-3 flex gap-2">
+                      <button
+                        onClick={() => handleEditTrip(trip)}
+                        className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors duration-200 opacity-75 hover:opacity-100"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => deleteTrip(trip.id)}
+                        className="w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors duration-200 opacity-75 hover:opacity-100"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Trip Info */}
@@ -251,6 +318,19 @@ export default function ItineraryPage() {
         onClose={() => setIsAddTripOpen(false)}
         onAddTrip={addTrip}
       />
+
+      {/* Edit Trip Modal */}
+      {editingTrip && (
+        <EditTripModal
+          isOpen={isEditTripOpen}
+          onClose={() => {
+            setIsEditTripOpen(false);
+            setEditingTrip(null);
+          }}
+          trip={editingTrip}
+          onUpdateTrip={handleUpdateTrip}
+        />
+      )}
     </div>
   );
 }

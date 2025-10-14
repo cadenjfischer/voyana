@@ -12,4 +12,4 @@ export interface Destination {
 // Import destinations data from JSON
 import * as destinationsData from './destinations-data.json';
 
-export const destinations: Destination[] = (destinationsData as any).default || destinationsData;
+export const destinations: Destination[] = (destinationsData as { default?: Destination[] } & Destination[]).default || destinationsData;
