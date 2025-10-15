@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { Day, Trip, formatDate } from '@/types/itinerary';
 import { getCalendarColors, getProgressIndicatorClass, getCalendarColorsWithTransfer } from '@/utils/colors';
 
@@ -21,6 +21,7 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
   const outerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const [dayScale, setDayScale] = useState(1);
+  const [isScrollable, setIsScrollable] = useState(false);
   const MIN_SCALE = 0.85; // don't scale below this
   const BASE_DAY_WIDTH = 112; // matches w-28 + padding approximation
   const GAP = 8; // gap between items (approx px)
@@ -54,15 +55,18 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
 
       if (totalBaseWidth <= availableWidth) {
         setDayScale(1);
+        setIsScrollable(false);
         // disable overflow when fits
         stripRef.current?.classList.remove('overflow-x-auto');
       } else {
         const candidate = availableWidth / totalBaseWidth;
         if (candidate >= MIN_SCALE) {
           setDayScale(candidate);
+          setIsScrollable(false);
           stripRef.current?.classList.remove('overflow-x-auto');
         } else {
           setDayScale(MIN_SCALE);
+          setIsScrollable(true);
           // enable scrolling when too many days
           stripRef.current?.classList.add('overflow-x-auto');
         }
@@ -80,12 +84,32 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
     };
   }, [days]);
 
-  // Handle scroll position for fade effects
-  const handleScroll = () => {
-    if (stripRef.current) {
-      setScrollPosition(stripRef.current.scrollLeft);
+  // Handle scroll position for fade effects and constrain over-scroll
+  const handleScroll = useCallback(() => {
+    if (!stripRef.current || !innerRef.current) return;
+    
+    const container = stripRef.current;
+    const content = innerRef.current;
+    
+    // Get actual dimensions
+    const containerWidth = container.clientWidth;
+    const contentWidth = content.scrollWidth * dayScale; // Account for scaling
+    const paddingLeft = isScrollable ? 8 : 24; // px-2 or px-6
+    const paddingRight = paddingLeft;
+    
+    // Calculate max scroll position (content width - visible area + padding)
+    const maxScroll = Math.max(0, contentWidth - containerWidth + paddingLeft + paddingRight);
+    
+    // Constrain scroll position
+    if (container.scrollLeft > maxScroll) {
+      container.scrollLeft = maxScroll;
     }
-  };
+    if (container.scrollLeft < 0) {
+      container.scrollLeft = 0;
+    }
+    
+    setScrollPosition(container.scrollLeft);
+  }, [dayScale, isScrollable]);
 
   // Get destination for a day
   const getDayDestination = (day: Day) => {
@@ -127,17 +151,21 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
       )}
 
       {/* Calendar strip */}
-      <div ref={outerRef} className={`w-full flex ${centered ? 'justify-center' : 'justify-start'}`}>
+      <div ref={outerRef} className={`w-full flex ${centered && !isScrollable ? 'justify-center' : 'justify-start'}`}>
         <div
           ref={stripRef}
-          className="flex gap-2 scrollbar-hide px-6 py-4"
+          className={`flex gap-2 scrollbar-hide py-4 ${centered ? 'w-full' : ''} ${isScrollable ? 'px-2' : 'px-6'}`}
           onScroll={handleScroll}
           style={{
             scrollbarWidth: 'none',
-            msOverflowStyle: 'none'
+            msOverflowStyle: 'none',
+            overscrollBehavior: 'contain'
           }}
         >
-          <div ref={innerRef} className="flex gap-2 items-stretch" style={{ transform: `scale(${dayScale})`, transformOrigin: 'center left' }}>
+          <div ref={innerRef} className="flex gap-2 items-stretch" style={{ 
+            transform: `scale(${dayScale})`, 
+            transformOrigin: centered && !isScrollable ? 'center' : 'center left' 
+          }}>
             {days.map((day, index) => {
           const info = getDayInfo(day, index);
           const isActive = day.id === activeDay;

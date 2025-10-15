@@ -258,8 +258,44 @@ export default function TripDetailPage() {
 
     // Auto-assign a color from the palette to ensure consistent colors
     const availableColors = PREMIUM_COLOR_PALETTE.map(color => color.id);
-    const usedColors = trip.destinations.map(d => d.customColor).filter(Boolean);
-    const nextColor = availableColors.find(colorId => !usedColors.includes(colorId)) || availableColors[trip.destinations.length % availableColors.length];
+    const usedColors = trip.destinations
+      .map(d => d.customColor)
+      .filter((color): color is string => Boolean(color)); // Type-safe filter to remove undefined
+    
+    console.log('=== COLOR ASSIGNMENT DEBUG ===');
+    console.log('Adding destination:', destination.name);
+    console.log('Total existing destinations:', trip.destinations.length);
+    console.log('Available colors in palette:', availableColors);
+    console.log('Used colors:', usedColors);
+    console.log('Existing destinations with colors:', trip.destinations.map(d => ({ 
+      name: d.name, 
+      color: d.customColor,
+      hasColor: Boolean(d.customColor)
+    })));
+    
+    // Find first unused color, or if all colors are used, pick the least-used one
+    let nextColor: string;
+    const unusedColor = availableColors.find(colorId => !usedColors.includes(colorId));
+    
+    if (unusedColor) {
+      nextColor = unusedColor;
+      console.log('Found unused color:', nextColor);
+    } else {
+      // All colors are used, find the least used one
+      const colorCounts = new Map<string, number>();
+      availableColors.forEach(color => colorCounts.set(color, 0));
+      usedColors.forEach(color => {
+        colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+      });
+      
+      // Sort by count and pick the least used
+      const sortedColors = Array.from(colorCounts.entries()).sort((a, b) => a[1] - b[1]);
+      nextColor = sortedColors[0][0];
+      console.log('All colors used, picking least-used:', nextColor, 'used', sortedColors[0][1], 'times');
+    }
+    
+    console.log('Selected color for', destination.name, ':', nextColor);
+    console.log('=== END DEBUG ===');
 
     // Always geocode the destination for map alignment - this is critical for map centering
     let coordinates;
@@ -334,11 +370,24 @@ export default function TripDetailPage() {
       coordinates // Always include coordinates (or undefined if geocoding failed)
     };
 
+    console.log('NEW DESTINATION CREATED:', {
+      name: newDestination.name,
+      id: newDestination.id,
+      customColor: newDestination.customColor,
+      order: newDestination.order,
+      hasCoordinates: !!newDestination.coordinates
+    });
+
     const updatedTrip = {
       ...trip,
       destinations: [...trip.destinations, newDestination],
       updatedAt: new Date().toISOString()
     };
+
+    console.log('UPDATED TRIP DESTINATIONS:', updatedTrip.destinations.map(d => ({
+      name: d.name,
+      color: d.customColor
+    })));
 
     handleUpdateTrip(updatedTrip);
     setShowAddDestinationModal(false);
@@ -378,6 +427,30 @@ export default function TripDetailPage() {
     handleUpdateTrip(updatedTrip);
     setShowAddActivityModal(false);
     setSelectedDayId('');
+  };
+
+  const handleRemoveDestination = (destinationId: string) => {
+    if (!trip) return;
+
+    // Filter out the destination and renumber remaining
+    const filtered = trip.destinations
+      .filter(d => d.id !== destinationId)
+      .map((d, idx) => ({ ...d, order: idx }));
+
+    // Unassign any days that had this destination
+    const updatedDays = trip.days.map(day => ({
+      ...day,
+      destinationId: day.destinationId === destinationId ? undefined : day.destinationId
+    }));
+
+    const updatedTrip = {
+      ...trip,
+      destinations: filtered,
+      days: updatedDays,
+      updatedAt: new Date().toISOString()
+    };
+
+    handleUpdateTrip(updatedTrip);
   };
 
   if (loading) {
@@ -446,6 +519,7 @@ export default function TripDetailPage() {
           <ItineraryLayout
             trip={trip}
               onUpdateTrip={handleUpdateTrip}
+              onRemoveDestination={handleRemoveDestination}
               onActiveDay={(dayId) => {
                 const day = trip.days.find(d => d.id === dayId);
                 setMapSelectedDay(day || null);

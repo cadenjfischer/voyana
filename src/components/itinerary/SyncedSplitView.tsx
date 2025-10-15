@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Trip, Destination, Day, Activity, formatDate } from '@/types/itinerary';
+import { PREMIUM_COLOR_PALETTE } from '@/utils/colors';
 import TabbedDestinationRail from './TabbedDestinationRail';
 import TimelineView from './TimelineView';
 import CalendarStrip from './CalendarStrip';
@@ -10,11 +11,12 @@ import FloatingAddButton from './FloatingAddButton';
 interface SyncedSplitViewProps {
   trip: Trip;
   onUpdateTrip: (trip: Trip) => void;
+  onRemoveDestination?: (destinationId: string) => void;
   onActiveDay?: (dayId: string) => void;
   onDestinationMapCenterRequest?: (coords: { lat: number; lng: number } | null) => void;
 }
 
-export default function SyncedSplitView({ trip, onUpdateTrip, onActiveDay, onDestinationMapCenterRequest }: SyncedSplitViewProps) {
+export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestination, onActiveDay, onDestinationMapCenterRequest }: SyncedSplitViewProps) {
   const [activeDestinationId, setActiveDestinationId] = useState<string>('');
   const [activeDay, setActiveDay] = useState<string>('');
   const [isMobile, setIsMobile] = useState(false);
@@ -375,12 +377,62 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onActiveDay, onDes
   }, [trip, onUpdateTrip]);
 
   // Handle adding new destination
-  const handleAddDestination = useCallback((destinationData: Omit<Destination, 'id' | 'order'>) => {
+  const handleAddDestination = useCallback(async (destinationData: Omit<Destination, 'id' | 'order'>) => {
+    // Auto-assign a color from the palette to ensure unique colors
+    const availableColors = PREMIUM_COLOR_PALETTE.map(color => color.id);
+    const usedColors = trip.destinations
+      .map(d => d.customColor)
+      .filter((color): color is string => Boolean(color));
+    
+    // Find first unused color, or if all colors are used, pick the least-used one
+    let assignedColor: string;
+    const unusedColor = availableColors.find(colorId => !usedColors.includes(colorId));
+    
+    if (unusedColor) {
+      assignedColor = unusedColor;
+    } else {
+      // All colors are used, find the least used one
+      const colorCounts = new Map<string, number>();
+      availableColors.forEach(color => colorCounts.set(color, 0));
+      usedColors.forEach(color => {
+        colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+      });
+      const sortedColors = Array.from(colorCounts.entries()).sort((a, b) => a[1] - b[1]);
+      assignedColor = sortedColors[0][0];
+    }
+
+    // Geocode the destination for map alignment
+    let coordinates;
+    try {
+      const response = await fetch(`/api/places/search?query=${encodeURIComponent(destinationData.name)}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.results && data.results.length > 0) {
+          const place = data.results[0];
+          coordinates = {
+            lat: place.geometry.location.lat,
+            lng: place.geometry.location.lng
+          };
+          console.log('Geocoded', destinationData.name, ':', coordinates);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to geocode destination:', destinationData.name, error);
+    }
+
     const newDestination: Destination = {
       ...destinationData,
       id: crypto.randomUUID(),
-      order: trip.destinations.length
+      order: trip.destinations.length,
+      customColor: assignedColor,
+      coordinates
     };
+
+    console.log('SyncedSplitView: Adding destination with color:', {
+      name: newDestination.name,
+      color: assignedColor,
+      hasCoordinates: !!coordinates
+    });
 
     const updatedDestinations = [...trip.destinations, newDestination];
 
@@ -477,6 +529,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onActiveDay, onDes
           onDestinationSelect={handleDestinationSelect}
           onDestinationsReorder={handleDestinationReorder}
           onUpdateDestination={handleDestinationUpdate}
+          onRemoveDestination={onRemoveDestination}
           onAddDestination={handleAddDestination}
           trip={trip}
         />

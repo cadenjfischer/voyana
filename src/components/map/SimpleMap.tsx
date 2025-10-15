@@ -15,9 +15,15 @@ interface SimpleMapProps {
   forceRefreshKey?: number;
   centerOn?: { lat: number; lng: number } | null;
   onCentered?: () => void;
+  fitBoundsPadding?: number | { top: number; bottom: number; left: number; right: number }; // Padding for fitBounds
+  disableAutoFit?: boolean; // Disable automatic fitBounds on mount/update
+  initialZoom?: number; // Override initial zoom level
+  initialCenter?: [number, number]; // Override initial center
+  animateFitBounds?: boolean; // Whether to animate fitBounds (default true)
+  onMapReady?: (map: mapboxgl.Map) => void; // Callback when map is ready
 }
 
-export default function SimpleMap({ destinations = [], className = "", onDestinationClick, focusedDestination = null, forceRefreshKey, centerOn, onCentered }: SimpleMapProps) {
+export default function SimpleMap({ destinations = [], className = "", onDestinationClick, focusedDestination = null, forceRefreshKey, centerOn, onCentered, fitBoundsPadding = 120, disableAutoFit = false, initialZoom, initialCenter, animateFitBounds = true, onMapReady }: SimpleMapProps) {
   // When parent requests center on coordinates, fly to them
   useEffect(() => {
     if (!map.current) return;
@@ -82,7 +88,8 @@ export default function SimpleMap({ destinations = [], className = "", onDestina
         mapboxgl.accessToken = MAPBOX_TOKEN;
 
         // Calculate initial center - will be adjusted by fitBounds anyway
-        const initialCenter = (() => {
+        const calculatedCenter = (() => {
+          if (initialCenter) return initialCenter;
           const firstDestWithCoords = destinations.find(d => d.coordinates);
           if (firstDestWithCoords?.coordinates) {
             console.log('Using first destination center:', firstDestWithCoords.name, firstDestWithCoords.coordinates);
@@ -94,14 +101,21 @@ export default function SimpleMap({ destinations = [], className = "", onDestina
         map.current = new mapboxgl.Map({
           container: mapContainer.current,
           style: 'mapbox://styles/mapbox/streets-v11',
-          center: initialCenter as [number, number],
-          zoom: 2, // Start zoomed out, will fit bounds once markers are added
+          center: calculatedCenter as [number, number],
+          zoom: initialZoom ?? 2, // Use provided zoom or start zoomed out, will fit bounds once markers are added
           pitch: 0, // No tilt
           bearing: 0, // No rotation
           dragRotate: false, // Disable rotation with right-click or ctrl+drag
           pitchWithRotate: false, // Disable pitch when rotating
           touchPitch: false // Disable pitch on touch devices
         });
+
+        // Call onMapReady callback when map is ready
+        if (onMapReady) {
+          map.current.on('load', () => {
+            if (map.current) onMapReady(map.current);
+          });
+        }
 
         // On load: try to ensure canvas is properly sized and tiles render
         map.current.on('load', () => {
@@ -245,7 +259,12 @@ export default function SimpleMap({ destinations = [], className = "", onDestina
       destinationsWithCoords.forEach((destination, index) => {
         if (!destination.coordinates) return;
         
-        console.log('Adding marker for', destination.name, 'at coordinates:', destination.coordinates);
+        console.log('=== CREATING MARKER ===');
+        console.log('Destination:', destination.name);
+        console.log('Coordinates:', destination.coordinates);
+        console.log('Custom color:', destination.customColor);
+        console.log('Resolved color:', getDestinationColor(destination, index));
+        console.log('Index:', index);
 
         // Create marker with precise positioning
         const el = document.createElement('div');
@@ -317,13 +336,26 @@ export default function SimpleMap({ destinations = [], className = "", onDestina
     };
 
     // Fit bounds to show ALL destinations, then add markers
-    if (coordinates.length === 1) {
+    if (disableAutoFit) {
+      // Skip auto-fitting, just add markers immediately
+      console.log('Auto-fit disabled, adding markers without repositioning');
+      addMarkersAfterMove();
+    } else if (coordinates.length === 1) {
       // Single destination: center on it with comfortable zoom
+      const padding = typeof fitBoundsPadding === 'number' 
+        ? { top: fitBoundsPadding / 2, bottom: fitBoundsPadding / 2, left: fitBoundsPadding / 2, right: fitBoundsPadding / 2 }
+        : { 
+            top: fitBoundsPadding.top / 2, 
+            bottom: fitBoundsPadding.bottom / 2, 
+            left: fitBoundsPadding.left / 2, 
+            right: fitBoundsPadding.right / 2 
+          };
+      
       map.current.flyTo({
         center: coordinates[0],
         zoom: 10,
-        duration: 800,
-        padding: { top: 50, bottom: 50, left: 50, right: 50 }
+        duration: animateFitBounds ? 800 : 0,
+        padding
       });
       console.log('Centering on single destination:', coordinates[0]);
       
@@ -347,14 +379,18 @@ export default function SimpleMap({ destinations = [], className = "", onDestina
         return bounds.extend(coord);
       }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
 
+      const padding = typeof fitBoundsPadding === 'number'
+        ? { top: fitBoundsPadding, bottom: fitBoundsPadding, left: fitBoundsPadding, right: fitBoundsPadding }
+        : fitBoundsPadding;
+
       map.current.fitBounds(bounds, {
-        padding: { top: 120, bottom: 120, left: 120, right: 120 }, // Increased padding for breathing room
-        duration: 800,
+        padding,
+        duration: animateFitBounds ? 800 : 0,
         maxZoom: 12, // Prevent over-zooming when destinations are very close
         linear: false
       });
       
-      console.log('Fitting bounds for', coordinates.length, 'destinations');
+      console.log('Fitting bounds for', coordinates.length, 'destinations with padding:', padding);
       
       // Add markers after fitBounds animation completes, or immediately if
       // the map isn't moving.
@@ -369,7 +405,7 @@ export default function SimpleMap({ destinations = [], className = "", onDestina
       }
     }
 
-  }, [destinations, focusedDestination, onDestinationClick]);
+  }, [destinations, focusedDestination, onDestinationClick, fitBoundsPadding]);
 
   // Update markers when destinations or focus changes
   useEffect(() => {
