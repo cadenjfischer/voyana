@@ -39,16 +39,15 @@ export default function ExpandableMapWidget({
   onAddDestination,
   onDaysUpdate
 }: ExpandableMapWidgetProps) {
-  const miniMapWrapperRef = useRef<HTMLDivElement | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [overlayRect, setOverlayRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [isHidingOverlay, setIsHidingOverlay] = useState(false);
   const [focusedDestinationId, setFocusedDestinationId] = useState<string | null>(null);
-  const [miniMapKey, setMiniMapKey] = useState(0);
   const destinationRefs = useRef<{ [key: string]: HTMLDivElement }>({});
-  // Store mini map instance and viewport state
-  const miniMapRef = useRef<mapboxgl.Map | null>(null);
+  // Use a single shared map instance
+  const sharedMapRef = useRef<mapboxgl.Map | null>(null);
   const [capturedViewport, setCapturedViewport] = useState<{ center: [number, number]; zoom: number } | null>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
   // Calendar responsiveness: scale down to a min scale and enable scrolling when there's no room
   const calendarContainerRef = useRef<HTMLDivElement | null>(null);
   const calendarInnerRef = useRef<HTMLDivElement | null>(null);
@@ -57,6 +56,21 @@ export default function ExpandableMapWidget({
   const MIN_CALENDAR_SCALE = 0.85; // scale floor
   const SIDE_PADDING = 24; // px padding on each side inside the left-2/3 area
   const SCALE_BUFFER = 1.05; // Add 5% buffer to prevent edge-case overflow
+  
+  // Calculate mini map height to match viewport aspect ratio
+  const [miniMapHeight, setMiniMapHeight] = useState(200);
+  
+  useEffect(() => {
+    const updateMiniMapHeight = () => {
+      const viewportAspectRatio = window.innerHeight / window.innerWidth;
+      const miniMapWidth = 320;
+      setMiniMapHeight(miniMapWidth * viewportAspectRatio);
+    };
+    
+    updateMiniMapHeight();
+    window.addEventListener('resize', updateMiniMapHeight);
+    return () => window.removeEventListener('resize', updateMiniMapHeight);
+  }, []);
 
   useEffect(() => {
     const container = calendarContainerRef.current;
@@ -131,32 +145,69 @@ export default function ExpandableMapWidget({
     }
   }, [destinations]);
 
-  const measureMiniMap = () => {
-    if (miniMapWrapperRef.current) {
-      const rect = miniMapWrapperRef.current.getBoundingClientRect();
-      return {
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        height: rect.height
-      };
-    }
-    return null;
-  };
+  // Resize map whenever expansion state changes
+  useEffect(() => {
+    if (!sharedMapRef.current) return;
+    
+    // Trigger resize immediately when state changes
+    sharedMapRef.current.resize();
+    
+    // Continue resizing during the transition to keep up with container size changes
+    const resizeInterval = setInterval(() => {
+      if (sharedMapRef.current) {
+        sharedMapRef.current.resize();
+      }
+    }, 16); // Resize every frame (~60fps) during transition
+    
+    // Clear interval after transition completes
+    const timeout = setTimeout(() => {
+      clearInterval(resizeInterval);
+      // Final resize to ensure it's perfect
+      if (sharedMapRef.current) {
+        sharedMapRef.current.resize();
+      }
+    }, 400);
+    
+    return () => {
+      clearInterval(resizeInterval);
+      clearTimeout(timeout);
+    };
+  }, [isExpanded]);
 
   const openFromMiniMap = () => {
-    const rect = measureMiniMap();
-    if (rect) {
-      // Capture the current viewport from the mini map
-      if (miniMapRef.current) {
-        const center = miniMapRef.current.getCenter();
-        const zoom = miniMapRef.current.getZoom();
-        setCapturedViewport({ center: [center.lng, center.lat], zoom });
-      }
-      setOverlayRect(rect);
+    // When not expanded, the map container is at mini position already
+    if (!isExpanded && isMapLoaded && sharedMapRef.current) {
+      // Capture viewport first
+      const center = sharedMapRef.current.getCenter();
+      const zoom = sharedMapRef.current.getZoom();
+      
       setIsMounted(true);
       requestAnimationFrame(() => {
         setIsExpanded(true);
+        
+        // Set padding and zoom AFTER the expansion animation starts
+        setTimeout(() => {
+          if (sharedMapRef.current) {
+            // Set padding to account for right panel (1/3 of screen)
+            const rightPadding = window.innerWidth / 3;
+            sharedMapRef.current.setPadding({ 
+              top: 80, 
+              bottom: 120, 
+              left: 20, 
+              right: rightPadding 
+            });
+            
+            // Zoom in while maintaining center
+            sharedMapRef.current.flyTo({
+              center: [center.lng, center.lat],
+              zoom: zoom + 2,
+              duration: 300,
+              essential: true
+            });
+            
+            setCapturedViewport({ center: [center.lng, center.lat], zoom: zoom + 2 });
+          }
+        }, 100);
       });
     }
   };
@@ -167,273 +218,279 @@ export default function ExpandableMapWidget({
 
   const handleCloseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // Remove padding and zoom out
+    if (sharedMapRef.current) {
+      const center = sharedMapRef.current.getCenter();
+      const zoom = sharedMapRef.current.getZoom();
+      const newZoom = zoom - 2;
+      
+      // Remove padding first
+      sharedMapRef.current.setPadding({ top: 0, bottom: 0, left: 0, right: 0 });
+      
+      // Then zoom out
+      sharedMapRef.current.flyTo({
+        center: [center.lng, center.lat],
+        zoom: newZoom,
+        duration: 300,
+        essential: true
+      });
+      
+      setCapturedViewport({ center: [center.lng, center.lat], zoom: newZoom });
+    }
+    
     setIsExpanded(false);
+    // Wait for animation to complete before unmounting
+    setTimeout(() => {
+      setIsMounted(false);
+    }, 400);
   };
 
   return (
     <>
-      {/* Mini Map Widget - always visible at bottom-left */}
+      {/* Backdrop - only visible when expanded */}
+      {isMounted && isExpanded && (
+        <div 
+          aria-hidden
+          onClick={handleCloseClick}
+          className="fixed inset-0 bg-black"
+          style={{ 
+            opacity: 0.4, 
+            pointerEvents: 'auto',
+            zIndex: 45
+          }}
+        />
+      )}
+
+      {/* Mini Map Header - positioned above the map container and animates with it */}
       <div 
-        ref={miniMapWrapperRef}
-        className="fixed bottom-6 left-6 z-40 cursor-pointer group hover:shadow-3xl hover:-translate-y-1 transition-all duration-200"
-        style={{ width: '320px', height: '200px' }}
+        className="fixed bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg cursor-pointer"
+        style={{
+          top: isExpanded ? '-48px' : `calc(100vh - ${miniMapHeight + 54}px)`,
+          left: isExpanded ? 0 : '24px',
+          width: isExpanded ? '100vw' : '320px',
+          height: '48px',
+          borderTopLeftRadius: '16px',
+          borderTopRightRadius: '16px',
+          zIndex: 50,
+          transition: isMounted ? 'all 360ms cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none',
+          willChange: isMounted ? 'top, left, width' : 'auto',
+          pointerEvents: isExpanded ? 'none' : 'auto',
+          opacity: isExpanded ? 0 : 1,
+        }}
         onClick={handleMapClick}
       >
-        <div className="rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden h-full">
-          {/* Widget Header */}
-          <div className="px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-                </svg>
-                <span className="font-semibold text-sm">Trip Map</span>
-              </div>
-              <div className="text-xs opacity-90">
-                Press M to expand
-              </div>
-            </div>
+        <div className="flex items-center justify-between h-full px-4">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+            </svg>
+            <span className="font-semibold text-sm">Trip Map</span>
           </div>
+          <div className="text-xs opacity-90">Press M to expand</div>
+        </div>
+      </div>
 
-          {/* Map Container */}
-          <div className="relative" style={{ height: '152px' }}>
-            <SimpleMap 
-              destinations={destinations}
-              onDestinationClick={onDestinationClick}
-              className="w-full h-full"
-              centerOn={centerOn}
-              onCentered={onCentered}
-              fitBoundsPadding={{ top: 55, bottom: 60, left: 10, right: 10 }}
-              onMapReady={(map) => { miniMapRef.current = map; }}
-            />
-            
-            {/* Loading indicator for map */}
-            {destinations.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                  <svg className="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <p className="text-xs text-gray-500">Add destinations to see map</p>
-                </div>
-              </div>
-            )}
-            
-            {/* Overlay with expand hint */}
-            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center">
+      {/* Single Map Container - moves between mini and expanded positions */}
+      <div
+        className="fixed bg-white overflow-hidden shadow-2xl pointer-events-auto"
+        style={{
+          top: isExpanded ? 0 : `calc(100vh - ${miniMapHeight + 6}px)`,
+          left: isExpanded ? 0 : '24px',
+          right: isExpanded ? 0 : undefined,
+          bottom: isExpanded ? 0 : undefined,
+          width: isExpanded ? '100vw' : '320px',
+          height: isExpanded ? '100vh' : `${miniMapHeight}px`,
+          borderTopLeftRadius: isExpanded ? '0px' : '0px',
+          borderTopRightRadius: isExpanded ? '0px' : '0px',
+          borderBottomLeftRadius: isExpanded ? '0px' : '16px',
+          borderBottomRightRadius: isExpanded ? '0px' : '16px',
+          transition: isMounted ? 'all 360ms cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none',
+          zIndex: 50,
+          willChange: isMounted ? 'top, left, width, height, border-radius' : 'auto',
+        }}
+      >
+        {/* Map - renders once, stays mounted */}
+        <div className="absolute left-0 right-0 bottom-0 top-0">
+          <SimpleMap 
+            destinations={destinations}
+            focusedDestination={isExpanded ? destinations.find(d => d.id === focusedDestinationId) ?? null : null}
+            onDestinationClick={onDestinationClick}
+            className="w-full h-full"
+            centerOn={centerOn}
+            onCentered={onCentered}
+            fitBoundsPadding={isExpanded ? { top: 80, bottom: 100, left: 10, right: 10 } : { top: 10, bottom: 10, left: 10, right: 10 }}
+            onMapReady={(map) => { 
+              sharedMapRef.current = map;
+              // Check if map is already loaded, or wait for it to load
+              if (map.loaded()) {
+                setIsMapLoaded(true);
+              } else {
+                map.once('load', () => {
+                  setIsMapLoaded(true);
+                });
+              }
+            }}
+            disableAutoFit={!!capturedViewport}
+            animateFitBounds={false}
+          />
+        </div>
+
+        {/* Click overlay for mini map */}
+        {!isExpanded && (
+          <div 
+            className="absolute inset-0 cursor-pointer group z-20"
+            onClick={handleMapClick}
+          >
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white bg-opacity-90 rounded-lg px-3 py-2 text-sm font-medium text-gray-800">
                 Click to expand
               </div>
             </div>
-
-            {/* Destination count badge */}
             {destinations.length > 0 && (
-              <div className="absolute top-3 right-3 bg-white bg-opacity-90 rounded-full px-2 py-1 text-xs font-semibold text-gray-700 shadow-sm">
+              <div className="absolute top-14 right-3 bg-white bg-opacity-90 rounded-full px-2 py-1 text-xs font-semibold text-gray-700 shadow-sm pointer-events-none">
                 {destinations.length} {destinations.length === 1 ? 'stop' : 'stops'}
               </div>
             )}
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* Expanded Overlay - morphs from mini map position */}
-      {isMounted && overlayRect && (
-        <>
-          {/* Backdrop with dimming */}
-          <div 
-            aria-hidden
-            onClick={handleCloseClick}
-            className="fixed inset-0 bg-black transition-opacity duration-300 z-40"
-            style={{ opacity: isExpanded ? 0.4 : 0 }}
-          />
+        {/* Expanded Header - overlays on top of map */}
+        {isExpanded && (
+          <div className="absolute top-0 left-0 right-0 z-60 bg-white border-b border-gray-200 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+                </svg>
+                <div>
+                  <h2 className="font-bold text-lg text-gray-900">Trip Overview</h2>
+                  <p className="text-sm text-gray-600">
+                    {destinations.length} {destinations.length === 1 ? 'destination' : 'destinations'}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <div className="text-sm text-gray-500">
+                  Press <kbd className="px-1.5 py-0.5 text-xs bg-gray-100 rounded">Esc</kbd> to close
+                </div>
+                <button
+                  onClick={handleCloseClick}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-          {/* Animated container that morphs from mini map to full screen */}
-          <div 
-            className="fixed z-50 pointer-events-none bg-white rounded-2xl overflow-hidden shadow-2xl"
-            style={{
-              top: isExpanded ? 0 : overlayRect.top,
-              left: isExpanded ? 0 : overlayRect.left,
-              width: isExpanded ? '100vw' : overlayRect.width,
-              height: isExpanded ? '100vh' : overlayRect.height,
-              transition: 'all 360ms cubic-bezier(0.2, 0.8, 0.2, 1)',
-              borderRadius: isExpanded ? '0px' : '16px',
-              transformOrigin: isExpanded 
-                ? `${overlayRect.left + overlayRect.width / 2}px ${overlayRect.top + overlayRect.height / 2}px`
-                : 'center center',
-            }}
-            onTransitionEnd={() => {
-              // When close animation finishes, unmount the overlay
-              if (!isExpanded) {
-                setIsMounted(false);
-                setOverlayRect(null);
-                // Force mini-map to remount to ensure it re-renders properly
-                setMiniMapKey(prev => prev + 1);
-              }
-            }}
-          >
-            <div className="w-full h-full pointer-events-auto">{/* Content wrapper */}
-              {/* Header */}
-              <div className="absolute top-0 left-0 right-0 z-10 bg-white border-b border-gray-200 px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-                    </svg>
-                    <div>
-                      <h2 className="font-bold text-lg text-gray-900">Trip Overview</h2>
-                      <p className="text-sm text-gray-600">
-                        {destinations.length} {destinations.length === 1 ? 'destination' : 'destinations'}
-                        {selectedDay && (
-                          <span className="ml-2 text-blue-600">
-                            • {new Date(selectedDay.date).toLocaleDateString('en-US', { 
-                              weekday: 'short', 
-                              month: 'short', 
-                              day: 'numeric' 
-                            })} selected
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="text-sm text-gray-500">
-                      Press <kbd className="px-1.5 py-0.5 text-xs bg-gray-100 rounded">Esc</kbd> to close
-                    </div>
-                    <button
-                      onClick={handleCloseClick}
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
+        {/* Side Panel - only visible when expanded */}
+        {isExpanded && (
+          <>
+            {/* Side Panel */}
+            <div className="absolute top-20 right-0 bottom-0 w-1/3 bg-white border-l border-gray-200 shadow-xl overflow-hidden flex flex-col z-60">
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="font-semibold text-gray-900 mb-2">Quick Actions</h3>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => onAddDestination && onAddDestination({ name: 'New Destination', nights: 0, lodging: '', estimatedCost: 0, startDate: trip.startDate, endDate: trip.endDate })}
+                    className="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200 text-sm"
+                  >
+                    <div className="font-medium text-blue-900">Add Destination</div>
+                    <div className="text-blue-700 text-xs">Plan your next stop</div>
+                  </button>
+                  <button className="w-full text-left p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200 text-sm" onClick={() => alert('Use timeline to add activities')}>
+                    <div className="font-medium text-green-900">Add Activity</div>
+                    <div className="text-green-700 text-xs">Plan what to do</div>
+                  </button>
                 </div>
               </div>
 
-              {/* Main Content */}
-              <div className="absolute inset-0 pt-20 flex">
-                {/* Map Section (2/3 width) */}
-                <div className="w-2/3 h-full relative" style={{ opacity: isExpanded ? 1 : 0, transition: 'opacity 200ms ease-in 200ms' }}>
-                  <SimpleMap 
-                    key="expanded-map"
-                    destinations={destinations}
-                    focusedDestination={destinations.find(d => d.id === focusedDestinationId) ?? null}
-                    onDestinationClick={onDestinationClick}
-                    className="w-full h-full"
-                    centerOn={centerOn}
-                    onCentered={onCentered}
-                    disableAutoFit={true}
-                    animateFitBounds={false}
-                    initialCenter={capturedViewport?.center}
-                    initialZoom={capturedViewport?.zoom}
-                  />
-                </div>
-
-                {/* Side Panel (1/3 width) */}
-                <div className="w-1/3 h-full bg-white border-l border-gray-200 shadow-xl overflow-hidden flex flex-col">
-                  <div className="p-4 border-b border-gray-200">
-                    <h3 className="font-semibold text-gray-900 mb-2">Quick Actions</h3>
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => onAddDestination && onAddDestination({ name: 'New Destination', nights: 0, lodging: '', estimatedCost: 0, startDate: trip.startDate, endDate: trip.endDate })}
-                        className="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200 text-sm"
-                      >
-                        <div className="font-medium text-blue-900">Add Destination</div>
-                        <div className="text-blue-700 text-xs">Plan your next stop</div>
-                      </button>
-                      <button className="w-full text-left p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200 text-sm" onClick={() => alert('Use timeline to add activities while map is open')}>
-                        <div className="font-medium text-green-900">Add Activity</div>
-                        <div className="text-green-700 text-xs">Plan what to do</div>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex-1 overflow-hidden">
-                    <CompactEditor
-                      trip={trip}
-                      destinations={destinations}
-                      selectedDay={selectedDay}
-                      onUpdateDestination={(d) => onUpdateDestination && onUpdateDestination(d)}
-                      onRemoveDestination={(id) => onRemoveDestination && onRemoveDestination(id)}
-                      onAddDestination={(d) => onAddDestination && onAddDestination(d)}
-                      onDestinationClick={(d) => onDestinationClick && onDestinationClick(d)}
-                    />
-                  </div>
-
-                  {/* Day-by-day activity view */}
-                  <div className="h-1/3 border-t border-gray-100 overflow-auto">
-                    <TimelineView
-                      trip={trip}
-                      activeDestinationId={focusedDestinationId ?? ''}
-                      activeDay={selectedDay ? selectedDay.id : ''}
-                      destinationRefs={destinationRefs}
-                      onDaysUpdate={(updatedDays) => {
-                        if (onDaysUpdate) onDaysUpdate(updatedDays);
-                      }}
-                      onDaySelect={(dayId) => {
-                        const day = trip.days.find(d => d.id === dayId);
-                        if (day && onDaySelect) onDaySelect(day);
-                      }}
-                    />
-                  </div>
-                </div>
+              <div className="flex-1 overflow-hidden">
+                <CompactEditor
+                  trip={trip}
+                  destinations={destinations}
+                  selectedDay={selectedDay}
+                  onUpdateDestination={(d) => onUpdateDestination && onUpdateDestination(d)}
+                  onRemoveDestination={(id) => onRemoveDestination && onRemoveDestination(id)}
+                  onAddDestination={(d) => onAddDestination && onAddDestination(d)}
+                  onDestinationClick={(d) => onDestinationClick && onDestinationClick(d)}
+                />
               </div>
 
-              {/* Bottom Calendar Strip - only spans left 2/3 of screen */}
-              <div className="absolute left-0 bottom-0 z-50 pb-4" style={{ width: '66.666667%' }}>
-                {/* Outer container provides side padding and centers content horizontally inside left 2/3 */}
+              <div className="h-1/3 border-t border-gray-100 overflow-auto">
+                <TimelineView
+                  trip={trip}
+                  activeDestinationId={focusedDestinationId ?? ''}
+                  activeDay={selectedDay ? selectedDay.id : ''}
+                  destinationRefs={destinationRefs}
+                  onDaysUpdate={(updatedDays) => {
+                    if (onDaysUpdate) onDaysUpdate(updatedDays);
+                  }}
+                  onDaySelect={(dayId) => {
+                    const day = trip.days.find(d => d.id === dayId);
+                    if (day && onDaySelect) onDaySelect(day);
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Bottom Calendar */}
+            <div className="absolute left-0 bottom-0 z-60 pb-2" style={{ width: '66.666667%' }}>
+              <div
+                ref={calendarContainerRef}
+                className="mx-auto"
+                style={{
+                  paddingLeft: `${SIDE_PADDING}px`,
+                  paddingRight: `${SIDE_PADDING}px`,
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  background: 'transparent',
+                }}
+              >
                 <div
-                  ref={calendarContainerRef}
-                  className="mx-auto"
+                  className="relative"
                   style={{
-                    paddingLeft: `${SIDE_PADDING}px`,
-                    paddingRight: `${SIDE_PADDING}px`,
                     width: '100%',
-                    boxSizing: 'border-box',
+                    overflowX: calendarScrollable ? 'auto' : 'visible',
+                    WebkitOverflowScrolling: 'touch',
                     display: 'flex',
                     justifyContent: 'center',
-                    alignItems: 'center',
+                    background: 'transparent',
                   }}
                 >
-                  {/* Inner wrapper applies scaling and optional horizontal scroll */}
                   <div
-                    className="relative"
+                    ref={calendarInnerRef}
                     style={{
-                      width: '100%',
-                      overflowX: calendarScrollable ? 'auto' : 'visible',
-                      WebkitOverflowScrolling: 'touch',
-                      display: 'flex',
-                      justifyContent: 'center'
+                      transform: `scale(${calendarScale})`,
+                      transformOrigin: 'center bottom',
+                      transition: 'transform 160ms ease-out',
+                      display: 'inline-block',
+                      background: 'transparent',
                     }}
                   >
-                    <div
-                      ref={calendarInnerRef}
-                      style={{
-                        transform: `scale(${calendarScale})`,
-                        transformOrigin: 'center bottom',
-                        transition: 'transform 160ms ease-out',
-                        display: 'inline-block'
-                      }}
-                    >
-                      <CalendarStrip
-                        days={trip.days}
-                        activeDay={selectedDay ? selectedDay.id : ''}
-                        onDaySelect={(dayId: string) => onDaySelect && onDaySelect(trip.days.find(d => d.id === dayId) as Day)}
-                        trip={trip}
-                        transparent
-                        centered
-                      />
-                    </div>
+                    <CalendarStrip
+                      days={trip.days}
+                      activeDay={selectedDay ? selectedDay.id : ''}
+                      onDaySelect={(dayId: string) => onDaySelect && onDaySelect(trip.days.find(d => d.id === dayId) as Day)}
+                      trip={trip}
+                      transparent
+                      centered
+                    />
                   </div>
                 </div>
               </div>
-            </div>{/* Close content wrapper */}
-          </div>{/* Close animated container */}
-        </>
-      )}
+            </div>
+          </>
+        )}
+      </div>
     </>
   );
 }
