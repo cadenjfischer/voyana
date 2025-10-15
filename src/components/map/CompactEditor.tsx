@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Trip, Destination, Day } from '@/types/itinerary';
+import { PREMIUM_COLOR_PALETTE, resolveColorHex } from '@/utils/colors';
 
 interface CompactEditorProps {
   trip: Trip;
@@ -40,7 +41,12 @@ export default function CompactEditor({ trip, destinations, selectedDay, onUpdat
           {destinations.map((destination, idx) => (
             <div key={destination.id} className="flex items-center justify-between gap-3 p-2 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-3 cursor-pointer" onClick={() => onDestinationClick?.(destination)}>
-                <div className="w-3 h-3 rounded-full" style={{ background: destination.customColor || '#6366f1' }} />
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{
+                    background: resolveColorHex(destination.customColor, '#6366f1')
+                  }}
+                />
                 <div className="min-w-0">
                   <div className="text-sm font-medium truncate">{destination.name}</div>
                   <div className="text-xs text-gray-500">{destination.nights} nights</div>

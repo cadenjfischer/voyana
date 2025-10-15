@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { Destination } from '@/types/itinerary';
+import { PREMIUM_COLOR_PALETTE, resolveColorHex } from '@/utils/colors';
+const { resolveColorHex: legacyResolve } = require('@/utils/colors');
 
 interface SimpleMapProps {
   destinations?: Destination[];
@@ -193,14 +195,16 @@ export default function SimpleMap({ destinations = [], className = "", onDestina
 
   // Helper to get destination color
   const getDestinationColor = (destination: Destination, index: number): string => {
-    // Check if this destination is focused
-    if (focusedDestination && destination.id === focusedDestination.id) {
-      return '#f97316'; // orange-500 for focused
-    }
-    
-    // Fallback to default colors
-    const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
-    return colors[index % colors.length];
+    // If destination has a customColor id, map to its hex from PREMIUM_COLOR_PALETTE
+    // resolve via helper which supports legacy ids
+    const resolved = resolveColorHex(destination.customColor, ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'][index % 6]);
+    console.log('SimpleMap marker color:', {
+      name: destination.name,
+      customColor: destination.customColor,
+      resolvedHex: resolved,
+      index
+    });
+    return resolved;
   };
 
   // Update markers when destinations or focus changes

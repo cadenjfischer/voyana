@@ -366,3 +366,39 @@ export function getProgressIndicatorClass(
   const colors = getDestinationColors(destinationId, destinations, false);
   return colors.bg;
 }
+
+/**
+ * Resolve a color id (current or legacy) to a hex value.
+ * Accepts the new palette ids (e.g. 'ocean-blue') or legacy short ids ('ocean','mint', etc.)
+ */
+export function resolveColorHex(colorId?: string, fallback: string = '#6366f1'): string {
+  if (!colorId) return fallback;
+
+  // Check current palette first
+  const current = PREMIUM_COLOR_PALETTE.find(c => c.id === colorId);
+  if (current && current.hex) return current.hex;
+
+  // Map legacy short ids to palette ids
+  const legacyMap: { [key: string]: string } = {
+    coral: 'sunset-coral',
+    ocean: 'ocean-blue',
+    sunset: 'sunset-purple',
+    lavender: 'sunset-purple',
+    sky: 'ocean-blue',
+    rose: 'cherry-pink',
+    mint: 'mint-fresh',
+    peach: 'sunset-coral'
+  };
+
+  const mapped = legacyMap[colorId];
+  if (mapped) {
+    const found = PREMIUM_COLOR_PALETTE.find(c => c.id === mapped);
+    if (found && found.hex) return found.hex;
+  }
+
+  // As a last attempt, try to find any palette entry containing the colorId substring
+  const fuzzy = PREMIUM_COLOR_PALETTE.find(c => c.id.includes(colorId));
+  if (fuzzy && fuzzy.hex) return fuzzy.hex;
+
+  return fallback;
+}

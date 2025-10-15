@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { Destination, Day, Activity } from '@/types/itinerary';
+import { PREMIUM_COLOR_PALETTE, resolveColorHex } from '@/utils/colors';
 
 export interface MapboxGlobeRef {
   fitToDestinations: (destinations: Destination[]) => void;
@@ -215,24 +216,7 @@ const MapboxGlobe = forwardRef<MapboxGlobeRef, MapboxGlobeProps>(({
   }, [selectedDay, destinations]);
 
   const getDestinationColor = (destination: Destination, index: number): string => {
-    if (destination.customColor) {
-      // Use custom color from destination
-      const colorMap: { [key: string]: string } = {
-        'coral': '#FF6B6B',
-        'ocean': '#4ECDC4',
-        'sunset': '#FFD93D',
-        'lavender': '#A8E6CF',
-        'sky': '#74B9FF',
-        'rose': '#FD79A8',
-        'mint': '#00B894',
-        'peach': '#FDCB6E'
-      };
-      return colorMap[destination.customColor] || '#6366f1';
-    }
-    
-    // Fallback colors
-    const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#f97316', '#3b82f6', '#ef4444'];
-    return colors[index % colors.length];
+    return resolveColorHex(destination.customColor, ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#f97316', '#3b82f6', '#ef4444'][index % 8]);
   };
 
   if (!MAPBOX_TOKEN) {

@@ -6,6 +6,7 @@ import CalendarStrip from '@/components/itinerary/CalendarStrip';
 import TimelineView from '@/components/itinerary/TimelineView';
 import CompactEditor from './CompactEditor';
 import { Destination, Day, Activity } from '@/types/itinerary';
+import { resolveColorHex } from '@/utils/colors';
 
 interface ExpandableMapWidgetProps {
   trip: import('@/types/itinerary').Trip;
@@ -278,10 +279,10 @@ export default function ExpandableMapWidget({
           </div>
 
           {/* Bottom Calendar Strip full-width */}
-          <div className="absolute left-0 right-0 bottom-0 h-36 z-50 pointer-events-none">
-            <div className="max-w-7xl mx-auto px-6 py-3 flex">
-              {/* Left 2/3: calendar strip (transparent background) */}
-              <div className="w-2/3 pointer-events-auto">
+          <div className="absolute left-0 bottom-0 h-36 z-50 pointer-events-none w-full">
+            <div className="w-full px-6 py-3 flex justify-center">
+              {/* Left 2/3: calendar strip (transparent background) - left aligned to map area */}
+              <div className="w-2/3 pointer-events-auto px-4 flex justify-center">
                 <CalendarStrip
                   days={trip.days}
                   activeDay={selectedDay ? selectedDay.id : ''}
@@ -291,7 +292,7 @@ export default function ExpandableMapWidget({
                 />
               </div>
 
-              {/* Right 1/3 is intentionally empty so the calendar doesn't spill under the side panel */}
+              {/* Right 1/3 remains empty to prevent overlap */}
               <div className="w-1/3" />
             </div>
           </div>
@@ -302,21 +303,4 @@ export default function ExpandableMapWidget({
 }
 
 // Helper function for destination colors (matches MapboxGlobe)
-function getDestinationColor(destination: Destination, index: number): string {
-  if (destination.customColor) {
-    const colorMap: { [key: string]: string } = {
-      'coral': '#FF6B6B',
-      'ocean': '#4ECDC4',
-      'sunset': '#FFD93D',
-      'lavender': '#A8E6CF',
-      'sky': '#74B9FF',
-      'rose': '#FD79A8',
-      'mint': '#00B894',
-      'peach': '#FDCB6E'
-    };
-    return colorMap[destination.customColor] || '#6366f1';
-  }
-  
-  const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#f97316', '#3b82f6', '#ef4444'];
-  return colors[index % colors.length];
 }

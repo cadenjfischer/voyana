@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { Day, Trip, formatDate } from '@/types/itinerary';
 import { getCalendarColors, getProgressIndicatorClass, getCalendarColorsWithTransfer } from '@/utils/colors';
 
@@ -17,6 +17,12 @@ interface CalendarStripProps {
 export default function CalendarStrip({ days, activeDay, onDaySelect, trip, transparent = false }: CalendarStripProps) {
   const [scrollPosition, setScrollPosition] = useState(0);
   const stripRef = useRef<HTMLDivElement>(null);
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [dayScale, setDayScale] = useState(1);
+  const MIN_SCALE = 0.85; // don't scale below this
+  const BASE_DAY_WIDTH = 112; // matches w-28 + padding approximation
+  const GAP = 8; // gap between items (approx px)
   
   // Auto-scroll to active day
   useEffect(() => {
@@ -34,6 +40,44 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
       behavior: 'smooth'
     });
   }, [activeDay, days]);
+
+  // Responsive scaling to fit days into available space up to a minimum scale
+  useLayoutEffect(() => {
+    function recompute() {
+      const outer = outerRef.current;
+      const inner = innerRef.current;
+      if (!outer || !inner) return;
+
+      const availableWidth = outer.clientWidth - 16; // leave some padding
+      const totalBaseWidth = days.length * BASE_DAY_WIDTH + Math.max(0, days.length - 1) * GAP;
+
+      if (totalBaseWidth <= availableWidth) {
+        setDayScale(1);
+        // disable overflow when fits
+        stripRef.current?.classList.remove('overflow-x-auto');
+      } else {
+        const candidate = availableWidth / totalBaseWidth;
+        if (candidate >= MIN_SCALE) {
+          setDayScale(candidate);
+          stripRef.current?.classList.remove('overflow-x-auto');
+        } else {
+          setDayScale(MIN_SCALE);
+          // enable scrolling when too many days
+          stripRef.current?.classList.add('overflow-x-auto');
+        }
+      }
+    }
+
+    recompute();
+
+    const ro = new ResizeObserver(() => recompute());
+    if (outerRef.current) ro.observe(outerRef.current);
+    window.addEventListener('orientationchange', recompute);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('orientationchange', recompute);
+    };
+  }, [days]);
 
   // Handle scroll position for fade effects
   const handleScroll = () => {
@@ -82,16 +126,18 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
       )}
 
       {/* Calendar strip */}
-      <div
-        ref={stripRef}
-        className="flex gap-2 overflow-x-auto scrollbar-hide px-6 py-4"
-        onScroll={handleScroll}
-        style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none'
-        }}
-      >
-        {days.map((day, index) => {
+      <div ref={outerRef} className="w-full flex justify-center">
+        <div
+          ref={stripRef}
+          className="flex gap-2 scrollbar-hide px-6 py-4"
+          onScroll={handleScroll}
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
+        >
+          <div ref={innerRef} className="flex gap-2 items-stretch" style={{ transform: `scale(${dayScale})`, transformOrigin: 'center left' }}>
+            {days.map((day, index) => {
           const info = getDayInfo(day, index);
           const isActive = day.id === activeDay;
           const hasActivities = day.activities.length > 0;
@@ -181,7 +227,9 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
               )}
             </button>
           );
-        })}
+            })}
+          </div>
+        </div>
       </div>
       
       {/* Current position indicator */}
