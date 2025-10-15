@@ -10,11 +10,12 @@ interface CalendarStripProps {
   onDaySelect: (dayId: string) => void;
   trip: Trip;
   transparent?: boolean;
+  centered?: boolean;
 }
 
 
 
-export default function CalendarStrip({ days, activeDay, onDaySelect, trip, transparent = false }: CalendarStripProps) {
+export default function CalendarStrip({ days, activeDay, onDaySelect, trip, transparent = false, centered = false }: CalendarStripProps) {
   const [scrollPosition, setScrollPosition] = useState(0);
   const stripRef = useRef<HTMLDivElement>(null);
   const outerRef = useRef<HTMLDivElement>(null);
@@ -126,7 +127,7 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
       )}
 
       {/* Calendar strip */}
-      <div ref={outerRef} className="w-full flex justify-center">
+      <div ref={outerRef} className={`w-full flex ${centered ? 'justify-center' : 'justify-start'}`}>
         <div
           ref={stripRef}
           className="flex gap-2 scrollbar-hide px-6 py-4"

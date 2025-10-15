@@ -289,6 +289,7 @@ export default function ExpandableMapWidget({
                   onDaySelect={(dayId: string) => onDaySelect && onDaySelect(trip.days.find(d => d.id === dayId) as Day)}
                   trip={trip}
                   transparent
+                  centered
                 />
               </div>
 
