@@ -9,11 +9,12 @@ interface CalendarStripProps {
   activeDay: string;
   onDaySelect: (dayId: string) => void;
   trip: Trip;
+  transparent?: boolean;
 }
 
 
 
-export default function CalendarStrip({ days, activeDay, onDaySelect, trip }: CalendarStripProps) {
+export default function CalendarStrip({ days, activeDay, onDaySelect, trip, transparent = false }: CalendarStripProps) {
   const [scrollPosition, setScrollPosition] = useState(0);
   const stripRef = useRef<HTMLDivElement>(null);
   
@@ -63,18 +64,22 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip }: Ca
   };
 
   return (
-    <div className="relative bg-white border-b border-gray-200">
+    <div className={`relative ${transparent ? '' : 'bg-white border-b border-gray-200'}`}>
       {/* Left fade */}
-      <div 
-        className={`absolute left-0 top-0 w-8 h-full bg-gradient-to-r from-white to-transparent z-10 pointer-events-none transition-opacity duration-200 ${
-          scrollPosition > 10 ? 'opacity-100' : 'opacity-0'
-        }`} 
-      />
+      {!transparent && (
+        <div 
+          className={`absolute left-0 top-0 w-8 h-full bg-gradient-to-r from-white to-transparent z-10 pointer-events-none transition-opacity duration-200 ${
+            scrollPosition > 10 ? 'opacity-100' : 'opacity-0'
+          }`} 
+        />
+      )}
       
       {/* Right fade */}
-      <div 
-        className={`absolute right-0 top-0 w-8 h-full bg-gradient-to-l from-white to-transparent z-10 pointer-events-none transition-opacity duration-200`}
-      />
+      {!transparent && (
+        <div 
+          className={`absolute right-0 top-0 w-8 h-full bg-gradient-to-l from-white to-transparent z-10 pointer-events-none transition-opacity duration-200`}
+        />
+      )}
 
       {/* Calendar strip */}
       <div

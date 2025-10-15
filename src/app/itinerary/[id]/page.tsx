@@ -8,6 +8,7 @@ import ItineraryLayout from '@/components/itinerary/ItineraryLayout';
 import AddDestinationModal from '@/components/itinerary/AddDestinationModal';
 import AddActivityModal from '@/components/itinerary/AddActivityModal';
 import EditTripModal from '@/components/itinerary/EditTripModal';
+import ExpandableMapWidget from '@/components/map/ExpandableMapWidget';
 import { Trip, Destination, Activity, generateDays } from '@/types/itinerary';
 import { PREMIUM_COLOR_PALETTE } from '@/utils/colors';
 import Link from 'next/link';
@@ -23,6 +24,65 @@ export default function TripDetailPage() {
   const [showAddActivityModal, setShowAddActivityModal] = useState(false);
   const [showEditTripModal, setShowEditTripModal] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string>('');
+  const [mapSelectedDay, setMapSelectedDay] = useState<any>(null);
+  const [mapCenterTarget, setMapCenterTarget] = useState<{ lat: number; lng: number } | null>(null);
+
+  const handleUpdateTrip = (updatedTrip: Trip) => {
+    if (user) {
+      const savedTrips = localStorage.getItem(`voyana_trips_${user.id}`);
+      if (savedTrips) {
+        const trips = JSON.parse(savedTrips);
+        const updatedTrips = trips.map((t: Trip) => t.id === tripId ? updatedTrip : t);
+        localStorage.setItem(`voyana_trips_${user.id}`, JSON.stringify(updatedTrips));
+        setTrip(updatedTrip);
+      }
+    }
+  };
+
+  // Function to geocode existing destinations that don't have coordinates
+  const geocodeExistingDestinations = async (currentTrip: Trip, destinations: Destination[]) => {
+    let updated = false;
+    const updatedDestinations = [...currentTrip.destinations];
+    
+    for (const dest of destinations) {
+      try {
+        console.log('Geocoding existing destination:', dest.name);
+        const response = await fetch(`/api/places/search?query=${encodeURIComponent(dest.name)}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.results && data.results.length > 0) {
+            const place = data.results[0];
+            const coordinates = {
+              lat: place.geometry.location.lat,
+              lng: place.geometry.location.lng
+            };
+            
+            // Update the destination in the array
+            const destIndex = updatedDestinations.findIndex(d => d.id === dest.id);
+            if (destIndex !== -1) {
+              updatedDestinations[destIndex] = { ...updatedDestinations[destIndex], coordinates };
+              updated = true;
+              console.log('Updated coordinates for existing destination', dest.name, ':', coordinates);
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to geocode existing destination:', dest.name, error);
+      }
+      
+      // Small delay between requests
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    if (updated) {
+      const updatedTrip = {
+        ...currentTrip,
+        destinations: updatedDestinations,
+        updatedAt: new Date().toISOString()
+      };
+      handleUpdateTrip(updatedTrip);
+    }
+  };
 
   // Load trip data and convert to new format if needed
   useEffect(() => {
@@ -71,6 +131,21 @@ export default function TripDetailPage() {
               const availableColors = PREMIUM_COLOR_PALETTE.map(color => color.id);
               const assignedColor = availableColors[index % availableColors.length];
               
+              // Add known coordinates for common destinations
+              let coordinates;
+              const lowerName = name.toLowerCase();
+              if (lowerName.includes('paris')) {
+                coordinates = { lat: 48.8566, lng: 2.3522 };
+              } else if (lowerName.includes('nice')) {
+                coordinates = { lat: 43.7102, lng: 7.2620 };
+              } else if (lowerName.includes('london')) {
+                coordinates = { lat: 51.5074, lng: -0.1278 };
+              } else if (lowerName.includes('new york')) {
+                coordinates = { lat: 40.7128, lng: -74.0060 };
+              } else if (lowerName.includes('tokyo')) {
+                coordinates = { lat: 35.6762, lng: 139.6503 };
+              }
+              
               return {
                 id: `destination-${Date.now()}-${index}`,
                 name: name,
@@ -80,7 +155,8 @@ export default function TripDetailPage() {
                 lodging: '',
                 estimatedCost: 0,
                 order: index,
-                customColor: assignedColor
+                customColor: assignedColor,
+                coordinates
               };
             });
 
@@ -124,25 +200,20 @@ export default function TripDetailPage() {
             }))
           };
           setTrip(finalTrip);
+          
+          // Geocode any destinations that don't have coordinates
+          const destinationsNeedingCoords = finalTrip.destinations.filter(dest => !dest.coordinates);
+          if (destinationsNeedingCoords.length > 0) {
+            console.log('Geocoding existing destinations without coordinates:', destinationsNeedingCoords.map(d => d.name));
+            geocodeExistingDestinations(finalTrip, destinationsNeedingCoords);
+          }
         }
       }
       setLoading(false);
     }
   }, [user, tripId]);
 
-  const handleUpdateTrip = (updatedTrip: Trip) => {
-    if (user) {
-      const savedTrips = localStorage.getItem(`voyana_trips_${user.id}`);
-      if (savedTrips) {
-        const trips = JSON.parse(savedTrips);
-        const updatedTrips = trips.map((t: Trip) => t.id === tripId ? updatedTrip : t);
-        localStorage.setItem(`voyana_trips_${user.id}`, JSON.stringify(updatedTrips));
-        setTrip(updatedTrip);
-      }
-    }
-  };
-
-  const handleAddDestination = (destination: Omit<Destination, 'id' | 'order'>) => {
+  const handleAddDestination = async (destination: Omit<Destination, 'id' | 'order'>) => {
     if (!trip) return;
 
     // Auto-assign a color from the palette to ensure consistent colors
@@ -150,11 +221,77 @@ export default function TripDetailPage() {
     const usedColors = trip.destinations.map(d => d.customColor).filter(Boolean);
     const nextColor = availableColors.find(colorId => !usedColors.includes(colorId)) || availableColors[trip.destinations.length % availableColors.length];
 
+    // Always geocode the destination for map alignment - this is critical for map centering
+    let coordinates;
+    try {
+      console.log('Geocoding destination:', destination.name);
+      const response = await fetch(`/api/places/search?query=${encodeURIComponent(destination.name)}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.results && data.results.length > 0) {
+          const place = data.results[0];
+          coordinates = {
+            lat: place.geometry.location.lat,
+            lng: place.geometry.location.lng
+          };
+          console.log('Found coordinates for', destination.name, ':', coordinates);
+        } else {
+          console.warn('No geocoding results for:', destination.name);
+        }
+      } else {
+        console.warn('Geocoding API error:', response.status);
+      }
+    } catch (error) {
+      console.error('Failed to geocode destination:', destination.name, error);
+    }
+    
+    // Post-process: if destination is a US state name, use geographic center instead of city
+    if (!coordinates || (coordinates.lat > 38 && coordinates.lat < 41 && coordinates.lng > -106 && coordinates.lng < -103)) {
+      const lowerName = destination.name.toLowerCase();
+      if (lowerName === 'colorado' || (lowerName.includes('colorado') && !lowerName.includes('springs') && !lowerName.includes('city'))) {
+        coordinates = { lat: 39.0, lng: -105.5 }; // Center of Colorado
+        console.log('Adjusted coordinates to center of Colorado state:', coordinates);
+      }
+    }
+
+    // If geocoding failed, try fallback coordinates for common places
+    if (!coordinates) {
+      const lowerName = destination.name.toLowerCase();
+      if (lowerName.includes('paris')) {
+        coordinates = { lat: 48.8566, lng: 2.3522 };
+      } else if (lowerName.includes('nice')) {
+        coordinates = { lat: 43.7102, lng: 7.2620 };
+      } else if (lowerName.includes('london')) {
+        coordinates = { lat: 51.5074, lng: -0.1278 };
+      } else if (lowerName.includes('new york')) {
+        coordinates = { lat: 40.7128, lng: -74.0060 };
+      } else if (lowerName.includes('tokyo')) {
+        coordinates = { lat: 35.6762, lng: 139.6503 };
+      } else if (lowerName.includes('colorado') && !lowerName.includes('springs')) {
+        // Center of Colorado state for better map alignment
+        coordinates = { lat: 39.0, lng: -105.5 };
+      } else if (lowerName.includes('california')) {
+        coordinates = { lat: 36.7783, lng: -119.4179 }; // Center of California
+      } else if (lowerName.includes('florida')) {
+        coordinates = { lat: 27.9944, lng: -81.7603 }; // Center of Florida
+      } else if (lowerName.includes('rome')) {
+        coordinates = { lat: 41.9028, lng: 12.4964 };
+      } else if (lowerName.includes('barcelona')) {
+        coordinates = { lat: 41.3851, lng: 2.1734 };
+      } else if (lowerName.includes('amsterdam')) {
+        coordinates = { lat: 52.3676, lng: 4.9041 };
+      }
+      if (coordinates) {
+        console.log('Used fallback coordinates for', destination.name, ':', coordinates);
+      }
+    }
+
     const newDestination: Destination = {
       ...destination,
       id: Date.now().toString(),
       order: trip.destinations.length,
-      customColor: nextColor
+      customColor: nextColor,
+      coordinates // Always include coordinates (or undefined if geocoding failed)
     };
 
     const updatedTrip = {
@@ -241,7 +378,7 @@ export default function TripDetailPage() {
   return (
     <>
       <Header />
-      <div className="h-screen flex flex-col">
+  <div className="h-screen flex flex-col overflow-hidden">
         {/* Trip Header with Edit Button */}
         <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0 mt-20">
           <div className="flex items-center justify-between">
@@ -268,7 +405,14 @@ export default function TripDetailPage() {
         <div className="flex-1 min-h-0">
           <ItineraryLayout
             trip={trip}
-            onUpdateTrip={handleUpdateTrip}
+              onUpdateTrip={handleUpdateTrip}
+              onActiveDay={(dayId) => {
+                const day = trip.days.find(d => d.id === dayId);
+                setMapSelectedDay(day || null);
+              }}
+              onDestinationMapCenterRequest={(coords: { lat: number; lng: number } | null) => {
+                setMapCenterTarget(coords);
+              }}
           />
         </div>
       </div>
@@ -299,6 +443,36 @@ export default function TripDetailPage() {
         onClose={() => setShowEditTripModal(false)}
         onUpdateTrip={handleUpdateTrip}
         trip={trip}
+      />
+
+      {/* Expandable Map Widget */}
+      <ExpandableMapWidget
+        trip={trip}
+        destinations={trip.destinations}
+        selectedDay={mapSelectedDay}
+        onDestinationClick={(destination) => {
+          console.log('Destination clicked:', destination);
+        }}
+        onActivityClick={(activity) => {
+          console.log('Activity clicked:', activity);
+        }}
+        centerOn={mapCenterTarget}
+        onCentered={() => setTimeout(() => setMapCenterTarget(null), 300)}
+        onUpdateDestination={(updated) => {
+          handleUpdateTrip({ ...trip, destinations: trip.destinations.map(d => d.id === updated.id ? updated : d), updatedAt: new Date().toISOString() });
+        }}
+        onRemoveDestination={(id) => {
+          const filtered = trip.destinations.filter(d => d.id !== id).map((d, idx) => ({ ...d, order: idx }));
+          handleUpdateTrip({ ...trip, destinations: filtered, updatedAt: new Date().toISOString() });
+        }}
+        onAddDestination={(dest) => {
+          // Delegate to existing add flow which geocodes and assigns color
+          handleAddDestination(dest);
+        }}
+        onDaysUpdate={(updatedDays) => {
+          const updatedTrip = { ...trip, days: updatedDays, updatedAt: new Date().toISOString() };
+          handleUpdateTrip(updatedTrip);
+        }}
       />
     </>
   );

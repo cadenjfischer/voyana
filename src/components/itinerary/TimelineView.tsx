@@ -163,7 +163,7 @@ export default function TimelineView({
                       }`}
                     >
                       {/* Day Header */}
-                      <button
+                      <div
                         onClick={() => onDaySelect?.(day.id)}
                         className={`w-full text-left transition-all duration-200 ${
                           onDaySelect 
@@ -390,7 +390,7 @@ export default function TimelineView({
                           </div>
                         </div>
                       </div>
-                      </button>
+                      </div>
 
                       {/* Activities */}
                       <Droppable droppableId={day.id}>

@@ -27,7 +27,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body
-          className={`${inter.variable} ${playfair.variable} antialiased`}
+          className={`${inter.variable} ${playfair.variable} antialiased scrollbar-hide`}
         >
           {children}
         </body>

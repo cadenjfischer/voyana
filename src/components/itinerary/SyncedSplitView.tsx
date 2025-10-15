@@ -10,9 +10,11 @@ import FloatingAddButton from './FloatingAddButton';
 interface SyncedSplitViewProps {
   trip: Trip;
   onUpdateTrip: (trip: Trip) => void;
+  onActiveDay?: (dayId: string) => void;
+  onDestinationMapCenterRequest?: (coords: { lat: number; lng: number } | null) => void;
 }
 
-export default function SyncedSplitView({ trip, onUpdateTrip }: SyncedSplitViewProps) {
+export default function SyncedSplitView({ trip, onUpdateTrip, onActiveDay, onDestinationMapCenterRequest }: SyncedSplitViewProps) {
   const [activeDestinationId, setActiveDestinationId] = useState<string>('');
   const [activeDay, setActiveDay] = useState<string>('');
   const [isMobile, setIsMobile] = useState(false);
@@ -37,6 +39,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip }: SyncedSplitViewP
     }
     if (trip.days.length > 0 && !activeDay) {
       setActiveDay(trip.days[0].id);
+      onActiveDay?.(trip.days[0].id);
     }
   }, [trip.destinations, trip.days, activeDestinationId, activeDay]);
 
@@ -178,17 +181,11 @@ export default function SyncedSplitView({ trip, onUpdateTrip }: SyncedSplitViewP
   const handleDestinationSelect = (destinationId: string) => {
     const destination = trip.destinations.find(d => d.id === destinationId);
     setActiveDestinationId(destinationId);
-    scrollToDestination(destinationId);
-    
-    // Announce to screen readers
-    if (destination) {
-      const announcement = document.createElement('div');
-      announcement.setAttribute('aria-live', 'polite');
-      announcement.setAttribute('aria-atomic', 'true');
-      announcement.className = 'sr-only';
-      announcement.textContent = `Selected ${destination.name}. Scrolling to timeline.`;
-      document.body.appendChild(announcement);
-      setTimeout(() => document.body.removeChild(announcement), 1000);
+    // Request the parent to center the map on this destination instead of scrolling
+    if (destination && destination.coordinates) {
+      onDestinationMapCenterRequest?.({ lat: destination.coordinates.lat, lng: destination.coordinates.lng });
+    } else {
+      onDestinationMapCenterRequest?.(null);
     }
   };
 
@@ -217,6 +214,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip }: SyncedSplitViewP
 
     if (closestDay && closestDay !== activeDay) {
       setActiveDay(closestDay);
+      onActiveDay?.(closestDay);
       
       // Find corresponding destination
       const day = trip.days.find(d => d.id === closestDay);
@@ -233,6 +231,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip }: SyncedSplitViewP
     
     // Set active day immediately for responsive UI
     setActiveDay(dayId);
+    onActiveDay?.(dayId);
     
     // Find corresponding destination and set it active
     const day = trip.days.find(d => d.id === dayId);
