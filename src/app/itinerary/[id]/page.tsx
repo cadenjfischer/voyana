@@ -84,6 +84,43 @@ export default function TripDetailPage() {
     }
   };
 
+  // Function to assign colors to destinations that don't have them
+  const assignMissingColors = (currentTrip: Trip) => {
+    const availableColors = PREMIUM_COLOR_PALETTE.map(color => color.id);
+    const usedColors = currentTrip.destinations.map(d => d.customColor).filter(Boolean) as string[];
+    let colorIndex = 0;
+    let updated = false;
+
+    const updatedDestinations = currentTrip.destinations.map(dest => {
+      if (!dest.customColor) {
+        // Find next available color
+        let nextColor = availableColors.find(colorId => !usedColors.includes(colorId));
+        if (!nextColor) {
+          // All colors used, cycle through palette
+          nextColor = availableColors[colorIndex % availableColors.length];
+          colorIndex++;
+        } else {
+          usedColors.push(nextColor);
+        }
+        updated = true;
+        console.log(`Assigning color '${nextColor}' to destination '${dest.name}'`);
+        return { ...dest, customColor: nextColor };
+      }
+      return dest;
+    });
+
+    if (updated) {
+      const updatedTrip = {
+        ...currentTrip,
+        destinations: updatedDestinations,
+        updatedAt: new Date().toISOString()
+      };
+      handleUpdateTrip(updatedTrip);
+      return updatedTrip;
+    }
+    return currentTrip;
+  };
+
   // Load trip data and convert to new format if needed
   useEffect(() => {
     if (user && tripId) {
@@ -201,11 +238,14 @@ export default function TripDetailPage() {
           };
           setTrip(finalTrip);
           
+          // Assign colors to destinations that don't have them
+          const tripWithColors = assignMissingColors(finalTrip);
+          
           // Geocode any destinations that don't have coordinates
-          const destinationsNeedingCoords = finalTrip.destinations.filter(dest => !dest.coordinates);
+          const destinationsNeedingCoords = tripWithColors.destinations.filter(dest => !dest.coordinates);
           if (destinationsNeedingCoords.length > 0) {
             console.log('Geocoding existing destinations without coordinates:', destinationsNeedingCoords.map(d => d.name));
-            geocodeExistingDestinations(finalTrip, destinationsNeedingCoords);
+            geocodeExistingDestinations(tripWithColors, destinationsNeedingCoords);
           }
         }
       }
