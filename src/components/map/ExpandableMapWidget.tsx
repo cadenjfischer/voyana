@@ -302,5 +302,3 @@ export default function ExpandableMapWidget({
   );
 }
 
-// Helper function for destination colors (matches MapboxGlobe)
-}
