@@ -190,10 +190,10 @@ export default function ExpandableMapWidget({
         coords.forEach(c => bounds.extend([c.lng, c.lat]));
         
         // Trigger fitBounds with expanded padding immediately
-        // Right padding accounts for the 1/3 width side panel + extra margin
+        // To center in the left 2/3, we need to offset right padding by panel width
         const rightPanelWidth = window.innerWidth / 3;
         sharedMapRef.current.fitBounds(bounds, {
-          padding: { top: 80, bottom: 120, left: 60, right: rightPanelWidth + 80 },
+          padding: { top: 80, bottom: 120, left: rightPanelWidth + 80, right: 80 },
           duration: 600,
           maxZoom: 22,
           easing: (t) => t * (2 - t) // easeOutQuad to match container
