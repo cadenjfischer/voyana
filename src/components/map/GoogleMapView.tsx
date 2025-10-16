@@ -140,6 +140,7 @@ export default function GoogleMapView({
         height: 32px;
         border-radius: 50%;
         background: ${color};
+        opacity: 0.85;
         color: white;
         display: flex;
         align-items: center;
@@ -149,7 +150,7 @@ export default function GoogleMapView({
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         box-shadow: 0 2px 8px rgba(0,0,0,0.25);
         cursor: pointer;
-        transition: transform 0.2s;
+        transition: transform 0.2s, opacity 0.2s;
         z-index: 2;
       `;
       circle.textContent = number;
@@ -157,9 +158,11 @@ export default function GoogleMapView({
       // Add hover effect
       circle.addEventListener('mouseenter', () => {
         circle.style.transform = 'scale(1.1)';
+        circle.style.opacity = '1';
       });
       circle.addEventListener('mouseleave', () => {
         circle.style.transform = 'scale(1)';
+        circle.style.opacity = '0.85';
       });
 
       // Create keyframes animation dynamically
