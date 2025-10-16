@@ -158,33 +158,6 @@ export default function ExpandableMapWidget({
     };
   }, [isExpanded]);
 
-  // Animate camera when expanding/collapsing - keep destinations centered
-  useEffect(() => {
-    if (!sharedMapRef.current || !isMapLoaded) return;
-    
-    if (isExpanded) {
-      // Expanding: set padding to account for right panel
-      const rightPadding = window.innerWidth / 3;
-      sharedMapRef.current.easeTo({
-        padding: { 
-          top: 80, 
-          bottom: 120, 
-          left: 20, 
-          right: rightPadding 
-        },
-        duration: 600,
-        easing: (t) => t * (2 - t) // easeOutQuad
-      });
-    } else {
-      // Collapsing: explicitly reset padding to zero
-      sharedMapRef.current.easeTo({
-        padding: { top: 0, bottom: 0, left: 0, right: 0 },
-        duration: 600,
-        easing: (t) => t * (2 - t) // easeOutQuad
-      });
-    }
-  }, [isExpanded, isMapLoaded]);
-
   // Auto-fit when destinations change (new destination added) or when expanding
   useEffect(() => {
     if (destinations.length > 0 && isMapLoaded) {
@@ -329,7 +302,7 @@ export default function ExpandableMapWidget({
               }
             }}
             disableAutoFit={!shouldResetView}
-            animateFitBounds={shouldResetView}
+            animateFitBounds={true}
             forceRefreshKey={shouldResetView ? Date.now() : undefined}
           />
         </div>
