@@ -178,11 +178,15 @@ export default function ExpandableMapWidget({
   const openFromMiniMap = () => {
     // When not expanded, the map container is at mini position already
     if (!isExpanded && isMapLoaded && sharedMapRef.current) {
+      // Capture current viewport
+      const currentCenter = sharedMapRef.current.getCenter();
+      const currentZoom = sharedMapRef.current.getZoom();
+      
       setIsMounted(true);
       requestAnimationFrame(() => {
         setIsExpanded(true);
         
-        // Set padding AFTER the expansion animation starts
+        // Set padding and zoom in AFTER the expansion animation starts
         setTimeout(() => {
           if (sharedMapRef.current) {
             // Set padding to account for right panel (1/3 of screen)
@@ -192,6 +196,14 @@ export default function ExpandableMapWidget({
               bottom: 120, 
               left: 20, 
               right: rightPadding 
+            });
+            
+            // Zoom in slightly for better view
+            sharedMapRef.current.easeTo({
+              center: [currentCenter.lng, currentCenter.lat],
+              zoom: currentZoom + 1,
+              duration: 400,
+              easing: (t) => t * (2 - t) // easeOutQuad for smooth deceleration
             });
           }
         }, 100);
@@ -211,9 +223,21 @@ export default function ExpandableMapWidget({
   const handleCloseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    // Remove padding
+    // Zoom out and remove padding
     if (sharedMapRef.current) {
+      const currentCenter = sharedMapRef.current.getCenter();
+      const currentZoom = sharedMapRef.current.getZoom();
+      
+      // Remove padding first
       sharedMapRef.current.setPadding({ top: 0, bottom: 0, left: 0, right: 0 });
+      
+      // Zoom out smoothly
+      sharedMapRef.current.easeTo({
+        center: [currentCenter.lng, currentCenter.lat],
+        zoom: currentZoom - 1,
+        duration: 400,
+        easing: (t) => t * (2 - t) // easeOutQuad for smooth deceleration
+      });
     }
     
     setIsExpanded(false);
