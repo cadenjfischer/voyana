@@ -21,9 +21,10 @@ interface SimpleMapProps {
   initialCenter?: [number, number]; // Override initial center
   animateFitBounds?: boolean; // Whether to animate fitBounds (default true)
   onMapReady?: (map: mapboxgl.Map) => void; // Callback when map is ready
+  maxZoom?: number; // Max zoom level for fitBounds (default 12)
 }
 
-export default function SimpleMap({ destinations = [], className = "", onDestinationClick, focusedDestination = null, forceRefreshKey, centerOn, onCentered, fitBoundsPadding = 120, disableAutoFit = false, initialZoom, initialCenter, animateFitBounds = true, onMapReady }: SimpleMapProps) {
+export default function SimpleMap({ destinations = [], className = "", onDestinationClick, focusedDestination = null, forceRefreshKey, centerOn, onCentered, fitBoundsPadding = 120, disableAutoFit = false, initialZoom, initialCenter, animateFitBounds = true, onMapReady, maxZoom = 12 }: SimpleMapProps) {
   // When parent requests center on coordinates, fly to them
   useEffect(() => {
     if (!map.current) return;
@@ -386,7 +387,7 @@ export default function SimpleMap({ destinations = [], className = "", onDestina
       map.current.fitBounds(bounds, {
         padding,
         duration: animateFitBounds ? 800 : 0,
-        maxZoom: 12, // Prevent over-zooming when destinations are very close
+        maxZoom: maxZoom, // Use configurable maxZoom
         linear: false
       });
       

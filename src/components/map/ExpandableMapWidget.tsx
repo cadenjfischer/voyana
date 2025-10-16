@@ -304,6 +304,7 @@ export default function ExpandableMapWidget({
             centerOn={centerOn}
             onCentered={onCentered}
             fitBoundsPadding={isExpanded ? { top: 80, bottom: 100, left: 10, right: 10 } : { top: 50, bottom: 40, left: 40, right: 40 }}
+            maxZoom={isExpanded ? 14 : 10}
             onMapReady={(map) => { 
               sharedMapRef.current = map;
               // Check if map is already loaded, or wait for it to load
