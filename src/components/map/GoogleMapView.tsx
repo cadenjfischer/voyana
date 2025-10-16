@@ -95,65 +95,93 @@ export default function GoogleMapView({
 
       // Create custom HTML marker element
       const markerDiv = document.createElement('div');
-      markerDiv.style.position = 'relative';
-      markerDiv.style.width = '40px';
-      markerDiv.style.height = '40px';
-      
-      // Pulse animation rings
-      markerDiv.innerHTML = `
-        <style>
-          @keyframes pulse {
-            0% {
-              transform: scale(1);
-              opacity: 0.6;
-            }
-            100% {
-              transform: scale(2);
-              opacity: 0;
-            }
-          }
-          .pulse-ring {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: ${color};
-            transform: translate(-50%, -50%);
-            animation: pulse 2s ease-out infinite;
-          }
-          .pulse-ring:nth-child(2) {
-            animation-delay: 0.5s;
-          }
-          .marker-circle {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: ${color};
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: 700;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-            transform: translate(-50%, -50%);
-            cursor: pointer;
-            transition: transform 0.2s;
-          }
-          .marker-circle:hover {
-            transform: translate(-50%, -50%) scale(1.1);
-          }
-        </style>
-        <div class="pulse-ring"></div>
-        <div class="pulse-ring"></div>
-        <div class="marker-circle">${number}</div>
+      markerDiv.style.cssText = `
+        position: relative;
+        width: 40px;
+        height: 40px;
       `;
+
+      // Create pulse rings
+      const pulseRing1 = document.createElement('div');
+      pulseRing1.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: ${color};
+        opacity: 0.6;
+        animation: pulse-${index} 2s ease-out infinite;
+        pointer-events: none;
+      `;
+
+      const pulseRing2 = document.createElement('div');
+      pulseRing2.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: ${color};
+        opacity: 0.6;
+        animation: pulse-${index} 2s ease-out infinite 0.5s;
+        pointer-events: none;
+      `;
+
+      // Create main circle
+      const circle = document.createElement('div');
+      circle.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: ${color};
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 700;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        cursor: pointer;
+        transition: transform 0.2s;
+        z-index: 2;
+      `;
+      circle.textContent = number;
+
+      // Add hover effect
+      circle.addEventListener('mouseenter', () => {
+        circle.style.transform = 'scale(1.1)';
+      });
+      circle.addEventListener('mouseleave', () => {
+        circle.style.transform = 'scale(1)';
+      });
+
+      // Create keyframes animation dynamically
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes pulse-${index} {
+          0% {
+            transform: scale(1);
+            opacity: 0.6;
+          }
+          100% {
+            transform: scale(2.5);
+            opacity: 0;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+
+      // Assemble marker
+      markerDiv.appendChild(pulseRing1);
+      markerDiv.appendChild(pulseRing2);
+      markerDiv.appendChild(circle);
 
       // Use OverlayView to add custom HTML to the map
       class CustomMarker extends google.maps.OverlayView {
@@ -181,8 +209,9 @@ export default function GoogleMapView({
           const point = projection.fromLatLngToDivPixel(this.position);
           
           if (point) {
-            this.containerDiv.style.left = point.x + 'px';
-            this.containerDiv.style.top = point.y + 'px';
+            // Center the marker on the point
+            this.containerDiv.style.left = (point.x - 20) + 'px';
+            this.containerDiv.style.top = (point.y - 20) + 'px';
           }
         }
 
