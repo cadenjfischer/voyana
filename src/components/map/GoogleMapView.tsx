@@ -97,8 +97,8 @@ export default function GoogleMapView({
       const markerDiv = document.createElement('div');
       markerDiv.style.cssText = `
         position: relative;
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
       `;
 
       // Create pulse rings
@@ -107,11 +107,11 @@ export default function GoogleMapView({
         position: absolute;
         top: 0;
         left: 0;
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         background: ${color};
-        opacity: 0.6;
+        opacity: 0.5;
         animation: pulse-${index} 2s ease-out infinite;
         pointer-events: none;
       `;
@@ -121,12 +121,12 @@ export default function GoogleMapView({
         position: absolute;
         top: 0;
         left: 0;
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         background: ${color};
-        opacity: 0.6;
-        animation: pulse-${index} 2s ease-out infinite 0.5s;
+        opacity: 0.5;
+        animation: pulse-${index} 2s ease-out infinite 1s;
         pointer-events: none;
       `;
 
@@ -136,15 +136,15 @@ export default function GoogleMapView({
         position: absolute;
         top: 0;
         left: 0;
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         background: ${color};
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 700;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         box-shadow: 0 2px 8px rgba(0,0,0,0.25);
@@ -168,10 +168,10 @@ export default function GoogleMapView({
         @keyframes pulse-${index} {
           0% {
             transform: scale(1);
-            opacity: 0.6;
+            opacity: 0.5;
           }
           100% {
-            transform: scale(2.5);
+            transform: scale(1.4);
             opacity: 0;
           }
         }
@@ -209,9 +209,9 @@ export default function GoogleMapView({
           const point = projection.fromLatLngToDivPixel(this.position);
           
           if (point) {
-            // Center the marker on the point
-            this.containerDiv.style.left = (point.x - 20) + 'px';
-            this.containerDiv.style.top = (point.y - 20) + 'px';
+            // Center the marker on the point (32px / 2 = 16px offset)
+            this.containerDiv.style.left = (point.x - 16) + 'px';
+            this.containerDiv.style.top = (point.y - 16) + 'px';
           }
         }
 
