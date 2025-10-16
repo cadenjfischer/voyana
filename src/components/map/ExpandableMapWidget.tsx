@@ -181,6 +181,22 @@ export default function ExpandableMapWidget({
       setIsMounted(true);
       requestAnimationFrame(() => {
         setIsExpanded(true);
+        
+        // Set padding and trigger reset to realign with new dimensions
+        setTimeout(() => {
+          if (sharedMapRef.current) {
+            // Set padding to account for right panel (1/3 of screen)
+            const rightPadding = window.innerWidth / 3;
+            sharedMapRef.current.setPadding({ 
+              top: 80, 
+              bottom: 120, 
+              left: 20, 
+              right: rightPadding 
+            });
+          }
+          // Trigger reset to fit bounds with new padding
+          setShouldResetView(true);
+        }, 400);
       });
     }
   };
@@ -196,6 +212,12 @@ export default function ExpandableMapWidget({
 
   const handleCloseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // Remove padding and trigger reset to realign
+    if (sharedMapRef.current) {
+      sharedMapRef.current.setPadding({ top: 0, bottom: 0, left: 0, right: 0 });
+    }
+    setShouldResetView(true);
     
     setIsExpanded(false);
     
