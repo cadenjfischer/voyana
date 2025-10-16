@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Destination, Trip, calculateNights } from '@/types/itinerary';
 import { getDestinationColors, PREMIUM_COLOR_PALETTE } from '@/utils/colors';
@@ -30,6 +30,25 @@ export default function TabbedDestinationRail({
 }: TabbedDestinationRailProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
+  
+  // Auto-fill nights if only one destination
+  useEffect(() => {
+    if (destinations.length === 1 && trip.startDate && trip.endDate) {
+      const maxNights = calculateNights(trip.startDate, trip.endDate);
+      const destination = destinations[0];
+      
+      // Only update if nights don't match the full trip
+      if (destination.nights !== maxNights) {
+        const updatedDestination = {
+          ...destination,
+          nights: maxNights,
+          startDate: trip.startDate,
+          endDate: trip.endDate
+        };
+        onUpdateDestination(updatedDestination);
+      }
+    }
+  }, [destinations.length, trip.startDate, trip.endDate, destinations, onUpdateDestination]);
   
   // Handle drag end for destination reordering
   const handleDragEnd = useCallback((result: DropResult) => {
@@ -110,6 +129,9 @@ export default function TabbedDestinationRail({
   // Handle night count changes with validation
   const updateNights = useCallback((destination: Destination, change: number) => {
     if (isUpdating) return; // Prevent rapid clicking
+    
+    // Disable night changes when there's only one destination
+    if (destinations.length === 1) return;
     
     const newNights = Math.max(0, destination.nights + change);
     if (newNights === destination.nights) return; // No change needed
@@ -305,7 +327,8 @@ export default function TabbedDestinationRail({
                                     updateNights(destination, -1);
                                   }}
                                   className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all duration-200"
-                                  disabled={destination.nights <= 0 || isUpdating}
+                                  disabled={destination.nights <= 0 || isUpdating || destinations.length === 1}
+                                  title={destinations.length === 1 ? 'Add a second destination to adjust nights' : undefined}
                                 >
                                   −
                                 </button>
@@ -318,8 +341,8 @@ export default function TabbedDestinationRail({
                                     updateNights(destination, 1);
                                   }}
                                   className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-50 hover:border-green-300 hover:text-green-600 transition-all duration-200"
-                                  disabled={isUpdating || getRemainingNights() <= 0}
-                                  title={getRemainingNights() <= 0 ? 'No more nights available for this trip' : 'Add one night'}
+                                  disabled={isUpdating || getRemainingNights() <= 0 || destinations.length === 1}
+                                  title={destinations.length === 1 ? 'Add a second destination to adjust nights' : getRemainingNights() <= 0 ? 'No more nights available for this trip' : 'Add one night'}
                                 >
                                   +
                                 </button>
