@@ -158,12 +158,12 @@ export default function ExpandableMapWidget({
     };
   }, [isExpanded]);
 
-  // Auto-fit when destinations change (new destination added) or when expanding
+  // Auto-fit when destinations change (new destination added)
   useEffect(() => {
     if (destinations.length > 0 && isMapLoaded) {
       setShouldResetView(true);
     }
-  }, [destinations.length, isExpanded, isMapLoaded]); // Trigger on expand too
+  }, [destinations.length, isMapLoaded]); // Only trigger on destination count change
 
   // Reset the shouldResetView flag after map has updated
   useEffect(() => {
@@ -179,6 +179,8 @@ export default function ExpandableMapWidget({
     // When not expanded, the map container is at mini position already
     if (!isExpanded && isMapLoaded && sharedMapRef.current) {
       setIsMounted(true);
+      // Trigger fitBounds immediately when expanding
+      setShouldResetView(true);
       requestAnimationFrame(() => {
         setIsExpanded(true);
       });
@@ -197,6 +199,8 @@ export default function ExpandableMapWidget({
   const handleCloseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     
+    // Trigger fitBounds immediately when collapsing
+    setShouldResetView(true);
     setIsExpanded(false);
     
     // Wait for animation to complete before unmounting
