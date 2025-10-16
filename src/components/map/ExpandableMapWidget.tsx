@@ -232,7 +232,7 @@ export default function ExpandableMapWidget({
           borderTopLeftRadius: '16px',
           borderTopRightRadius: '16px',
           zIndex: 50,
-          transition: isMounted ? 'all 360ms cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none',
+          transition: isMounted ? 'all 600ms cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none',
           willChange: isMounted ? 'top, left, width' : 'auto',
           pointerEvents: isExpanded ? 'none' : 'auto',
           opacity: isExpanded ? 0 : 1,
@@ -271,7 +271,7 @@ export default function ExpandableMapWidget({
           borderTopRightRadius: isExpanded ? '0px' : '0px',
           borderBottomLeftRadius: isExpanded ? '0px' : '16px',
           borderBottomRightRadius: isExpanded ? '0px' : '16px',
-          transition: isMounted ? 'all 360ms cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none',
+          transition: isMounted ? 'all 600ms cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none',
           zIndex: 50,
           willChange: isMounted ? 'top, left, width, height, border-radius' : 'auto',
         }}
