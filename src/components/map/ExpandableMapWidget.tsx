@@ -38,6 +38,7 @@ export default function ExpandableMapWidget({
 }: ExpandableMapWidgetProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [focusedDestinationId, setFocusedDestinationId] = useState<string | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
   const destinationRefs = useRef<{ [key: string]: HTMLDivElement }>({});
   const googleMapRef = useRef<google.maps.Map | null>(null);
   
@@ -107,7 +108,7 @@ export default function ExpandableMapWidget({
     } else {
       setFocusedDestinationId(null);
     }
-  }, [destinations]);
+  }, [destinations, isMapReady]);
 
   // Fit bounds when destinations change (NOT on expand/collapse to avoid visible zoom)
   useEffect(() => {
@@ -127,7 +128,7 @@ export default function ExpandableMapWidget({
       : { top: 60, bottom: 60, left: 60, right: 60 };
 
     googleMapRef.current.fitBounds(bounds, padding);
-  }, [destinations]); // Removed isExpanded to prevent visible camera movement
+  }, [destinations, isMapReady]); // Removed isExpanded to prevent visible camera movement
 
   const adjustCameraSilently = (willBeExpanded: boolean) => {
     if (!googleMapRef.current || destinations.length === 0) return;
@@ -251,6 +252,7 @@ export default function ExpandableMapWidget({
             className="w-full h-full"
             onMapReady={(map) => {
               googleMapRef.current = map;
+              setIsMapReady(true);
             }}
           />
         </div>
