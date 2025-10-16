@@ -164,32 +164,26 @@ export default function ExpandableMapWidget({
     
     if (isExpanded) {
       // Expanding: set padding to account for right panel
-      setTimeout(() => {
-        if (sharedMapRef.current) {
-          const rightPadding = window.innerWidth / 3;
-          sharedMapRef.current.easeTo({
-            padding: { 
-              top: 80, 
-              bottom: 120, 
-              left: 20, 
-              right: rightPadding 
-            },
-            duration: 600,
-            easing: (t) => t * (2 - t) // easeOutQuad
-          });
-        }
-      }, 100);
-    } else if (isMounted) {
-      // Collapsing: remove padding
-      if (sharedMapRef.current) {
-        sharedMapRef.current.easeTo({
-          padding: { top: 0, bottom: 0, left: 0, right: 0 },
-          duration: 600,
-          easing: (t) => t * (2 - t) // easeOutQuad
-        });
-      }
+      const rightPadding = window.innerWidth / 3;
+      sharedMapRef.current.easeTo({
+        padding: { 
+          top: 80, 
+          bottom: 120, 
+          left: 20, 
+          right: rightPadding 
+        },
+        duration: 600,
+        easing: (t) => t * (2 - t) // easeOutQuad
+      });
+    } else {
+      // Collapsing: explicitly reset padding to zero
+      sharedMapRef.current.easeTo({
+        padding: { top: 0, bottom: 0, left: 0, right: 0 },
+        duration: 600,
+        easing: (t) => t * (2 - t) // easeOutQuad
+      });
     }
-  }, [isExpanded, isMounted, isMapLoaded]);
+  }, [isExpanded, isMapLoaded]);
 
   // Auto-fit when destinations change (new destination added)
   useEffect(() => {
