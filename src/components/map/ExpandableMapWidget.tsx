@@ -46,8 +46,8 @@ export default function ExpandableMapWidget({
   const destinationRefs = useRef<{ [key: string]: HTMLDivElement }>({});
   // Use a single shared map instance
   const sharedMapRef = useRef<mapboxgl.Map | null>(null);
-  const [capturedViewport, setCapturedViewport] = useState<{ center: [number, number]; zoom: number } | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [shouldResetView, setShouldResetView] = useState(false);
   // Calendar responsiveness: scale down to a min scale and enable scrolling when there's no room
   const calendarContainerRef = useRef<HTMLDivElement | null>(null);
   const calendarInnerRef = useRef<HTMLDivElement | null>(null);
@@ -109,22 +109,6 @@ export default function ExpandableMapWidget({
   }, [isMounted, isExpanded, calendarScale]);  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Toggle map with 'M' key
-      if (event.key === 'm' || event.key === 'M') {
-        if (!event.ctrlKey && !event.metaKey && !event.altKey) {
-          const target = event.target as HTMLElement;
-          // Don't trigger if user is typing in an input or textarea
-          if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && !target.isContentEditable) {
-            event.preventDefault();
-            if (!isMounted) {
-              openFromMiniMap();
-            } else {
-              handleCloseClick(event as any);
-            }
-          }
-        }
-      }
-
       // Close map with Escape
       if (event.key === 'Escape' && isMounted) {
         event.preventDefault();
@@ -174,18 +158,31 @@ export default function ExpandableMapWidget({
     };
   }, [isExpanded]);
 
+  // Auto-fit when destinations change (new destination added)
+  useEffect(() => {
+    if (destinations.length > 0) {
+      setShouldResetView(true);
+    }
+  }, [destinations.length]); // Only trigger when count changes
+
+  // Reset the shouldResetView flag after map has updated
+  useEffect(() => {
+    if (shouldResetView && isMapLoaded) {
+      const timer = setTimeout(() => {
+        setShouldResetView(false);
+      }, 1000); // Give map time to animate to new bounds
+      return () => clearTimeout(timer);
+    }
+  }, [shouldResetView, isMapLoaded]);
+
   const openFromMiniMap = () => {
     // When not expanded, the map container is at mini position already
     if (!isExpanded && isMapLoaded && sharedMapRef.current) {
-      // Capture viewport first
-      const center = sharedMapRef.current.getCenter();
-      const zoom = sharedMapRef.current.getZoom();
-      
       setIsMounted(true);
       requestAnimationFrame(() => {
         setIsExpanded(true);
         
-        // Set padding and zoom AFTER the expansion animation starts
+        // Set padding AFTER the expansion animation starts
         setTimeout(() => {
           if (sharedMapRef.current) {
             // Set padding to account for right panel (1/3 of screen)
@@ -196,16 +193,6 @@ export default function ExpandableMapWidget({
               left: 20, 
               right: rightPadding 
             });
-            
-            // Zoom in while maintaining center
-            sharedMapRef.current.flyTo({
-              center: [center.lng, center.lat],
-              zoom: zoom + 2,
-              duration: 300,
-              essential: true
-            });
-            
-            setCapturedViewport({ center: [center.lng, center.lat], zoom: zoom + 2 });
           }
         }, 100);
       });
@@ -216,27 +203,17 @@ export default function ExpandableMapWidget({
     openFromMiniMap();
   };
 
+  const handleResetPosition = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShouldResetView(true);
+  };
+
   const handleCloseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    // Remove padding and zoom out
+    // Remove padding
     if (sharedMapRef.current) {
-      const center = sharedMapRef.current.getCenter();
-      const zoom = sharedMapRef.current.getZoom();
-      const newZoom = zoom - 2;
-      
-      // Remove padding first
       sharedMapRef.current.setPadding({ top: 0, bottom: 0, left: 0, right: 0 });
-      
-      // Then zoom out
-      sharedMapRef.current.flyTo({
-        center: [center.lng, center.lat],
-        zoom: newZoom,
-        duration: 300,
-        essential: true
-      });
-      
-      setCapturedViewport({ center: [center.lng, center.lat], zoom: newZoom });
     }
     
     setIsExpanded(false);
@@ -264,7 +241,7 @@ export default function ExpandableMapWidget({
 
       {/* Mini Map Header - positioned above the map container and animates with it */}
       <div 
-        className="fixed bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg cursor-pointer"
+        className="fixed bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
         style={{
           top: isExpanded ? '-48px' : `calc(100vh - ${miniMapHeight + 54}px)`,
           left: isExpanded ? 0 : '24px',
@@ -278,16 +255,23 @@ export default function ExpandableMapWidget({
           pointerEvents: isExpanded ? 'none' : 'auto',
           opacity: isExpanded ? 0 : 1,
         }}
-        onClick={handleMapClick}
       >
         <div className="flex items-center justify-between h-full px-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={handleMapClick}>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
             </svg>
             <span className="font-semibold text-sm">Trip Map</span>
           </div>
-          <div className="text-xs opacity-90">Press M to expand</div>
+          <button
+            onClick={handleResetPosition}
+            className="flex items-center gap-1.5 text-xs bg-white/20 hover:bg-white/30 px-2.5 py-1 rounded-md transition-colors duration-200"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+            <span>Reset</span>
+          </button>
         </div>
       </div>
 
@@ -319,7 +303,7 @@ export default function ExpandableMapWidget({
             className="w-full h-full"
             centerOn={centerOn}
             onCentered={onCentered}
-            fitBoundsPadding={isExpanded ? { top: 80, bottom: 100, left: 10, right: 10 } : { top: 10, bottom: 10, left: 10, right: 10 }}
+            fitBoundsPadding={isExpanded ? { top: 80, bottom: 100, left: 10, right: 10 } : { top: 50, bottom: 40, left: 40, right: 40 }}
             onMapReady={(map) => { 
               sharedMapRef.current = map;
               // Check if map is already loaded, or wait for it to load
@@ -331,8 +315,9 @@ export default function ExpandableMapWidget({
                 });
               }
             }}
-            disableAutoFit={!!capturedViewport}
-            animateFitBounds={false}
+            disableAutoFit={!shouldResetView}
+            animateFitBounds={shouldResetView}
+            forceRefreshKey={shouldResetView ? Date.now() : undefined}
           />
         </div>
 
