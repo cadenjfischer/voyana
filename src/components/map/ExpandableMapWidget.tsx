@@ -181,8 +181,6 @@ export default function ExpandableMapWidget({
       setIsMounted(true);
       requestAnimationFrame(() => {
         setIsExpanded(true);
-        // Trigger a reset to apply the higher maxZoom
-        setShouldResetView(true);
         
         // Set padding AFTER the expansion animation starts
         setTimeout(() => {
@@ -305,8 +303,11 @@ export default function ExpandableMapWidget({
             className="w-full h-full"
             centerOn={centerOn}
             onCentered={onCentered}
-            fitBoundsPadding={isExpanded ? { top: 80, bottom: 100, left: 10, right: 10 } : { top: 50, bottom: 40, left: 40, right: 40 }}
-            maxZoom={isExpanded ? 14 : 10}
+            fitBoundsPadding={isExpanded 
+              ? { top: 100, bottom: 140, left: 60, right: window.innerWidth / 3 + 60 } 
+              : { top: 50, bottom: 40, left: 40, right: 40 }
+            }
+            maxZoom={isExpanded ? 8 : 6}
             onMapReady={(map) => { 
               sharedMapRef.current = map;
               // Check if map is already loaded, or wait for it to load
