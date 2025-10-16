@@ -320,33 +320,38 @@ export default function TabbedDestinationRail({
                                 </svg>
                                 NIGHTS
                               </div>
-                              <div className="flex items-center gap-1">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    updateNights(destination, -1);
-                                  }}
-                                  className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all duration-200"
-                                  disabled={destination.nights <= 0 || isUpdating || destinations.length === 1}
-                                  title={destinations.length === 1 ? 'Add a second destination to adjust nights' : undefined}
-                                >
-                                  −
-                                </button>
+                              {destinations.length > 1 ? (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateNights(destination, -1);
+                                    }}
+                                    className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all duration-200"
+                                    disabled={destination.nights <= 0 || isUpdating}
+                                  >
+                                    −
+                                  </button>
+                                  <span className="min-w-[24px] text-center font-medium text-gray-900">
+                                    {destination.nights}
+                                  </span>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateNights(destination, 1);
+                                    }}
+                                    className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-50 hover:border-green-300 hover:text-green-600 transition-all duration-200"
+                                    disabled={isUpdating || getRemainingNights() <= 0}
+                                    title={getRemainingNights() <= 0 ? 'No more nights available for this trip' : 'Add one night'}
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              ) : (
                                 <span className="min-w-[24px] text-center font-medium text-gray-900">
                                   {destination.nights}
                                 </span>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    updateNights(destination, 1);
-                                  }}
-                                  className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-50 hover:border-green-300 hover:text-green-600 transition-all duration-200"
-                                  disabled={isUpdating || getRemainingNights() <= 0 || destinations.length === 1}
-                                  title={destinations.length === 1 ? 'Add a second destination to adjust nights' : getRemainingNights() <= 0 ? 'No more nights available for this trip' : 'Add one night'}
-                                >
-                                  +
-                                </button>
-                              </div>
+                              )}
                             </div>
 
                             {/* Delete button */}
