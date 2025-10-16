@@ -163,26 +163,24 @@ export default function ExpandableMapWidget({
     if (!sharedMapRef.current || !isMapLoaded) return;
     
     if (isExpanded) {
-      // Expanding: zoom out slightly and add pitch for pull-back effect
+      // Expanding: zoom out slightly for pull-back effect
       const currentCenter = sharedMapRef.current.getCenter();
       const currentZoom = sharedMapRef.current.getZoom();
       
       sharedMapRef.current.easeTo({
         center: currentCenter,
         zoom: currentZoom - 0.5, // Slight zoom out
-        pitch: 20, // Add subtle pitch for depth
         duration: 600,
         easing: (t) => t * (2 - t) // easeOutQuad
       });
     } else if (isMounted) {
-      // Collapsing: zoom back in and flatten
+      // Collapsing: zoom back in
       const currentCenter = sharedMapRef.current.getCenter();
       const currentZoom = sharedMapRef.current.getZoom();
       
       sharedMapRef.current.easeTo({
         center: currentCenter,
         zoom: currentZoom + 0.5, // Zoom back in
-        pitch: 0, // Flatten
         duration: 600,
         easing: (t) => t * (2 - t) // easeOutQuad
       });
