@@ -181,20 +181,6 @@ export default function ExpandableMapWidget({
       setIsMounted(true);
       requestAnimationFrame(() => {
         setIsExpanded(true);
-        
-        // Set padding AFTER the expansion animation starts
-        setTimeout(() => {
-          if (sharedMapRef.current) {
-            // Set padding to account for right panel (1/3 of screen)
-            const rightPadding = window.innerWidth / 3;
-            sharedMapRef.current.setPadding({ 
-              top: 80, 
-              bottom: 120, 
-              left: 20, 
-              right: rightPadding 
-            });
-          }
-        }, 100);
       });
     }
   };
@@ -213,11 +199,8 @@ export default function ExpandableMapWidget({
     
     setIsExpanded(false);
     
-    // Remove padding AFTER the container animation completes
+    // Wait for animation to complete before unmounting
     setTimeout(() => {
-      if (sharedMapRef.current) {
-        sharedMapRef.current.setPadding({ top: 0, bottom: 0, left: 0, right: 0 });
-      }
       setIsMounted(false);
     }, 400);
   };
