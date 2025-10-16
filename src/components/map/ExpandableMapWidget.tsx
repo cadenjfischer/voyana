@@ -133,14 +133,27 @@ export default function ExpandableMapWidget({
   useEffect(() => {
     if (!sharedMapRef.current) return;
     
-    // Only resize AFTER the transition completes
-    const timeout = setTimeout(() => {
+    // Trigger resize immediately when state changes
+    sharedMapRef.current.resize();
+    
+    // Continue resizing during the transition to keep up with container size changes
+    const resizeInterval = setInterval(() => {
       if (sharedMapRef.current) {
         sharedMapRef.current.resize();
       }
-    }, 400); // Wait for 360ms animation + buffer
+    }, 16); // Resize every frame (~60fps) during transition
+    
+    // Clear interval after transition completes
+    const timeout = setTimeout(() => {
+      clearInterval(resizeInterval);
+      // Final resize to ensure it's perfect
+      if (sharedMapRef.current) {
+        sharedMapRef.current.resize();
+      }
+    }, 400);
     
     return () => {
+      clearInterval(resizeInterval);
       clearTimeout(timeout);
     };
   }, [isExpanded]);
@@ -168,20 +181,6 @@ export default function ExpandableMapWidget({
       setIsMounted(true);
       requestAnimationFrame(() => {
         setIsExpanded(true);
-        
-        // Set padding AFTER the expansion animation completes
-        setTimeout(() => {
-          if (sharedMapRef.current) {
-            // Set padding to account for right panel (1/3 of screen)
-            const rightPadding = window.innerWidth / 3;
-            sharedMapRef.current.setPadding({ 
-              top: 80, 
-              bottom: 120, 
-              left: 20, 
-              right: rightPadding 
-            });
-          }
-        }, 400);
       });
     }
   };
@@ -197,11 +196,6 @@ export default function ExpandableMapWidget({
 
   const handleCloseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    // Remove padding immediately when closing
-    if (sharedMapRef.current) {
-      sharedMapRef.current.setPadding({ top: 0, bottom: 0, left: 0, right: 0 });
-    }
     
     setIsExpanded(false);
     
