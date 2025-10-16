@@ -109,7 +109,7 @@ export default function ExpandableMapWidget({
     }
   }, [destinations]);
 
-  // Fit bounds when destinations change or expand state changes
+  // Fit bounds when destinations change (NOT on expand/collapse to avoid visible zoom)
   useEffect(() => {
     if (!googleMapRef.current || destinations.length === 0) return;
 
@@ -127,19 +127,50 @@ export default function ExpandableMapWidget({
       : { top: 60, bottom: 60, left: 60, right: 60 };
 
     googleMapRef.current.fitBounds(bounds, padding);
-  }, [destinations, isExpanded]);
+  }, [destinations]); // Removed isExpanded to prevent visible camera movement
+
+  const adjustCameraSilently = (willBeExpanded: boolean) => {
+    if (!googleMapRef.current || destinations.length === 0) return;
+
+    // Calculate bounds from destinations
+    const coords = destinations
+      .filter(d => d.coordinates)
+      .map(d => ({ lat: d.coordinates!.lat, lng: d.coordinates!.lng }));
+
+    if (coords.length === 0) return;
+
+    const bounds = new google.maps.LatLngBounds();
+    coords.forEach(coord => bounds.extend(coord));
+
+    // Calculate padding for the target state
+    const padding = willBeExpanded
+      ? { top: 80, bottom: 120, left: 80, right: (window.innerWidth / 3) + 120 }
+      : { top: 60, bottom: 60, left: 60, right: 60 };
+
+    // Wait for React to update the DOM and container size
+    setTimeout(() => {
+      if (!googleMapRef.current) return;
+      
+      // Tell Google Maps the container size changed
+      google.maps.event.trigger(googleMapRef.current, 'resize');
+      
+      // Apply bounds instantly (no animation)
+      googleMapRef.current.fitBounds(bounds, padding);
+    }, 50);
+  };
 
   const handleMapClick = () => {
     if (!isExpanded) {
       setIsExpanded(true);
+      adjustCameraSilently(true);
     }
   };
 
   const handleCloseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsExpanded(false);
+    adjustCameraSilently(false);
   };
-
   return (
     <>
       {/* Backdrop */}
