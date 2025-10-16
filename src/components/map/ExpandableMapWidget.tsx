@@ -158,32 +158,36 @@ export default function ExpandableMapWidget({
     };
   }, [isExpanded]);
 
-  // Animate camera when expanding/collapsing - Apple Maps style
+  // Animate camera when expanding/collapsing - keep destinations centered
   useEffect(() => {
     if (!sharedMapRef.current || !isMapLoaded) return;
     
     if (isExpanded) {
-      // Expanding: zoom out slightly for pull-back effect
-      const currentCenter = sharedMapRef.current.getCenter();
-      const currentZoom = sharedMapRef.current.getZoom();
-      
-      sharedMapRef.current.easeTo({
-        center: currentCenter,
-        zoom: currentZoom - 0.5, // Slight zoom out
-        duration: 600,
-        easing: (t) => t * (2 - t) // easeOutQuad
-      });
+      // Expanding: set padding to account for right panel
+      setTimeout(() => {
+        if (sharedMapRef.current) {
+          const rightPadding = window.innerWidth / 3;
+          sharedMapRef.current.easeTo({
+            padding: { 
+              top: 80, 
+              bottom: 120, 
+              left: 20, 
+              right: rightPadding 
+            },
+            duration: 600,
+            easing: (t) => t * (2 - t) // easeOutQuad
+          });
+        }
+      }, 100);
     } else if (isMounted) {
-      // Collapsing: zoom back in
-      const currentCenter = sharedMapRef.current.getCenter();
-      const currentZoom = sharedMapRef.current.getZoom();
-      
-      sharedMapRef.current.easeTo({
-        center: currentCenter,
-        zoom: currentZoom + 0.5, // Zoom back in
-        duration: 600,
-        easing: (t) => t * (2 - t) // easeOutQuad
-      });
+      // Collapsing: remove padding
+      if (sharedMapRef.current) {
+        sharedMapRef.current.easeTo({
+          padding: { top: 0, bottom: 0, left: 0, right: 0 },
+          duration: 600,
+          easing: (t) => t * (2 - t) // easeOutQuad
+        });
+      }
     }
   }, [isExpanded, isMounted, isMapLoaded]);
 
