@@ -92,32 +92,52 @@ export default function GoogleMapView({
 
       const color = resolveColorHex(dest.customColor, '#3b82f6');
 
-      // Create marker
-      const marker = new google.maps.Marker({
-        position,
-        map: googleMapRef.current!,
-        title: dest.name,
-        label: {
-          text: dest.name,
-          color: 'white',
-          fontSize: '12px',
-          fontWeight: 'bold',
-        },
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: color,
-          fillOpacity: 1,
-          strokeColor: 'white',
-          strokeWeight: 2,
-        },
+      // Create advanced marker with custom HTML
+      const markerDiv = document.createElement('div');
+      markerDiv.className = 'custom-map-marker';
+      markerDiv.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        color: #222;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+      `;
+      markerDiv.innerHTML = `
+        <div style="width: 12px; height: 12px; background: ${color}; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px rgba(0,0,0,0.1);"></div>
+        <span>${dest.name}</span>
+      `;
+
+      markerDiv.addEventListener('mouseenter', () => {
+        markerDiv.style.transform = 'scale(1.05)';
+        markerDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
       });
 
-      marker.addListener('click', () => {
+      markerDiv.addEventListener('mouseleave', () => {
+        markerDiv.style.transform = 'scale(1)';
+        markerDiv.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+      });
+
+      markerDiv.addEventListener('click', () => {
         if (onDestinationClick) onDestinationClick(dest);
       });
 
-      markersRef.current.push(marker);
+      const marker = new google.maps.marker.AdvancedMarkerElement({
+        position,
+        map: googleMapRef.current!,
+        title: dest.name,
+        content: markerDiv,
+      });
+
+      markersRef.current.push(marker as any);
     });
   }, [destinations, isLoaded, onDestinationClick]);
 

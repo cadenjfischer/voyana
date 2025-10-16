@@ -124,8 +124,8 @@ export default function ExpandableMapWidget({
     coords.forEach(coord => bounds.extend(coord));
 
     const padding = isExpanded
-      ? { top: 80, bottom: 120, left: 80, right: (window.innerWidth / 3) + 120 }
-      : { top: 60, bottom: 60, left: 60, right: 60 };
+      ? { top: 120, bottom: 120, left: 120, right: (window.innerWidth / 3) + 150 }
+      : { top: 40, bottom: 40, left: 40, right: 40 };
 
     googleMapRef.current.fitBounds(bounds, padding);
   }, [destinations, isMapReady]); // Removed isExpanded to prevent visible camera movement
@@ -146,7 +146,7 @@ export default function ExpandableMapWidget({
     // Calculate padding for the target state
     const padding = willBeExpanded
       ? { top: 80, bottom: 120, left: 80, right: (window.innerWidth / 3) + 120 }
-      : { top: 60, bottom: 60, left: 60, right: 60 };
+      : { top: 40, bottom: 40, left: 40, right: 40 };
 
     // Wait for React to update the DOM and container size
     setTimeout(() => {
@@ -214,7 +214,7 @@ export default function ExpandableMapWidget({
                 if (coords.length > 0) {
                   const bounds = new google.maps.LatLngBounds();
                   coords.forEach(coord => bounds.extend(coord));
-                  googleMapRef.current.fitBounds(bounds, { top: 60, bottom: 60, left: 60, right: 60 });
+                  googleMapRef.current.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
                 }
               }
             }}
