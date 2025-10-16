@@ -211,14 +211,13 @@ export default function ExpandableMapWidget({
   const handleCloseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    // Remove padding
-    if (sharedMapRef.current) {
-      sharedMapRef.current.setPadding({ top: 0, bottom: 0, left: 0, right: 0 });
-    }
-    
     setIsExpanded(false);
-    // Wait for animation to complete before unmounting
+    
+    // Remove padding AFTER the container animation completes
     setTimeout(() => {
+      if (sharedMapRef.current) {
+        sharedMapRef.current.setPadding({ top: 0, bottom: 0, left: 0, right: 0 });
+      }
       setIsMounted(false);
     }, 400);
   };
