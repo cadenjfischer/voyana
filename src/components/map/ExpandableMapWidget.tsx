@@ -193,7 +193,8 @@ export default function ExpandableMapWidget({
         sharedMapRef.current.fitBounds(bounds, {
           padding: { top: 100, bottom: 140, left: 60, right: (window.innerWidth / 3) + 60 },
           duration: 600,
-          maxZoom: 22
+          maxZoom: 22,
+          easing: (t) => t * (2 - t) // easeOutQuad to match container
         });
       }
       
@@ -229,7 +230,8 @@ export default function ExpandableMapWidget({
         sharedMapRef.current.fitBounds(bounds, {
           padding: { top: 50, bottom: 40, left: 40, right: 40 },
           duration: 600,
-          maxZoom: 22
+          maxZoom: 22,
+          easing: (t) => t * (2 - t) // easeOutQuad to match container
         });
       }
     }
