@@ -316,7 +316,6 @@ export default function ExpandableMapWidget({
               ? { top: 100, bottom: 140, left: 60, right: (window.innerWidth / 3) + 60 }
               : { top: 50, bottom: 40, left: 40, right: 40 }
             }
-            maxZoom={15}
             onMapReady={(map) => { 
               sharedMapRef.current = map;
               // Check if map is already loaded, or wait for it to load
