@@ -179,8 +179,24 @@ export default function ExpandableMapWidget({
     // When not expanded, the map container is at mini position already
     if (!isExpanded && isMapLoaded && sharedMapRef.current) {
       setIsMounted(true);
-      // Trigger fitBounds immediately when expanding
-      setShouldResetView(true);
+      
+      // Calculate bounds and trigger fitBounds immediately
+      const coords = destinations
+        .map(d => d.coordinates)
+        .filter((c): c is { lat: number; lng: number } => !!c);
+      
+      if (coords.length > 0) {
+        const bounds = new mapboxgl.LngLatBounds();
+        coords.forEach(c => bounds.extend([c.lng, c.lat]));
+        
+        // Trigger fitBounds with expanded padding immediately
+        sharedMapRef.current.fitBounds(bounds, {
+          padding: { top: 100, bottom: 140, left: 60, right: (window.innerWidth / 3) + 60 },
+          duration: 600,
+          maxZoom: 22
+        });
+      }
+      
       requestAnimationFrame(() => {
         setIsExpanded(true);
       });
@@ -199,8 +215,25 @@ export default function ExpandableMapWidget({
   const handleCloseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    // Trigger fitBounds immediately when collapsing
-    setShouldResetView(true);
+    // Calculate bounds and trigger fitBounds immediately with mini padding
+    if (sharedMapRef.current && isMapLoaded) {
+      const coords = destinations
+        .map(d => d.coordinates)
+        .filter((c): c is { lat: number; lng: number } => !!c);
+      
+      if (coords.length > 0) {
+        const bounds = new mapboxgl.LngLatBounds();
+        coords.forEach(c => bounds.extend([c.lng, c.lat]));
+        
+        // Trigger fitBounds with mini padding immediately
+        sharedMapRef.current.fitBounds(bounds, {
+          padding: { top: 50, bottom: 40, left: 40, right: 40 },
+          duration: 600,
+          maxZoom: 22
+        });
+      }
+    }
+    
     setIsExpanded(false);
     
     // Wait for animation to complete before unmounting
