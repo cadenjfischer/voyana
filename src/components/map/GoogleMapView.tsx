@@ -57,7 +57,7 @@ export default function GoogleMapView({
       fullscreenControl: false,
       streetViewControl: false,
       zoomControl: true,
-      mapId: '1f1167edc2153e341e6b2265', // Custom map style
+      mapId: '24567cdfd6a1cc8d15db29d9', // Custom vector map style
     });
 
     googleMapRef.current = map;
