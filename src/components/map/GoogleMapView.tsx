@@ -77,15 +77,10 @@ export default function GoogleMapView({
 
     if (coordsWithDest.length === 0) return;
 
-    // Create bounds
-    const bounds = new google.maps.LatLngBounds();
-
     // Add markers
     coordsWithDest.forEach((item, index) => {
       const { dest, coords } = item;
       const position = { lat: coords.lat, lng: coords.lng };
-      
-      bounds.extend(position);
 
       const color = resolveColorHex(dest.customColor, '#3b82f6');
 
@@ -116,16 +111,6 @@ export default function GoogleMapView({
 
       markersRef.current.push(marker);
     });
-
-    // Fit bounds to show all markers
-    if (coordsWithDest.length > 0) {
-      googleMapRef.current.fitBounds(bounds, {
-        top: 80,
-        bottom: 120,
-        left: 80,
-        right: 80,
-      });
-    }
   }, [destinations, isLoaded, onDestinationClick]);
 
   if (!isLoaded) {
