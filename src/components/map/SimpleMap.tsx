@@ -355,7 +355,7 @@ export default function SimpleMap({ destinations = [], className = "", onDestina
       map.current.flyTo({
         center: coordinates[0],
         zoom: 10,
-        duration: animateFitBounds ? 600 : 0,
+        duration: animateFitBounds ? 800 : 0,
         padding
       });
       console.log('Centering on single destination:', coordinates[0]);
@@ -386,7 +386,7 @@ export default function SimpleMap({ destinations = [], className = "", onDestina
 
       map.current.fitBounds(bounds, {
         padding,
-        duration: animateFitBounds ? 600 : 0,
+        duration: animateFitBounds ? 800 : 0,
         maxZoom: maxZoom, // Use configurable maxZoom
         linear: false
       });

@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import GoogleMapView from '@/components/map/GoogleMapView';
+import mapboxgl from 'mapbox-gl';
+import SimpleMap from '@/components/map/SimpleMap';
 import CalendarStrip from '@/components/itinerary/CalendarStrip';
 import TimelineView from '@/components/itinerary/TimelineView';
 import CompactEditor from './CompactEditor';
 import { Destination, Day, Activity } from '@/types/itinerary';
+import { resolveColorHex } from '@/utils/colors';
 
 interface ExpandableMapWidgetProps {
   trip: import('@/types/itinerary').Trip;
@@ -16,6 +18,7 @@ interface ExpandableMapWidgetProps {
   centerOn?: { lat: number; lng: number } | null;
   onCentered?: () => void;
   onDaySelect?: (day: Day) => void;
+  // Editing hooks when map is expanded
   onUpdateDestination?: (destination: Destination) => void;
   onRemoveDestination?: (destinationId: string) => void;
   onAddDestination?: (destination: Omit<Destination, 'id' | 'order'>) => void;
@@ -36,20 +39,25 @@ export default function ExpandableMapWidget({
   onAddDestination,
   onDaysUpdate
 }: ExpandableMapWidgetProps) {
+  const [isMounted, setIsMounted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isHidingOverlay, setIsHidingOverlay] = useState(false);
   const [focusedDestinationId, setFocusedDestinationId] = useState<string | null>(null);
   const destinationRefs = useRef<{ [key: string]: HTMLDivElement }>({});
-  const googleMapRef = useRef<google.maps.Map | null>(null);
-  
-  // Calendar responsiveness
+  // Use a single shared map instance
+  const sharedMapRef = useRef<mapboxgl.Map | null>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [shouldResetView, setShouldResetView] = useState(false);
+  // Calendar responsiveness: scale down to a min scale and enable scrolling when there's no room
   const calendarContainerRef = useRef<HTMLDivElement | null>(null);
   const calendarInnerRef = useRef<HTMLDivElement | null>(null);
   const [calendarScale, setCalendarScale] = useState<number>(1);
   const [calendarScrollable, setCalendarScrollable] = useState<boolean>(false);
-  const MIN_CALENDAR_SCALE = 0.85;
-  const SIDE_PADDING = 24;
-  const SCALE_BUFFER = 1.05;
+  const MIN_CALENDAR_SCALE = 0.85; // scale floor
+  const SIDE_PADDING = 24; // px padding on each side inside the left-2/3 area
+  const SCALE_BUFFER = 1.05; // Add 5% buffer to prevent edge-case overflow
   
+  // Calculate mini map height to match viewport aspect ratio
   const [miniMapHeight, setMiniMapHeight] = useState(200);
   
   useEffect(() => {
@@ -72,35 +80,47 @@ export default function ExpandableMapWidget({
     const updateScale = () => {
       const containerRect = container.getBoundingClientRect();
       const innerRect = inner.getBoundingClientRect();
-      const naturalWidth = innerRect.width / (calendarScale || 1);
+      
+      // Get the actual natural width of the calendar content
+      const naturalWidth = innerRect.width / (calendarScale || 1); // Reverse current scale to get true width
       const available = containerRect.width - SIDE_PADDING * 2;
+      
+      // desired scale to fit the natural calendar width into available space with buffer
       const desired = Math.min(1, (available / naturalWidth) / SCALE_BUFFER);
       const scale = Math.max(desired, MIN_CALENDAR_SCALE);
       
       setCalendarScale(scale);
+      // if desired is smaller than the min scale, we need to allow scrolling
       setCalendarScrollable(desired < MIN_CALENDAR_SCALE);
     };
 
-    const ro = new ResizeObserver(() => updateScale());
+    const ro = new ResizeObserver(() => {
+      updateScale();
+    });
+
     ro.observe(container);
+    // Also observe the inner content in case it changes
     ro.observe(inner);
+    
+    // Initial update
     requestAnimationFrame(updateScale);
 
     return () => ro.disconnect();
-  }, [isExpanded, calendarScale]);
-
+  }, [isMounted, isExpanded, calendarScale]);  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isExpanded) {
+      // Close map with Escape
+      if (event.key === 'Escape' && isMounted) {
         event.preventDefault();
-        setIsExpanded(false);
+        handleCloseClick(event as any);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isExpanded]);
+  }, [isMounted, isExpanded]);
 
+  // Default focused destination to the top of the list whenever destinations change
   useEffect(() => {
     if (destinations && destinations.length > 0) {
       setFocusedDestinationId(destinations[0].id);
@@ -109,51 +129,142 @@ export default function ExpandableMapWidget({
     }
   }, [destinations]);
 
-  // Fit bounds when destinations change or expand state changes
+  // Resize map whenever expansion state changes
   useEffect(() => {
-    if (!googleMapRef.current || destinations.length === 0) return;
+    if (!sharedMapRef.current) return;
+    
+    // Trigger resize immediately when state changes
+    sharedMapRef.current.resize();
+    
+    // Continue resizing during the transition to keep up with container size changes
+    const resizeInterval = setInterval(() => {
+      if (sharedMapRef.current) {
+        sharedMapRef.current.resize();
+      }
+    }, 16); // Resize every frame (~60fps) during transition
+    
+    // Clear interval after transition completes
+    const timeout = setTimeout(() => {
+      clearInterval(resizeInterval);
+      // Final resize to ensure it's perfect
+      if (sharedMapRef.current) {
+        sharedMapRef.current.resize();
+      }
+    }, 400);
+    
+    return () => {
+      clearInterval(resizeInterval);
+      clearTimeout(timeout);
+    };
+  }, [isExpanded]);
 
-    const coords = destinations
-      .filter(d => d.coordinates)
-      .map(d => ({ lat: d.coordinates!.lat, lng: d.coordinates!.lng }));
+  // Auto-fit when destinations change (new destination added)
+  useEffect(() => {
+    if (destinations.length > 0 && isMapLoaded) {
+      setShouldResetView(true);
+    }
+  }, [destinations.length, isMapLoaded]); // Only trigger on destination count change
 
-    if (coords.length === 0) return;
+  // Reset the shouldResetView flag after map has updated
+  useEffect(() => {
+    if (shouldResetView && isMapLoaded) {
+      const timer = setTimeout(() => {
+        setShouldResetView(false);
+      }, 1000); // Give map time to animate to new bounds
+      return () => clearTimeout(timer);
+    }
+  }, [shouldResetView, isMapLoaded]);
 
-    const bounds = new google.maps.LatLngBounds();
-    coords.forEach(coord => bounds.extend(coord));
-
-    const padding = isExpanded
-      ? { top: 80, bottom: 120, left: 80, right: (window.innerWidth / 3) + 120 }
-      : { top: 60, bottom: 60, left: 60, right: 60 };
-
-    googleMapRef.current.fitBounds(bounds, padding);
-  }, [destinations, isExpanded]);
+  const openFromMiniMap = () => {
+    // When not expanded, the map container is at mini position already
+    if (!isExpanded && isMapLoaded && sharedMapRef.current) {
+      setIsMounted(true);
+      
+      // Calculate bounds and trigger fitBounds immediately
+      const coords = destinations
+        .map(d => d.coordinates)
+        .filter((c): c is { lat: number; lng: number } => !!c);
+      
+      if (coords.length > 0) {
+        const bounds = new mapboxgl.LngLatBounds();
+        coords.forEach(c => bounds.extend([c.lng, c.lat]));
+        
+        // Trigger fitBounds with expanded padding immediately
+        // Increased right padding to push destinations left, away from the side panel
+        const rightPanelWidth = window.innerWidth / 3;
+        sharedMapRef.current.fitBounds(bounds, {
+          padding: { top: 80, bottom: 120, left: 80, right: rightPanelWidth + 120 },
+          duration: 600,
+          maxZoom: 22,
+          easing: (t) => t * (2 - t) // easeOutQuad to match container
+        });
+      }
+      
+      requestAnimationFrame(() => {
+        setIsExpanded(true);
+      });
+    }
+  };
 
   const handleMapClick = () => {
-    if (!isExpanded) {
-      setIsExpanded(true);
-    }
+    openFromMiniMap();
+  };
+
+  const handleResetPosition = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShouldResetView(true);
   };
 
   const handleCloseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // Calculate bounds and trigger fitBounds immediately with mini padding
+    if (sharedMapRef.current && isMapLoaded) {
+      const coords = destinations
+        .map(d => d.coordinates)
+        .filter((c): c is { lat: number; lng: number } => !!c);
+      
+      if (coords.length > 0) {
+        const bounds = new mapboxgl.LngLatBounds();
+        coords.forEach(c => bounds.extend([c.lng, c.lat]));
+        
+        // Trigger fitBounds with mini padding immediately
+        sharedMapRef.current.fitBounds(bounds, {
+          padding: { top: 60, bottom: 60, left: 60, right: 60 },
+          duration: 600,
+          maxZoom: 22,
+          easing: (t) => t * (2 - t) // easeOutQuad to match container
+        });
+      }
+    }
+    
     setIsExpanded(false);
+    
+    // Wait for animation to complete before unmounting
+    setTimeout(() => {
+      setIsMounted(false);
+    }, 600); // Match camera animation duration
   };
 
   return (
     <>
-      {/* Backdrop */}
-      {isExpanded && (
+      {/* Backdrop - only visible when expanded */}
+      {isMounted && isExpanded && (
         <div 
           aria-hidden
           onClick={handleCloseClick}
-          className="fixed inset-0 bg-black opacity-40 z-45"
+          className="fixed inset-0 bg-black"
+          style={{ 
+            opacity: 0.4, 
+            pointerEvents: 'auto',
+            zIndex: 45
+          }}
         />
       )}
 
-      {/* Mini Map Header */}
+      {/* Mini Map Header - positioned above the map container and animates with it */}
       <div 
-        className="fixed bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg z-50"
+        className="fixed bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
         style={{
           top: isExpanded ? '-48px' : `calc(100vh - ${miniMapHeight + 54}px)`,
           left: isExpanded ? 0 : '24px',
@@ -161,6 +272,9 @@ export default function ExpandableMapWidget({
           height: '48px',
           borderTopLeftRadius: '16px',
           borderTopRightRadius: '16px',
+          zIndex: 50,
+          transition: isMounted ? 'all 600ms cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none',
+          willChange: isMounted ? 'top, left, width' : 'auto',
           pointerEvents: isExpanded ? 'none' : 'auto',
           opacity: isExpanded ? 0 : 1,
         }}
@@ -173,19 +287,7 @@ export default function ExpandableMapWidget({
             <span className="font-semibold text-sm">Trip Map</span>
           </div>
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (googleMapRef.current) {
-                const coords = destinations
-                  .filter(d => d.coordinates)
-                  .map(d => ({ lat: d.coordinates!.lat, lng: d.coordinates!.lng }));
-                if (coords.length > 0) {
-                  const bounds = new google.maps.LatLngBounds();
-                  coords.forEach(coord => bounds.extend(coord));
-                  googleMapRef.current.fitBounds(bounds, { top: 60, bottom: 60, left: 60, right: 60 });
-                }
-              }
-            }}
+            onClick={handleResetPosition}
             className="flex items-center gap-1.5 text-xs bg-white/20 hover:bg-white/30 px-2.5 py-1 rounded-md transition-colors duration-200"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -196,9 +298,9 @@ export default function ExpandableMapWidget({
         </div>
       </div>
 
-      {/* Map Container - NO TRANSITION */}
+      {/* Single Map Container - moves between mini and expanded positions */}
       <div
-        className="fixed bg-white overflow-hidden shadow-2xl pointer-events-auto z-50"
+        className="fixed bg-white overflow-hidden shadow-2xl pointer-events-auto"
         style={{
           top: isExpanded ? 0 : `calc(100vh - ${miniMapHeight + 6}px)`,
           left: isExpanded ? 0 : '24px',
@@ -210,17 +312,39 @@ export default function ExpandableMapWidget({
           borderTopRightRadius: isExpanded ? '0px' : '0px',
           borderBottomLeftRadius: isExpanded ? '0px' : '16px',
           borderBottomRightRadius: isExpanded ? '0px' : '16px',
+          transition: isMounted ? 'all 600ms cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none',
+          zIndex: 50,
+          willChange: isMounted ? 'top, left, width, height, border-radius' : 'auto',
         }}
       >
-        {/* Google Map */}
+        {/* Map - renders once, stays mounted */}
         <div className="absolute left-0 right-0 bottom-0 top-0">
-          <GoogleMapView
+          <SimpleMap 
             destinations={destinations}
+            focusedDestination={isExpanded ? destinations.find(d => d.id === focusedDestinationId) ?? null : null}
             onDestinationClick={onDestinationClick}
             className="w-full h-full"
-            onMapReady={(map) => {
-              googleMapRef.current = map;
+            centerOn={centerOn}
+            onCentered={onCentered}
+            fitBoundsPadding={isExpanded 
+              ? { top: 100, bottom: 140, left: 60, right: (window.innerWidth / 3) + 60 }
+              : { top: 50, bottom: 40, left: 40, right: 40 }
+            }
+            maxZoom={22}
+            onMapReady={(map) => { 
+              sharedMapRef.current = map;
+              // Check if map is already loaded, or wait for it to load
+              if (map.loaded()) {
+                setIsMapLoaded(true);
+              } else {
+                map.once('load', () => {
+                  setIsMapLoaded(true);
+                });
+              }
             }}
+            disableAutoFit={!shouldResetView}
+            animateFitBounds={true}
+            forceRefreshKey={shouldResetView ? Date.now() : undefined}
           />
         </div>
 
@@ -243,7 +367,7 @@ export default function ExpandableMapWidget({
           </div>
         )}
 
-        {/* Expanded Header */}
+        {/* Expanded Header - overlays on top of map */}
         {isExpanded && (
           <div className="absolute top-0 left-0 right-0 z-60 bg-white border-b border-gray-200 px-6 py-4">
             <div className="flex items-center justify-between">
@@ -276,9 +400,10 @@ export default function ExpandableMapWidget({
           </div>
         )}
 
-        {/* Side Panel */}
+        {/* Side Panel - only visible when expanded */}
         {isExpanded && (
           <>
+            {/* Side Panel */}
             <div className="absolute top-20 right-0 bottom-0 w-1/3 bg-white border-l border-gray-200 shadow-xl overflow-hidden flex flex-col z-60">
               <div className="p-4 border-b border-gray-200">
                 <h3 className="font-semibold text-gray-900 mb-2">Quick Actions</h3>
@@ -381,3 +506,4 @@ export default function ExpandableMapWidget({
     </>
   );
 }
+
