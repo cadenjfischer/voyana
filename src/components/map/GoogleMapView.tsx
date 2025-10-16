@@ -22,7 +22,7 @@ export default function GoogleMapView({
   const markersRef = useRef<google.maps.Marker[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load Google Maps script
+  // Load Google Maps script (only once globally)
   useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
     if (!apiKey) {
@@ -32,6 +32,13 @@ export default function GoogleMapView({
 
     if (window.google?.maps) {
       setIsLoaded(true);
+      return;
+    }
+
+    // Check if script is already being loaded
+    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => setIsLoaded(true));
       return;
     }
 
