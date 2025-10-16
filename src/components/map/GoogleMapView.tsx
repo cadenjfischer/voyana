@@ -43,7 +43,7 @@ export default function GoogleMapView({
     }
 
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker`;
     script.async = true;
     script.onload = () => setIsLoaded(true);
     document.head.appendChild(script);
@@ -85,59 +85,43 @@ export default function GoogleMapView({
 
     if (coordsWithDest.length === 0) return;
 
-    // Add markers
+    // Add markers with custom styled pins
     coordsWithDest.forEach((item, index) => {
       const { dest, coords } = item;
       const position = { lat: coords.lat, lng: coords.lng };
 
       const color = resolveColorHex(dest.customColor, '#3b82f6');
 
-      // Create advanced marker with custom HTML
-      const markerDiv = document.createElement('div');
-      markerDiv.className = 'custom-map-marker';
-      markerDiv.style.cssText = `
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        background: white;
-        padding: 6px 12px;
-        border-radius: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        font-size: 13px;
-        font-weight: 600;
-        color: #222;
-        white-space: nowrap;
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
-      `;
-      markerDiv.innerHTML = `
-        <div style="width: 12px; height: 12px; background: ${color}; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px rgba(0,0,0,0.1);"></div>
-        <span>${dest.name}</span>
-      `;
+      // Create a custom SVG marker
+      const svgMarker = {
+        path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z',
+        fillColor: color,
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 2,
+        scale: 1.5,
+        anchor: new google.maps.Point(12, 22),
+      };
 
-      markerDiv.addEventListener('mouseenter', () => {
-        markerDiv.style.transform = 'scale(1.05)';
-        markerDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
-      });
-
-      markerDiv.addEventListener('mouseleave', () => {
-        markerDiv.style.transform = 'scale(1)';
-        markerDiv.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
-      });
-
-      markerDiv.addEventListener('click', () => {
-        if (onDestinationClick) onDestinationClick(dest);
-      });
-
-      const marker = new google.maps.marker.AdvancedMarkerElement({
+      const marker = new google.maps.Marker({
         position,
         map: googleMapRef.current!,
         title: dest.name,
-        content: markerDiv,
+        icon: svgMarker,
+        label: {
+          text: dest.name,
+          color: '#222222',
+          fontSize: '13px',
+          fontWeight: '600',
+          className: 'map-marker-label',
+        },
       });
 
-      markersRef.current.push(marker as any);
+      marker.addListener('click', () => {
+        if (onDestinationClick) onDestinationClick(dest);
+      });
+
+      markersRef.current.push(marker);
     });
   }, [destinations, isLoaded, onDestinationClick]);
 
