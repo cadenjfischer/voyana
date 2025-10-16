@@ -181,6 +181,8 @@ export default function ExpandableMapWidget({
       setIsMounted(true);
       requestAnimationFrame(() => {
         setIsExpanded(true);
+        // Trigger a reset to apply the higher maxZoom
+        setShouldResetView(true);
         
         // Set padding AFTER the expansion animation starts
         setTimeout(() => {
