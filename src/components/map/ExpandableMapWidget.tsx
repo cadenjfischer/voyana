@@ -307,7 +307,10 @@ export default function ExpandableMapWidget({
             className="w-full h-full"
             centerOn={centerOn}
             onCentered={onCentered}
-            fitBoundsPadding={{ top: 50, bottom: 40, left: 40, right: 40 }}
+            fitBoundsPadding={isExpanded 
+              ? { top: 100, bottom: 140, left: 60, right: (window.innerWidth / 3) + 60 }
+              : { top: 50, bottom: 40, left: 40, right: 40 }
+            }
             maxZoom={7}
             onMapReady={(map) => { 
               sharedMapRef.current = map;
