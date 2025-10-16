@@ -185,12 +185,12 @@ export default function ExpandableMapWidget({
     }
   }, [isExpanded, isMapLoaded]);
 
-  // Auto-fit when destinations change (new destination added)
+  // Auto-fit when destinations change (new destination added) or when expanding
   useEffect(() => {
-    if (destinations.length > 0) {
+    if (destinations.length > 0 && isMapLoaded) {
       setShouldResetView(true);
     }
-  }, [destinations.length]); // Only trigger when count changes
+  }, [destinations.length, isExpanded, isMapLoaded]); // Trigger on expand too
 
   // Reset the shouldResetView flag after map has updated
   useEffect(() => {
