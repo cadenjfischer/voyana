@@ -218,28 +218,16 @@ export default function TripDetailPage() {
               updatedAt: new Date().toISOString()
             };
           } else {
-            // Already in new format - ensure all destinations start with 0 nights
+            // Already in new format - preserve existing nights
             convertedTrip = {
-              ...foundTrip as Trip,
-              destinations: (foundTrip as Trip).destinations.map(dest => ({
-                ...dest,
-                nights: 0 // Reset all nights to 0 for existing trips
-              }))
+              ...foundTrip as Trip
             };
           }
           
-          // Always ensure all destinations start with 0 nights on load
-          const finalTrip = {
-            ...convertedTrip,
-            destinations: convertedTrip.destinations.map(dest => ({
-              ...dest,
-              nights: 0
-            }))
-          };
-          setTrip(finalTrip);
+          setTrip(convertedTrip);
           
           // Assign colors to destinations that don't have them
-          const tripWithColors = assignMissingColors(finalTrip);
+          const tripWithColors = assignMissingColors(convertedTrip);
           
           // Geocode any destinations that don't have coordinates
           const destinationsNeedingCoords = tripWithColors.destinations.filter(dest => !dest.coordinates);
