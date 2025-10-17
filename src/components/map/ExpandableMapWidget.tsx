@@ -42,7 +42,7 @@ export default function ExpandableMapWidget({
   onActiveDay,
   onDestinationMapCenterRequest
 }: ExpandableMapWidgetProps) {
-  const { isExpanded, setIsExpanded } = useItineraryUI();
+  const { isExpanded, setIsExpanded, selectedDay: selectedDayIndex, setSelectedDay: setSelectedDayIndex } = useItineraryUI();
   const [focusedDestinationId, setFocusedDestinationId] = useState<string | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   // destinationRefs used only by removed side panel components; keep placeholder if needed in future
@@ -369,8 +369,16 @@ export default function ExpandableMapWidget({
                 >
                   <CalendarStrip
                     days={trip.days}
-                    activeDay={selectedDay ? selectedDay.id : ''}
-                    onDaySelect={(dayId: string) => onDaySelect && onDaySelect(trip.days.find(d => d.id === dayId) as Day)}
+                    activeDay={selectedDayIndex !== null && trip.days[selectedDayIndex] ? trip.days[selectedDayIndex].id : ''}
+                    onDaySelect={(dayId: string) => {
+                      const dayIndex = trip.days.findIndex(d => d.id === dayId);
+                      if (dayIndex !== -1) {
+                        setSelectedDayIndex(dayIndex);
+                        const day = trip.days[dayIndex];
+                        if (onDaySelect) onDaySelect(day as Day);
+                        if (onActiveDay) onActiveDay(dayId);
+                      }
+                    }}
                     trip={trip}
                     transparent
                     centered

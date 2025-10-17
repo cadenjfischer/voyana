@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Trip, Destination, Day } from '@/types/itinerary';
 import TabbedDestinationRail from './TabbedDestinationRail';
 import DayByDayTab from './DayByDayTab';
+import SingleDayView from './SingleDayView';
 import AddDestinationModal from './AddDestinationModal';
 import AddActivityModal from './AddActivityModal';
 import { useItineraryUI } from '@/contexts/ItineraryUIContext';
@@ -29,6 +30,11 @@ export default function ExpandedMapSidePanel({
   const [isAddDestinationModalOpen, setIsAddDestinationModalOpen] = useState(false);
   const [isAddActivityModalOpen, setIsAddActivityModalOpen] = useState(false);
   const [targetDayForActivity, setTargetDayForActivity] = useState<string>('');
+
+  // Find the current day based on selectedDay index from context
+  const currentDay = selectedDay !== null && selectedDay >= 0 && selectedDay < trip.days.length 
+    ? trip.days[selectedDay] 
+    : null;
 
   const handleDestinationSelect = (id: string) => {
     setActiveDestinationId(id);
@@ -85,9 +91,6 @@ export default function ExpandedMapSidePanel({
 
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* Debug indicator */}
-      <div className="h-2 bg-red-500"></div>
-      
       {/* Tab Headers */}
       <div className="flex border-b border-gray-200 bg-gray-50">
         <button
@@ -126,12 +129,40 @@ export default function ExpandedMapSidePanel({
             trip={trip}
           />
         )}
-        {activeTab === 'daybyday' && (
-          <DayByDayTab
-            days={trip.days}
-            onUpdateDays={handleUpdateDays}
-            onAddActivity={handleAddActivity}
-          />
+        {activeTab === 'daybyday' && currentDay && selectedDay !== null && (
+          <div className="h-full overflow-y-auto p-6">
+            <SingleDayView
+              day={currentDay}
+              dayNumber={selectedDay + 1}
+              onUpdateDay={(updatedDay: Day) => {
+                const updatedDays = trip.days.map(d => 
+                  d.id === updatedDay.id ? updatedDay : d
+                );
+                handleUpdateDays(updatedDays);
+              }}
+              onAddActivity={() => handleAddActivity(currentDay.id)}
+              onDeleteActivity={(activityId: string) => {
+                const updatedActivities = currentDay.activities.filter(a => a.id !== activityId);
+                const updatedDay = {
+                  ...currentDay,
+                  activities: updatedActivities.map((activity, index) => ({ ...activity, order: index })),
+                  totalCost: updatedActivities.reduce((sum, activity) => sum + activity.cost, 0)
+                };
+                const updatedDays = trip.days.map(d => 
+                  d.id === updatedDay.id ? updatedDay : d
+                );
+                handleUpdateDays(updatedDays);
+              }}
+            />
+          </div>
+        )}
+        {activeTab === 'daybyday' && !currentDay && (
+          <div className="h-full flex items-center justify-center p-6">
+            <div className="text-center text-gray-500">
+              <p className="text-lg font-medium">Select a day from the calendar below</p>
+              <p className="text-sm mt-2">Click on any day in the calendar to view its activities</p>
+            </div>
+          </div>
         )}
       </div>
 
