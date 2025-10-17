@@ -133,55 +133,66 @@ export default function TripDetailPage() {
           // Convert old format to new format if needed
           let convertedTrip: Trip;
           
-          if (foundTrip.activities && !foundTrip.destinations) {
-            // Old format - convert to new format
-            // Parse destinations - only split if there are multiple distinct destinations
-            // This handles cases like "Paris, France" (single destination) vs "Paris, France, Nice, France" (multiple destinations)
-            const destinationString = foundTrip.destination || 'Main Destination';
-            let destinationNames: string[] = [destinationString];
+          // Check if this is a LocalTrip format (has destination string and possibly destinations array)
+          const isLocalTripFormat = foundTrip.destination && typeof foundTrip.destination === 'string' && 
+                                    (!foundTrip.destinations || Array.isArray(foundTrip.destinations) && foundTrip.destinations.length > 0 && typeof foundTrip.destinations[0] === 'string');
+          
+          if (isLocalTripFormat || (foundTrip.activities && !foundTrip.destinations)) {
+            // LocalTrip format or old format - convert to new Trip format
             
-            // Only attempt to split if we have clear indicators of multiple destinations
-            if (destinationString.includes(',')) {
-              const parts = destinationString.split(',').map((name: string) => name.trim()).filter((name: string) => name.length > 0);
+            // Get destination names - prefer the destinations array if it exists, otherwise parse the destination string
+            let destinationNames: string[];
+            if ((foundTrip as any).destinations && Array.isArray((foundTrip as any).destinations)) {
+              // Has destinations array (new LocalTrip format)
+              destinationNames = (foundTrip as any).destinations;
+            } else {
+              // Parse from destination string (old format)
+              const destinationString = foundTrip.destination || 'Main Destination';
+              destinationNames = [destinationString];
               
-              // If we have more than 2 parts, or if parts look like complete destination names, treat as multiple
-              if (parts.length > 2) {
-                // Group pairs: "Paris, France, Nice, France" -> ["Paris, France", "Nice, France"]
-                const groupedDestinations: string[] = [];
-                for (let i = 0; i < parts.length; i += 2) {
-                  if (i + 1 < parts.length) {
-                    groupedDestinations.push(`${parts[i]}, ${parts[i + 1]}`);
-                  } else {
-                    groupedDestinations.push(parts[i]);
+              // Only attempt to split if we have clear indicators of multiple destinations
+              if (destinationString.includes(',')) {
+                const parts = destinationString.split(',').map((name: string) => name.trim()).filter((name: string) => name.length > 0);
+                
+                // If we have more than 2 parts, or if parts look like complete destination names, treat as multiple
+                if (parts.length > 2) {
+                  // Group pairs: "Paris, France, Nice, France" -> ["Paris, France", "Nice, France"]
+                  const groupedDestinations: string[] = [];
+                  for (let i = 0; i < parts.length; i += 2) {
+                    if (i + 1 < parts.length) {
+                      groupedDestinations.push(`${parts[i]}, ${parts[i + 1]}`);
+                    } else {
+                      groupedDestinations.push(parts[i]);
+                    }
                   }
+                  destinationNames = groupedDestinations;
                 }
-                destinationNames = groupedDestinations;
+                // Otherwise keep as single destination (e.g., "Paris, France")
               }
-              // Otherwise keep as single destination (e.g., "Paris, France")
             }
 
             // Calculate total nights for the trip
             const totalNights = Math.max(0, Math.ceil((new Date(foundTrip.endDate).getTime() - new Date(foundTrip.startDate).getTime()) / (1000 * 60 * 60 * 24)));
             
+            // Helper function to get coordinates for common destinations
+            const getKnownCoordinates = (name: string) => {
+              const lowerName = name.toLowerCase();
+              if (lowerName.includes('paris')) return { lat: 48.8566, lng: 2.3522 };
+              if (lowerName.includes('nice')) return { lat: 43.7102, lng: 7.2620 };
+              if (lowerName.includes('london')) return { lat: 51.5074, lng: -0.1278 };
+              if (lowerName.includes('new york')) return { lat: 40.7128, lng: -74.0060 };
+              if (lowerName.includes('tokyo')) return { lat: 35.6762, lng: 139.6503 };
+              if (lowerName.includes('colorado')) return { lat: 39.5501, lng: -105.7821 };
+              if (lowerName.includes('texas')) return { lat: 31.9686, lng: -99.9018 };
+              if (lowerName.includes('california')) return { lat: 36.7783, lng: -119.4179 };
+              if (lowerName.includes('florida')) return { lat: 27.6648, lng: -81.5158 };
+              return undefined;
+            };
+            
             // Create separate destination objects for each city with auto-assigned colors
             const destinations = destinationNames.map((name: string, index: number) => {
               const availableColors = PREMIUM_COLOR_PALETTE.map(color => color.id);
               const assignedColor = availableColors[index % availableColors.length];
-              
-              // Add known coordinates for common destinations
-              let coordinates;
-              const lowerName = name.toLowerCase();
-              if (lowerName.includes('paris')) {
-                coordinates = { lat: 48.8566, lng: 2.3522 };
-              } else if (lowerName.includes('nice')) {
-                coordinates = { lat: 43.7102, lng: 7.2620 };
-              } else if (lowerName.includes('london')) {
-                coordinates = { lat: 51.5074, lng: -0.1278 };
-              } else if (lowerName.includes('new york')) {
-                coordinates = { lat: 40.7128, lng: -74.0060 };
-              } else if (lowerName.includes('tokyo')) {
-                coordinates = { lat: 35.6762, lng: 139.6503 };
-              }
               
               return {
                 id: `destination-${Date.now()}-${index}`,
@@ -193,7 +204,7 @@ export default function TripDetailPage() {
                 estimatedCost: 0,
                 order: index,
                 customColor: assignedColor,
-                coordinates
+                coordinates: getKnownCoordinates(name)
               };
             });
 
