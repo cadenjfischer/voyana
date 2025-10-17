@@ -22,6 +22,7 @@ interface LocalTrip {
   id: string;
   title: string;
   destination: string;
+  destinations?: string[]; // Add support for multiple destinations
   startDate: string;
   endDate: string;
   description: string;
@@ -63,10 +64,14 @@ export default function ItineraryPage() {
     description: string; 
     photo: string; 
   }) => {
+    const isMultiple = Array.isArray(newTrip.destination);
+    const destinationArray = isMultiple ? newTrip.destination as string[] : [newTrip.destination as string];
+    
     const trip: LocalTrip = {
       id: Date.now().toString(),
       title: newTrip.title,
-      destination: Array.isArray(newTrip.destination) ? newTrip.destination.join(', ') : newTrip.destination,
+      destination: destinationArray.join(', '),
+      destinations: isMultiple ? destinationArray : undefined, // Store array separately for multi-destination trips
       startDate: newTrip.startDate,
       endDate: newTrip.endDate,
       description: newTrip.description,
@@ -91,6 +96,9 @@ export default function ItineraryPage() {
 
   // Convert LocalTrip to Trip for EditTripModal
   const convertToTrip = (localTrip: LocalTrip): Trip => {
+    // Check if we have multiple destinations stored
+    const destinationNames = localTrip.destinations || [localTrip.destination];
+    
     return {
       id: localTrip.id,
       title: localTrip.title,
@@ -98,16 +106,16 @@ export default function ItineraryPage() {
       photo: localTrip.photo,
       startDate: localTrip.startDate,
       endDate: localTrip.endDate,
-      destinations: [{
-        id: '1',
-        name: localTrip.destination,
+      destinations: destinationNames.map((name, index) => ({
+        id: (index + 1).toString(),
+        name: name,
         startDate: localTrip.startDate,
         endDate: localTrip.endDate,
         nights: 0,
         lodging: '',
         estimatedCost: 0,
-        order: 0
-      }],
+        order: index
+      })),
       days: [],
       totalCost: 0,
       createdAt: new Date().toISOString(),
@@ -117,10 +125,12 @@ export default function ItineraryPage() {
 
   // Convert Trip back to LocalTrip
   const convertToLocalTrip = (trip: Trip): LocalTrip => {
+    const destinationNames = trip.destinations.map(d => d.name);
     return {
       id: trip.id,
       title: trip.title,
-      destination: trip.destinations.map(d => d.name).join(', '),
+      destination: destinationNames.join(', '),
+      destinations: destinationNames.length > 1 ? destinationNames : undefined, // Preserve array for multi-destination trips
       startDate: trip.startDate,
       endDate: trip.endDate,
       description: trip.description,

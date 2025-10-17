@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Trip, Destination, Day, Activity, ACTIVITY_TYPES, formatDate, formatCurrency } from '@/types/itinerary';
 import { getDestinationColors, isTransferDay } from '@/utils/colors';
@@ -22,6 +22,36 @@ export default function TimelineView({
   onDaysUpdate,
   onDaySelect
 }: TimelineViewProps) {
+  // Track which days are collapsed (default: all collapsed)
+  const [collapsedDays, setCollapsedDays] = useState<Set<string>>(
+    new Set(trip.days.map(d => d.id))
+  );
+
+  // Toggle a single day
+  const toggleDay = (dayId: string) => {
+    setCollapsedDays(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(dayId)) {
+        newSet.delete(dayId);
+      } else {
+        newSet.add(dayId);
+      }
+      return newSet;
+    });
+  };
+
+  // Toggle all days
+  const toggleAll = () => {
+    if (collapsedDays.size === trip.days.length) {
+      // All collapsed, expand all
+      setCollapsedDays(new Set());
+    } else {
+      // Some or none collapsed, collapse all
+      setCollapsedDays(new Set(trip.days.map(d => d.id)));
+    }
+  };
+
+  const allCollapsed = collapsedDays.size === trip.days.length;
 
 
 
@@ -137,6 +167,30 @@ export default function TimelineView({
 
   return (
     <div className="px-6 py-4 pb-[800px] space-y-6">
+      {/* Expand/Collapse All Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={toggleAll}
+          className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors duration-200 flex items-center gap-1.5"
+        >
+          {allCollapsed ? (
+            <>
+              Expand All
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </>
+          ) : (
+            <>
+              Collapse All
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
+            </>
+          )}
+        </button>
+      </div>
+
       <DragDropContext onDragEnd={handleActivityDragEnd}>
         {Object.entries(groupedDays).map(([destinationId, { destination, days }]) => {
           const colors = getDestinationColors(destinationId, trip.destinations, true);
@@ -149,6 +203,7 @@ export default function TimelineView({
                   const isActiveDay = day.id === activeDay;
                   const dayIndexInTrip = trip.days.findIndex(d => d.id === day.id);
                   const isTransfer = isTransferDay(dayIndexInTrip, trip.days, trip.destinations);
+                  const isCollapsed = collapsedDays.has(day.id);
                   
                   return (
                     <div
@@ -156,7 +211,7 @@ export default function TimelineView({
                       ref={(el) => {
                         if (el) destinationRefs.current[day.id] = el;
                       }}
-                      className={`bg-white rounded-xl border-2 transition-all duration-300 ${
+                      className={`bg-white ${isCollapsed ? 'rounded-xl' : 'rounded-xl'} border-2 transition-all duration-300 ${
                         isActiveDay 
                           ? 'border-blue-500 shadow-xl ring-4 ring-blue-100' 
                           : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
@@ -164,7 +219,6 @@ export default function TimelineView({
                     >
                       {/* Day Header */}
                       <div
-                        onClick={() => onDaySelect?.(day.id)}
                         className={`w-full text-left transition-all duration-200 ${
                           onDaySelect 
                             ? 'hover:brightness-95 cursor-pointer' 
@@ -172,7 +226,7 @@ export default function TimelineView({
                         }`}
                       >
                         <div 
-                          className="border-b border-gray-100 p-4 rounded-t-xl"
+                          className={`border-b border-gray-100 p-4 ${isCollapsed ? 'rounded-xl' : 'rounded-t-xl'}`}
                           style={(() => {
                             // Check if this day should be treated as unassigned due to nights allocation
                             if (destination && day.destinationId) {
@@ -379,21 +433,44 @@ export default function TimelineView({
                           
                           {/* Right: Add Button */}
                           <div className="flex items-center justify-end gap-2">
-
-                            
                             {/* Add Activity Button */}
                             <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDaySelect?.(day.id);
+                              }}
                               className={`px-3 py-1.5 text-sm font-medium ${colors.text} hover:bg-white rounded-lg transition-colors duration-200`}
                             >
                               + Add
+                            </button>
+                            
+                            {/* Collapse Toggle */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleDay(day.id);
+                              }}
+                              className="p-1.5 hover:bg-white/50 rounded transition-colors duration-200"
+                            >
+                              {isCollapsed ? (
+                                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              ) : (
+                                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                </svg>
+                              )}
                             </button>
                           </div>
                         </div>
                       </div>
                       </div>
 
-                      {/* Activities */}
-                      <Droppable droppableId={day.id}>
+                      {/* Activities - only show when not collapsed */}
+                      {!isCollapsed && (
+                        <>
+                          <Droppable droppableId={day.id}>
                         {(provided, snapshot) => (
                           <div
                             {...provided.droppableProps}
@@ -489,11 +566,13 @@ export default function TimelineView({
                         )}
                       </Droppable>
 
-                      {/* Day Notes */}
-                      {day.notes && (
+                      {/* Day Notes - only show when not collapsed */}
+                      {!isCollapsed && day.notes && (
                         <div className="border-t border-gray-100 p-4">
                           <p className="text-sm text-gray-600">{day.notes}</p>
                         </div>
+                      )}
+                        </>
                       )}
                     </div>
                   );

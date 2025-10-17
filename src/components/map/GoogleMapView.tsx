@@ -22,6 +22,47 @@ export default function GoogleMapView({
   const markersRef = useRef<google.maps.Marker[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // Hide Google Maps "1 stop" style bubbles robustly (scoped to map container)
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const container = mapRef.current;
+
+    // Helper: hide any nodes that visually show a small "x stop" badge
+    const hideStopBadges = () => {
+      const walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT, null);
+      let node: Node | null = walker.currentNode;
+      while (node) {
+        const el = node as HTMLElement;
+        if (el && el.innerText && /\b\d+\s+stops?\b/i.test(el.innerText.trim())) {
+          // Hide the nearest absolutely-positioned bubble container if present
+          let target: HTMLElement | null = el;
+          for (let i = 0; i < 4 && target; i++) {
+            const style = window.getComputedStyle(target);
+            if (style.position === 'absolute') break;
+            target = target.parentElement;
+          }
+          (target ?? el).style.display = 'none';
+          (target ?? el).style.visibility = 'hidden';
+          (target ?? el).style.opacity = '0';
+        }
+        node = walker.nextNode();
+      }
+    };
+
+    // Initial pass after mount
+    const initTimer = setInterval(hideStopBadges, 200);
+
+    // Observe DOM mutations inside the map container
+    const observer = new MutationObserver(() => hideStopBadges());
+    observer.observe(container, { childList: true, subtree: true, characterData: false });
+
+    return () => {
+      clearInterval(initTimer);
+      observer.disconnect();
+    };
+  }, []);
+
   // Load Google Maps script (only once globally)
   useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
@@ -63,7 +104,15 @@ export default function GoogleMapView({
       mapTypeControl: false,
       fullscreenControl: false,
       streetViewControl: false,
-      zoomControl: true,
+      zoomControl: false,
+      clickableIcons: false, // avoid POI bubbles which can surface stop labels
+      // Proactively hide transit overlays which often render the "1 stop" badge
+      styles: [
+        { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+        { featureType: 'transit.station', stylers: [{ visibility: 'off' }] },
+        { featureType: 'transit.line', stylers: [{ visibility: 'off' }] },
+        { featureType: 'poi', stylers: [{ visibility: 'off' }] }
+      ],
       mapId: '24567cdfd6a1cc8d15db29d9', // Custom vector map style
     });
 
