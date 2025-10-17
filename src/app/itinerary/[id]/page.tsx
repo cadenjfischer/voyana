@@ -220,7 +220,16 @@ export default function TripDetailPage() {
           } else {
             // Already in new format - preserve existing nights
             convertedTrip = {
-              ...foundTrip as Trip
+              ...foundTrip as Trip,
+              // Ensure days array exists, regenerate if missing
+              days: (foundTrip as Trip).days || generateDays(foundTrip.startDate, foundTrip.endDate).map((date, index) => ({
+                id: `day-${index}`,
+                date,
+                destinationId: null,
+                activities: [],
+                notes: '',
+                totalCost: 0
+              }))
             };
           }
           
@@ -474,7 +483,7 @@ export default function TripDetailPage() {
     );
   }
 
-  const selectedDay = trip.days.find(day => day.id === selectedDayId);
+  const selectedDay = trip.days?.find(day => day.id === selectedDayId);
 
   return (
     <>
