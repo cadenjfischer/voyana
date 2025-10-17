@@ -3,9 +3,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import GoogleMapView from '@/components/map/GoogleMapView';
 import CalendarStrip from '@/components/itinerary/CalendarStrip';
-import TimelineView from '@/components/itinerary/TimelineView';
-import CompactEditor from './CompactEditor';
+import ExpandedMapSidePanel from '@/components/itinerary/ExpandedMapSidePanel';
 import { Destination, Day, Activity } from '@/types/itinerary';
+import { useItineraryUI } from '@/contexts/ItineraryUIContext';
 
 interface ExpandableMapWidgetProps {
   trip: import('@/types/itinerary').Trip;
@@ -20,6 +20,9 @@ interface ExpandableMapWidgetProps {
   onRemoveDestination?: (destinationId: string) => void;
   onAddDestination?: (destination: Omit<Destination, 'id' | 'order'>) => void;
   onDaysUpdate?: (days: Day[]) => void;
+  onUpdateTrip?: (trip: import('@/types/itinerary').Trip) => void;
+  onActiveDay?: (dayId: string) => void;
+  onDestinationMapCenterRequest?: (coords: { lat: number; lng: number } | null) => void;
 }
 
 export default function ExpandableMapWidget({
@@ -34,12 +37,16 @@ export default function ExpandableMapWidget({
   onUpdateDestination,
   onRemoveDestination,
   onAddDestination,
-  onDaysUpdate
+  onDaysUpdate,
+  onUpdateTrip,
+  onActiveDay,
+  onDestinationMapCenterRequest
 }: ExpandableMapWidgetProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const { isExpanded, setIsExpanded } = useItineraryUI();
   const [focusedDestinationId, setFocusedDestinationId] = useState<string | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
-  const destinationRefs = useRef<{ [key: string]: HTMLDivElement }>({});
+  // destinationRefs used only by removed side panel components; keep placeholder if needed in future
+  // const destinationRefs = useRef<{ [key: string]: HTMLDivElement }>({});
   const googleMapRef = useRef<google.maps.Map | null>(null);
   
   // Calendar responsiveness
@@ -278,7 +285,7 @@ export default function ExpandableMapWidget({
 
         {/* Expanded Header */}
         {isExpanded && (
-          <div className="absolute top-0 left-0 right-0 z-60 bg-white border-b border-gray-200 px-6 py-4">
+          <div className="absolute top-0 left-0 right-0 bg-white border-b border-gray-200 px-6 py-4" style={{ zIndex: 70 }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -309,106 +316,69 @@ export default function ExpandableMapWidget({
           </div>
         )}
 
-        {/* Side Panel */}
+        {/* Side Panel with Tabs */}
+        {isExpanded && onUpdateTrip && (
+          <div className="absolute top-20 right-0 bottom-0 w-1/3 bg-white border-l border-gray-200 shadow-xl overflow-hidden" style={{ zIndex: 70 }}>
+            <ExpandedMapSidePanel
+              trip={trip}
+              onUpdateTrip={onUpdateTrip}
+              onRemoveDestination={onRemoveDestination}
+              onActiveDay={onActiveDay}
+              onDestinationMapCenterRequest={onDestinationMapCenterRequest}
+            />
+          </div>
+        )}
+
+        {/* Bottom Calendar */}
         {isExpanded && (
-          <>
-            <div className="absolute top-20 right-0 bottom-0 w-1/3 bg-white border-l border-gray-200 shadow-xl overflow-hidden flex flex-col z-60">
-              <div className="p-4 border-b border-gray-200">
-                <h3 className="font-semibold text-gray-900 mb-2">Quick Actions</h3>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => onAddDestination && onAddDestination({ name: 'New Destination', nights: 0, lodging: '', estimatedCost: 0, startDate: trip.startDate, endDate: trip.endDate })}
-                    className="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200 text-sm"
-                  >
-                    <div className="font-medium text-blue-900">Add Destination</div>
-                    <div className="text-blue-700 text-xs">Plan your next stop</div>
-                  </button>
-                  <button className="w-full text-left p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200 text-sm" onClick={() => alert('Use timeline to add activities')}>
-                    <div className="font-medium text-green-900">Add Activity</div>
-                    <div className="text-green-700 text-xs">Plan what to do</div>
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex-1 overflow-hidden">
-                <CompactEditor
-                  trip={trip}
-                  destinations={destinations}
-                  selectedDay={selectedDay}
-                  onUpdateDestination={(d) => onUpdateDestination && onUpdateDestination(d)}
-                  onRemoveDestination={(id) => onRemoveDestination && onRemoveDestination(id)}
-                  onAddDestination={(d) => onAddDestination && onAddDestination(d)}
-                  onDestinationClick={(d) => onDestinationClick && onDestinationClick(d)}
-                />
-              </div>
-
-              <div className="h-1/3 border-t border-gray-100 overflow-auto">
-                <TimelineView
-                  trip={trip}
-                  activeDestinationId={focusedDestinationId ?? ''}
-                  activeDay={selectedDay ? selectedDay.id : ''}
-                  destinationRefs={destinationRefs}
-                  onDaysUpdate={(updatedDays) => {
-                    if (onDaysUpdate) onDaysUpdate(updatedDays);
-                  }}
-                  onDaySelect={(dayId) => {
-                    const day = trip.days.find(d => d.id === dayId);
-                    if (day && onDaySelect) onDaySelect(day);
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Bottom Calendar */}
-            <div className="absolute left-0 bottom-0 z-60 pb-2" style={{ width: '66.666667%' }}>
+          <div className="absolute left-0 bottom-0 pb-2" style={{ width: '66.666667%', zIndex: 70 }}>
+            <div
+              ref={calendarContainerRef}
+              className="mx-auto"
+              style={{
+                paddingLeft: `${SIDE_PADDING}px`,
+                paddingRight: `${SIDE_PADDING}px`,
+                width: '100%',
+                boxSizing: 'border-box',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                background: 'transparent',
+              }}
+            >
               <div
-                ref={calendarContainerRef}
-                className="mx-auto"
+                className="relative"
                 style={{
-                  paddingLeft: `${SIDE_PADDING}px`,
-                  paddingRight: `${SIDE_PADDING}px`,
                   width: '100%',
-                  boxSizing: 'border-box',
+                  overflowX: calendarScrollable ? 'auto' : 'visible',
+                  WebkitOverflowScrolling: 'touch',
                   display: 'flex',
                   justifyContent: 'center',
-                  alignItems: 'center',
                   background: 'transparent',
                 }}
               >
                 <div
-                  className="relative"
+                  ref={calendarInnerRef}
                   style={{
-                    width: '100%',
-                    overflowX: calendarScrollable ? 'auto' : 'visible',
-                    WebkitOverflowScrolling: 'touch',
-                    display: 'flex',
-                    justifyContent: 'center',
+                    transform: `scale(${calendarScale})`,
+                    transformOrigin: 'center bottom',
+                    transition: 'transform 160ms ease-out',
+                    display: 'inline-block',
                     background: 'transparent',
                   }}
                 >
-                  <div
-                    ref={calendarInnerRef}
-                    style={{
-                      transform: `scale(${calendarScale})`,
-                      transformOrigin: 'center bottom',
-                      transition: 'transform 160ms ease-out',
-                      display: 'inline-block',
-                      background: 'transparent',
-                    }}
-                  >
-                    <CalendarStrip
-                      days={trip.days}
-                      activeDay={selectedDay ? selectedDay.id : ''}
-                      onDaySelect={(dayId: string) => onDaySelect && onDaySelect(trip.days.find(d => d.id === dayId) as Day)}
-                      trip={trip}
-                      transparent
-                      centered
-                    />
-                  </div>
+                  <CalendarStrip
+                    days={trip.days}
+                    activeDay={selectedDay ? selectedDay.id : ''}
+                    onDaySelect={(dayId: string) => onDaySelect && onDaySelect(trip.days.find(d => d.id === dayId) as Day)}
+                    trip={trip}
+                    transparent
+                    centered
+                  />
                 </div>
               </div>
             </div>
-          </>
+          </div>
         )}
       </div>
     </>

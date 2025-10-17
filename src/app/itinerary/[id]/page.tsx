@@ -11,6 +11,7 @@ import EditTripModal from '@/components/itinerary/EditTripModal';
 import ExpandableMapWidget from '@/components/map/ExpandableMapWidget';
 import { Trip, Destination, Activity, generateDays } from '@/types/itinerary';
 import { PREMIUM_COLOR_PALETTE } from '@/utils/colors';
+import { ItineraryUIProvider } from '@/contexts/ItineraryUIContext';
 import Link from 'next/link';
 
 export default function TripDetailPage() {
@@ -497,7 +498,7 @@ export default function TripDetailPage() {
   const selectedDay = trip.days?.find(day => day.id === selectedDayId);
 
   return (
-    <>
+    <ItineraryUIProvider>
       <Header />
   <div className="h-screen flex flex-col overflow-hidden">
         {/* Trip Header with Edit Button */}
@@ -580,6 +581,7 @@ export default function TripDetailPage() {
         }}
         centerOn={mapCenterTarget}
         onCentered={() => setTimeout(() => setMapCenterTarget(null), 300)}
+        onUpdateTrip={handleUpdateTrip}
         onUpdateDestination={(updated) => {
           handleUpdateTrip({ ...trip, destinations: trip.destinations.map(d => d.id === updated.id ? updated : d), updatedAt: new Date().toISOString() });
         }}
@@ -595,7 +597,14 @@ export default function TripDetailPage() {
           const updatedTrip = { ...trip, days: updatedDays, updatedAt: new Date().toISOString() };
           handleUpdateTrip(updatedTrip);
         }}
+        onActiveDay={(dayId) => {
+          const day = trip.days.find(d => d.id === dayId);
+          setMapSelectedDay(day || null);
+        }}
+        onDestinationMapCenterRequest={(coords) => {
+          setMapCenterTarget(coords);
+        }}
       />
-    </>
+    </ItineraryUIProvider>
   );
 }
