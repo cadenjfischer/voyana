@@ -48,6 +48,14 @@ export default function ExpandableMapWidget({
   // destinationRefs used only by removed side panel components; keep placeholder if needed in future
   // const destinationRefs = useRef<{ [key: string]: HTMLDivElement }>({});
   const googleMapRef = useRef<google.maps.Map | null>(null);
+  // Zoom to a single destination
+  const zoomToDestination = (destination: Destination) => {
+    if (!googleMapRef.current || !destination.coordinates) return;
+    const map = googleMapRef.current;
+    const coords = destination.coordinates;
+    map.setCenter(coords);
+    map.setZoom(10);
+  };
   // Remember mini-map camera so collapsing restores exactly the same view
   const miniCameraRef = useRef<{ center: google.maps.LatLngLiteral; zoom: number } | null>(null);
   const skipNextMiniFitRef = useRef<boolean>(false);
@@ -75,6 +83,7 @@ export default function ExpandableMapWidget({
     return () => window.removeEventListener('resize', updateMiniMapHeight);
   }, []);
 
+  // Calendar scale/responsiveness
   useEffect(() => {
     const container = calendarContainerRef.current;
     const inner = calendarInnerRef.current;
@@ -87,7 +96,6 @@ export default function ExpandableMapWidget({
       const available = containerRect.width - SIDE_PADDING * 2;
       const desired = Math.min(1, (available / naturalWidth) / SCALE_BUFFER);
       const scale = Math.max(desired, MIN_CALENDAR_SCALE);
-      
       setCalendarScale(scale);
       setCalendarScrollable(desired < MIN_CALENDAR_SCALE);
     };
@@ -96,22 +104,10 @@ export default function ExpandableMapWidget({
     ro.observe(container);
     ro.observe(inner);
     requestAnimationFrame(updateScale);
-
     return () => ro.disconnect();
   }, [isExpanded, calendarScale]);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isExpanded) {
-        event.preventDefault();
-        setIsExpanded(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isExpanded]);
-
+  // Focus first destination on load/map ready
   useEffect(() => {
     if (destinations && destinations.length > 0) {
       setFocusedDestinationId(destinations[0].id);
@@ -120,10 +116,7 @@ export default function ExpandableMapWidget({
     }
   }, [destinations, isMapReady]);
 
-  // Fit bounds when destinations change or layout changes (expanded/mini)
-  // When expanded, account for the right-side panel (1/3 width) and bottom calendar overlay.
-  // We slightly inflate the geographic bounds so the resulting fit isn't overly tight
-  // without doing a post-fit zoom tweak.
+  // Fit bounds when destinations or expanded state change
   useEffect(() => {
     if (!googleMapRef.current || destinations.length === 0) return;
 
@@ -134,42 +127,29 @@ export default function ExpandableMapWidget({
     if (coords.length === 0) return;
 
     const bounds = new google.maps.LatLngBounds();
-    coords.forEach(coord => bounds.extend(coord));
+    coords.forEach(c => bounds.extend(c));
 
-    // Inflate bounds by a factor so fitBounds picks a slightly wider zoom naturally.
     const inflateBounds = (b: google.maps.LatLngBounds, factor: number) => {
       const ne = b.getNorthEast();
       const sw = b.getSouthWest();
       let latSpan = ne.lat() - sw.lat();
       let lngSpan = ne.lng() - sw.lng();
-
-      // For single-point or nearly identical points, use a sensible minimum span.
-      const MIN_SPAN = 0.25; // ~25km at equator; adjust as needed
+      const MIN_SPAN = 0.25;
       if (latSpan < MIN_SPAN) latSpan = MIN_SPAN;
       if (lngSpan < MIN_SPAN) lngSpan = MIN_SPAN;
-
       const latPad = (latSpan * (factor - 1)) / 2;
       const lngPad = (lngSpan * (factor - 1)) / 2;
-
-      const inflated = new google.maps.LatLngBounds(
+      return new google.maps.LatLngBounds(
         new google.maps.LatLng(sw.lat() - latPad, sw.lng() - lngPad),
         new google.maps.LatLng(ne.lat() + latPad, ne.lng() + lngPad)
       );
-      return inflated;
     };
 
     const padding = isExpanded
-      ? {
-          top: 130, // header height buffer
-          bottom: 190, // calendar overlay clearance
-          left: 110,
-          right: Math.round(window.innerWidth / 3) + 180, // shift view into left 2/3
-        }
+      ? { top: 130, bottom: 190, left: 110, right: Math.round(window.innerWidth / 3) + 180 }
       : { top: 24, bottom: 24, left: 24, right: 24 };
 
     const map = googleMapRef.current;
-
-    // If we just collapsed from expanded → mini, restore the exact mini camera once
     if (!isExpanded && skipNextMiniFitRef.current) {
       const prev = miniCameraRef.current;
       if (prev) {
@@ -179,12 +159,12 @@ export default function ExpandableMapWidget({
       skipNextMiniFitRef.current = false;
       return;
     }
-  // Only inflate in expanded mode; mini map should be tighter
-  const targetBounds = isExpanded ? inflateBounds(bounds, 1.25) : bounds;
-  map.fitBounds(targetBounds, padding);
+
+    const targetBounds = isExpanded ? inflateBounds(bounds, 1.25) : bounds;
+    map.fitBounds(targetBounds, padding);
   }, [destinations, isMapReady, isExpanded]);
 
-  // Resize map without changing zoom/center (prevents over-zoom on expand)
+  // Resize helper that doesn't change camera
   const resizeWithoutCameraChange = () => {
     if (!googleMapRef.current) return;
     google.maps.event.trigger(googleMapRef.current, 'resize');
@@ -192,26 +172,26 @@ export default function ExpandableMapWidget({
 
   const handleMapClick = () => {
     if (!isExpanded) {
-      // Save current mini camera so we can restore it on collapse
       if (googleMapRef.current) {
         const c = googleMapRef.current.getCenter();
         const z = googleMapRef.current.getZoom() ?? 2;
         if (c) miniCameraRef.current = { center: { lat: c.lat(), lng: c.lng() }, zoom: z };
       }
       setIsExpanded(true);
-      // Notify Google the container size changed so fitBounds can compute correctly
       setTimeout(() => resizeWithoutCameraChange(), 60);
     }
   };
 
   const handleCloseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // On collapse, skip the next mini fit and restore the saved mini camera
     skipNextMiniFitRef.current = true;
     setIsExpanded(false);
-    // On collapse, just notify Google the container size changed
     setTimeout(() => resizeWithoutCameraChange(), 50);
   };
+
+  // ...existing code...
+
+  // Place the return statement at the end of the component
   return (
     <>
       {/* Backdrop */}
@@ -222,6 +202,8 @@ export default function ExpandableMapWidget({
           className="fixed inset-0 bg-black opacity-40 z-45"
         />
       )}
+
+      {/* Removed duplicate/invalid block above. Correct content begins with Mini Map Header */}
 
       {/* Mini Map Header */}
       <div 
