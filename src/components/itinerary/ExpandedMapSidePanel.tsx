@@ -15,6 +15,7 @@ interface ExpandedMapSidePanelProps {
   onRemoveDestination?: (destinationId: string) => void;
   onActiveDay?: (dayId: string) => void;
   onDestinationMapCenterRequest?: (coords: { lat: number; lng: number } | null) => void;
+  onAddDestination?: (destination: Omit<Destination, 'id' | 'order'>) => void;
 }
 
 export default function ExpandedMapSidePanel({
@@ -22,7 +23,8 @@ export default function ExpandedMapSidePanel({
   onUpdateTrip,
   onRemoveDestination,
   onActiveDay,
-  onDestinationMapCenterRequest
+  onDestinationMapCenterRequest,
+  onAddDestination
 }: ExpandedMapSidePanelProps) {
   const [activeTab, setActiveTab] = useState<'destinations' | 'daybyday'>('destinations');
   const { selectedDay, setSelectedDay } = useItineraryUI();
@@ -63,17 +65,11 @@ export default function ExpandedMapSidePanel({
     });
   };
 
+  // Use the parent's onAddDestination which handles geocoding and color assignment
   const handleAddDestination = (destination: Omit<Destination, 'id' | 'order'>) => {
-    const newDestination: Destination = {
-      ...destination,
-      id: Date.now().toString(),
-      order: trip.destinations.length
-    };
-    onUpdateTrip({
-      ...trip,
-      destinations: [...trip.destinations, newDestination],
-      updatedAt: new Date().toISOString()
-    });
+    if (onAddDestination) {
+      onAddDestination(destination);
+    }
   };
 
   const handleUpdateDays = (days: Day[]) => {
