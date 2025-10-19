@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const GOOGLE_PLACES_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -10,8 +10,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ results: [], status: 'INVALID_REQUEST' });
   }
 
-  if (!GOOGLE_PLACES_API_KEY) {
-    console.error('Google Places API key not found');
+  if (!MAPBOX_TOKEN) {
+    console.error('Mapbox token not found');
     return NextResponse.json({ 
       error: 'API key not configured',
       results: [],
@@ -20,51 +20,51 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const params = new URLSearchParams({
-      query: query.trim(),
-      key: GOOGLE_PLACES_API_KEY,
-      language: 'en'
-    });
+    const types = ['country', 'region', 'place', 'locality', 'neighborhood', 'poi'].join(',');
+    const url = new URL(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query.trim())}.json`);
+    url.searchParams.set('access_token', MAPBOX_TOKEN);
+    url.searchParams.set('autocomplete', 'true');
+    url.searchParams.set('limit', '8');
+    url.searchParams.set('language', 'en');
+    url.searchParams.set('types', types);
 
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/place/textsearch/json?${params}`
-    );
-
+    const response = await fetch(url.toString());
     if (!response.ok) {
-      throw new Error(`Google Places API error: ${response.status}`);
+      throw new Error(`Mapbox Geocoding error: ${response.status}`);
     }
 
     const data = await response.json();
-    
-    // Filter for relevant place types
-    const relevantTypes = [
-      'locality', 
-      'administrative_area_level_1', 
-      'country', 
-      'tourist_attraction',
-      'establishment',
-      'point_of_interest',
-      'natural_feature',
-      'colloquial_area',
-      'sublocality',
-      'neighborhood'
-    ];
 
-    // Be more permissive - include all results first, then filter out obvious non-destinations
-    const excludedTypes = ['route', 'street_number', 'premise'];
-    const filteredResults = data.results
-      ?.filter((place: { types?: string[] }) => 
-        !place.types?.some((type: string) => excludedTypes.includes(type))
-      )
-      .slice(0, 8) || [];
+    // Map Mapbox features to GooglePlace-like shape for UI compatibility
+    const results = (data.features || []).map((f: any) => {
+      const [lng, lat] = f.center || [0, 0];
+      const name = f.text || f.place_name || '';
+      const formatted = f.place_name || name;
+      const placeId = f.id || `${lng},${lat}`;
+      const typesFromMapbox = (f.place_type || []).map((t: string) => {
+        switch (t) {
+          case 'country': return 'country';
+          case 'region': return 'administrative_area_level_1';
+          case 'place': return 'locality';
+          case 'locality': return 'sublocality';
+          case 'neighborhood': return 'neighborhood';
+          case 'poi': return 'point_of_interest';
+          default: return 'establishment';
+        }
+      });
 
-    return NextResponse.json({
-      results: filteredResults,
-      status: data.status || 'OK'
+      return {
+        place_id: placeId,
+        name,
+        formatted_address: formatted,
+        geometry: { location: { lat, lng } },
+        types: typesFromMapbox
+      };
     });
 
+    return NextResponse.json({ results, status: 'OK' });
   } catch (error) {
-    console.error('Google Places API error:', error);
+    console.error('Mapbox Geocoding error:', error);
     return NextResponse.json({ 
       error: 'Search failed',
       results: [],

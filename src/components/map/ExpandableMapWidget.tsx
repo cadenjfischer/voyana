@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import GoogleMapView from '@/components/map/GoogleMapView';
+import mapboxgl from 'mapbox-gl';
+import SimpleMap from '@/components/map/SimpleMap';
 import CalendarStrip from '@/components/itinerary/CalendarStrip';
-import ExpandedMapSidePanel from '@/components/itinerary/ExpandedMapSidePanel';
+import TimelineView from '@/components/itinerary/TimelineView';
+import CompactEditor from './CompactEditor';
 import { Destination, Day, Activity } from '@/types/itinerary';
-import { useItineraryUI } from '@/contexts/ItineraryUIContext';
+import { resolveColorHex } from '@/utils/colors';
 
 interface ExpandableMapWidgetProps {
   trip: import('@/types/itinerary').Trip;
@@ -16,13 +18,11 @@ interface ExpandableMapWidgetProps {
   centerOn?: { lat: number; lng: number } | null;
   onCentered?: () => void;
   onDaySelect?: (day: Day) => void;
+  // Editing hooks when map is expanded
   onUpdateDestination?: (destination: Destination) => void;
   onRemoveDestination?: (destinationId: string) => void;
   onAddDestination?: (destination: Omit<Destination, 'id' | 'order'>) => void;
   onDaysUpdate?: (days: Day[]) => void;
-  onUpdateTrip?: (trip: import('@/types/itinerary').Trip) => void;
-  onActiveDay?: (dayId: string) => void;
-  onDestinationMapCenterRequest?: (coords: { lat: number; lng: number } | null) => void;
 }
 
 export default function ExpandableMapWidget({
@@ -37,38 +37,27 @@ export default function ExpandableMapWidget({
   onUpdateDestination,
   onRemoveDestination,
   onAddDestination,
-  onDaysUpdate,
-  onUpdateTrip,
-  onActiveDay,
-  onDestinationMapCenterRequest
+  onDaysUpdate
 }: ExpandableMapWidgetProps) {
-  const { isExpanded, setIsExpanded, selectedDay: selectedDayIndex, setSelectedDay: setSelectedDayIndex } = useItineraryUI();
+  const [isMounted, setIsMounted] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isHidingOverlay, setIsHidingOverlay] = useState(false);
   const [focusedDestinationId, setFocusedDestinationId] = useState<string | null>(null);
-  const [isMapReady, setIsMapReady] = useState(false);
-  // destinationRefs used only by removed side panel components; keep placeholder if needed in future
-  // const destinationRefs = useRef<{ [key: string]: HTMLDivElement }>({});
-  const googleMapRef = useRef<google.maps.Map | null>(null);
-  // Zoom to a single destination
-  const zoomToDestination = (destination: Destination) => {
-    if (!googleMapRef.current || !destination.coordinates) return;
-    const map = googleMapRef.current;
-    const coords = destination.coordinates;
-    map.setCenter(coords);
-    map.setZoom(10);
-  };
-  // Remember mini-map camera so collapsing restores exactly the same view
-  const miniCameraRef = useRef<{ center: google.maps.LatLngLiteral; zoom: number } | null>(null);
-  const skipNextMiniFitRef = useRef<boolean>(false);
-  
-  // Calendar responsiveness
+  const destinationRefs = useRef<{ [key: string]: HTMLDivElement }>({});
+  // Use a single shared map instance
+  const sharedMapRef = useRef<mapboxgl.Map | null>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [shouldResetView, setShouldResetView] = useState(false);
+  // Calendar responsiveness: scale down to a min scale and enable scrolling when there's no room
   const calendarContainerRef = useRef<HTMLDivElement | null>(null);
   const calendarInnerRef = useRef<HTMLDivElement | null>(null);
   const [calendarScale, setCalendarScale] = useState<number>(1);
   const [calendarScrollable, setCalendarScrollable] = useState<boolean>(false);
-  const MIN_CALENDAR_SCALE = 0.85;
-  const SIDE_PADDING = 24;
-  const SCALE_BUFFER = 1.05;
+  const MIN_CALENDAR_SCALE = 0.85; // scale floor
+  const SIDE_PADDING = 24; // px padding on each side inside the left-2/3 area
+  const SCALE_BUFFER = 1.05; // Add 5% buffer to prevent edge-case overflow
   
+  // Calculate mini map height to match viewport aspect ratio
   const [miniMapHeight, setMiniMapHeight] = useState(200);
   
   useEffect(() => {
@@ -83,7 +72,6 @@ export default function ExpandableMapWidget({
     return () => window.removeEventListener('resize', updateMiniMapHeight);
   }, []);
 
-  // Calendar scale/responsiveness
   useEffect(() => {
     const container = calendarContainerRef.current;
     const inner = calendarInnerRef.current;
@@ -92,122 +80,191 @@ export default function ExpandableMapWidget({
     const updateScale = () => {
       const containerRect = container.getBoundingClientRect();
       const innerRect = inner.getBoundingClientRect();
-      const naturalWidth = innerRect.width / (calendarScale || 1);
+      
+      // Get the actual natural width of the calendar content
+      const naturalWidth = innerRect.width / (calendarScale || 1); // Reverse current scale to get true width
       const available = containerRect.width - SIDE_PADDING * 2;
+      
+      // desired scale to fit the natural calendar width into available space with buffer
       const desired = Math.min(1, (available / naturalWidth) / SCALE_BUFFER);
       const scale = Math.max(desired, MIN_CALENDAR_SCALE);
+      
       setCalendarScale(scale);
+      // if desired is smaller than the min scale, we need to allow scrolling
       setCalendarScrollable(desired < MIN_CALENDAR_SCALE);
     };
 
-    const ro = new ResizeObserver(() => updateScale());
-    ro.observe(container);
-    ro.observe(inner);
-    requestAnimationFrame(updateScale);
-    return () => ro.disconnect();
-  }, [isExpanded, calendarScale]);
+    const ro = new ResizeObserver(() => {
+      updateScale();
+    });
 
-  // Focus first destination on load/map ready
+    ro.observe(container);
+    // Also observe the inner content in case it changes
+    ro.observe(inner);
+    
+    // Initial update
+    requestAnimationFrame(updateScale);
+
+    return () => ro.disconnect();
+  }, [isMounted, isExpanded, calendarScale]);  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Close map with Escape
+      if (event.key === 'Escape' && isMounted) {
+        event.preventDefault();
+        handleCloseClick(event as any);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMounted, isExpanded]);
+
+  // Default focused destination to the top of the list whenever destinations change
   useEffect(() => {
     if (destinations && destinations.length > 0) {
       setFocusedDestinationId(destinations[0].id);
     } else {
       setFocusedDestinationId(null);
     }
-  }, [destinations, isMapReady]);
+  }, [destinations]);
 
-  // Fit bounds when destinations or expanded state change
+  // Resize map whenever expansion state changes
   useEffect(() => {
-    if (!googleMapRef.current || destinations.length === 0) return;
-
-    const coords = destinations
-      .filter(d => d.coordinates)
-      .map(d => ({ lat: d.coordinates!.lat, lng: d.coordinates!.lng }));
-
-    if (coords.length === 0) return;
-
-    const bounds = new google.maps.LatLngBounds();
-    coords.forEach(c => bounds.extend(c));
-
-    const inflateBounds = (b: google.maps.LatLngBounds, factor: number) => {
-      const ne = b.getNorthEast();
-      const sw = b.getSouthWest();
-      let latSpan = ne.lat() - sw.lat();
-      let lngSpan = ne.lng() - sw.lng();
-      const MIN_SPAN = 0.25;
-      if (latSpan < MIN_SPAN) latSpan = MIN_SPAN;
-      if (lngSpan < MIN_SPAN) lngSpan = MIN_SPAN;
-      const latPad = (latSpan * (factor - 1)) / 2;
-      const lngPad = (lngSpan * (factor - 1)) / 2;
-      return new google.maps.LatLngBounds(
-        new google.maps.LatLng(sw.lat() - latPad, sw.lng() - lngPad),
-        new google.maps.LatLng(ne.lat() + latPad, ne.lng() + lngPad)
-      );
-    };
-
-    const padding = isExpanded
-      ? { top: 130, bottom: 190, left: 110, right: Math.round(window.innerWidth / 3) + 180 }
-      : { top: 24, bottom: 24, left: 24, right: 24 };
-
-    const map = googleMapRef.current;
-    if (!isExpanded && skipNextMiniFitRef.current) {
-      const prev = miniCameraRef.current;
-      if (prev) {
-        map.setZoom(prev.zoom);
-        map.setCenter(prev.center);
+    if (!sharedMapRef.current) return;
+    
+    // Trigger resize immediately when state changes
+    sharedMapRef.current.resize();
+    
+    // Continue resizing during the transition to keep up with container size changes
+    const resizeInterval = setInterval(() => {
+      if (sharedMapRef.current) {
+        sharedMapRef.current.resize();
       }
-      skipNextMiniFitRef.current = false;
-      return;
+    }, 16); // Resize every frame (~60fps) during transition
+    
+    // Clear interval after transition completes
+    const timeout = setTimeout(() => {
+      clearInterval(resizeInterval);
+      // Final resize to ensure it's perfect
+      if (sharedMapRef.current) {
+        sharedMapRef.current.resize();
+      }
+    }, 400);
+    
+    return () => {
+      clearInterval(resizeInterval);
+      clearTimeout(timeout);
+    };
+  }, [isExpanded]);
+
+  // Auto-fit when destinations change (new destination added)
+  useEffect(() => {
+    if (destinations.length > 0 && isMapLoaded) {
+      setShouldResetView(true);
     }
+  }, [destinations.length, isMapLoaded]); // Only trigger on destination count change
 
-    const targetBounds = isExpanded ? inflateBounds(bounds, 1.25) : bounds;
-    map.fitBounds(targetBounds, padding);
-  }, [destinations, isMapReady, isExpanded]);
+  // Reset the shouldResetView flag after map has updated
+  useEffect(() => {
+    if (shouldResetView && isMapLoaded) {
+      const timer = setTimeout(() => {
+        setShouldResetView(false);
+      }, 1000); // Give map time to animate to new bounds
+      return () => clearTimeout(timer);
+    }
+  }, [shouldResetView, isMapLoaded]);
 
-  // Resize helper that doesn't change camera
-  const resizeWithoutCameraChange = () => {
-    if (!googleMapRef.current) return;
-    google.maps.event.trigger(googleMapRef.current, 'resize');
+  const openFromMiniMap = () => {
+    // When not expanded, the map container is at mini position already
+    if (!isExpanded && isMapLoaded && sharedMapRef.current) {
+      setIsMounted(true);
+      
+      // Calculate bounds and trigger fitBounds immediately
+      const coords = destinations
+        .map(d => d.coordinates)
+        .filter((c): c is { lat: number; lng: number } => !!c);
+      
+      if (coords.length > 0) {
+        const bounds = new mapboxgl.LngLatBounds();
+        coords.forEach(c => bounds.extend([c.lng, c.lat]));
+        
+        // Trigger fitBounds with expanded padding immediately
+        // Increased right padding to push destinations left, away from the side panel
+        const rightPanelWidth = window.innerWidth / 3;
+        sharedMapRef.current.fitBounds(bounds, {
+          padding: { top: 80, bottom: 120, left: 80, right: rightPanelWidth + 120 },
+          duration: 600,
+          maxZoom: 22,
+          easing: (t) => t * (2 - t) // easeOutQuad to match container
+        });
+      }
+      
+      requestAnimationFrame(() => {
+        setIsExpanded(true);
+      });
+    }
   };
 
   const handleMapClick = () => {
-    if (!isExpanded) {
-      if (googleMapRef.current) {
-        const c = googleMapRef.current.getCenter();
-        const z = googleMapRef.current.getZoom() ?? 2;
-        if (c) miniCameraRef.current = { center: { lat: c.lat(), lng: c.lng() }, zoom: z };
-      }
-      setIsExpanded(true);
-      setTimeout(() => resizeWithoutCameraChange(), 60);
-    }
+    openFromMiniMap();
+  };
+
+  const handleResetPosition = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShouldResetView(true);
   };
 
   const handleCloseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    skipNextMiniFitRef.current = true;
+    
+    // Calculate bounds and trigger fitBounds immediately with mini padding
+    if (sharedMapRef.current && isMapLoaded) {
+      const coords = destinations
+        .map(d => d.coordinates)
+        .filter((c): c is { lat: number; lng: number } => !!c);
+      
+      if (coords.length > 0) {
+        const bounds = new mapboxgl.LngLatBounds();
+        coords.forEach(c => bounds.extend([c.lng, c.lat]));
+        
+        // Trigger fitBounds with mini padding immediately
+        sharedMapRef.current.fitBounds(bounds, {
+          padding: { top: 60, bottom: 60, left: 60, right: 60 },
+          duration: 600,
+          maxZoom: 22,
+          easing: (t) => t * (2 - t) // easeOutQuad to match container
+        });
+      }
+    }
+    
     setIsExpanded(false);
-    setTimeout(() => resizeWithoutCameraChange(), 50);
+    
+    // Wait for animation to complete before unmounting
+    setTimeout(() => {
+      setIsMounted(false);
+    }, 600); // Match camera animation duration
   };
 
-  // ...existing code...
-
-  // Place the return statement at the end of the component
   return (
     <>
-      {/* Backdrop */}
-      {isExpanded && (
+      {/* Backdrop - only visible when expanded */}
+      {isMounted && isExpanded && (
         <div 
           aria-hidden
           onClick={handleCloseClick}
-          className="fixed inset-0 bg-black opacity-40 z-45"
+          className="fixed inset-0 bg-black"
+          style={{ 
+            opacity: 0.4, 
+            pointerEvents: 'auto',
+            zIndex: 45
+          }}
         />
       )}
 
-      {/* Removed duplicate/invalid block above. Correct content begins with Mini Map Header */}
-
-      {/* Mini Map Header */}
+      {/* Mini Map Header - positioned above the map container and animates with it */}
       <div 
-        className="fixed bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg z-50"
+        className="fixed bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
         style={{
           top: isExpanded ? '-48px' : `calc(100vh - ${miniMapHeight + 54}px)`,
           left: isExpanded ? 0 : '24px',
@@ -215,6 +272,9 @@ export default function ExpandableMapWidget({
           height: '48px',
           borderTopLeftRadius: '16px',
           borderTopRightRadius: '16px',
+          zIndex: 50,
+          transition: isMounted ? 'all 600ms cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none',
+          willChange: isMounted ? 'top, left, width' : 'auto',
           pointerEvents: isExpanded ? 'none' : 'auto',
           opacity: isExpanded ? 0 : 1,
         }}
@@ -227,19 +287,7 @@ export default function ExpandableMapWidget({
             <span className="font-semibold text-sm">Trip Map</span>
           </div>
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (googleMapRef.current) {
-                const coords = destinations
-                  .filter(d => d.coordinates)
-                  .map(d => ({ lat: d.coordinates!.lat, lng: d.coordinates!.lng }));
-                if (coords.length > 0) {
-                  const bounds = new google.maps.LatLngBounds();
-                  coords.forEach(coord => bounds.extend(coord));
-                  googleMapRef.current.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
-                }
-              }
-            }}
+            onClick={handleResetPosition}
             className="flex items-center gap-1.5 text-xs bg-white/20 hover:bg-white/30 px-2.5 py-1 rounded-md transition-colors duration-200"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -250,9 +298,9 @@ export default function ExpandableMapWidget({
         </div>
       </div>
 
-      {/* Map Container - NO TRANSITION */}
+      {/* Single Map Container - moves between mini and expanded positions */}
       <div
-        className="fixed bg-white overflow-hidden shadow-2xl pointer-events-auto z-50"
+        className="fixed bg-white overflow-hidden shadow-2xl pointer-events-auto"
         style={{
           top: isExpanded ? 0 : `calc(100vh - ${miniMapHeight + 6}px)`,
           left: isExpanded ? 0 : '24px',
@@ -264,18 +312,39 @@ export default function ExpandableMapWidget({
           borderTopRightRadius: isExpanded ? '0px' : '0px',
           borderBottomLeftRadius: isExpanded ? '0px' : '16px',
           borderBottomRightRadius: isExpanded ? '0px' : '16px',
+          transition: isMounted ? 'all 600ms cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none',
+          zIndex: 50,
+          willChange: isMounted ? 'top, left, width, height, border-radius' : 'auto',
         }}
       >
-        {/* Google Map */}
-  <div className={`absolute left-0 right-0 top-0 bottom-0`}>
-          <GoogleMapView
+        {/* Map - renders once, stays mounted */}
+        <div className="absolute left-0 right-0 bottom-0 top-0">
+          <SimpleMap 
             destinations={destinations}
+            focusedDestination={isExpanded ? destinations.find(d => d.id === focusedDestinationId) ?? null : null}
             onDestinationClick={onDestinationClick}
             className="w-full h-full"
-            onMapReady={(map) => {
-              googleMapRef.current = map;
-              setIsMapReady(true);
+            centerOn={centerOn}
+            onCentered={onCentered}
+            fitBoundsPadding={isExpanded 
+              ? { top: 100, bottom: 140, left: 60, right: (window.innerWidth / 3) + 60 }
+              : { top: 50, bottom: 40, left: 40, right: 40 }
+            }
+            maxZoom={22}
+            onMapReady={(map) => { 
+              sharedMapRef.current = map;
+              // Check if map is already loaded, or wait for it to load
+              if (map.loaded()) {
+                setIsMapLoaded(true);
+              } else {
+                map.once('load', () => {
+                  setIsMapLoaded(true);
+                });
+              }
             }}
+            disableAutoFit={!shouldResetView}
+            animateFitBounds={true}
+            forceRefreshKey={shouldResetView ? Date.now() : undefined}
           />
         </div>
 
@@ -298,9 +367,9 @@ export default function ExpandableMapWidget({
           </div>
         )}
 
-        {/* Expanded Header */}
+        {/* Expanded Header - overlays on top of map */}
         {isExpanded && (
-          <div className="absolute top-0 left-0 right-0 bg-white border-b border-gray-200 px-6 py-4" style={{ zIndex: 70 }}>
+          <div className="absolute top-0 left-0 right-0 z-60 bg-white border-b border-gray-200 px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -331,80 +400,110 @@ export default function ExpandableMapWidget({
           </div>
         )}
 
-        {/* Side Panel with Tabs */}
-        {isExpanded && onUpdateTrip && (
-          <div className="absolute top-20 right-0 bottom-0 w-1/3 bg-white border-l border-gray-200 shadow-xl overflow-hidden" style={{ zIndex: 70 }}>
-            <ExpandedMapSidePanel
-              trip={trip}
-              onUpdateTrip={onUpdateTrip}
-              onRemoveDestination={onRemoveDestination}
-              onActiveDay={onActiveDay}
-              onDestinationMapCenterRequest={onDestinationMapCenterRequest}
-              onAddDestination={onAddDestination}
-            />
-          </div>
-        )}
-
-        {/* Bottom Calendar */}
+        {/* Side Panel - only visible when expanded */}
         {isExpanded && (
-          <div className="absolute left-0 bottom-0 pb-2" style={{ width: '66.666667%', zIndex: 70 }}>
-            <div
-              ref={calendarContainerRef}
-              className="mx-auto"
-              style={{
-                paddingLeft: `${SIDE_PADDING}px`,
-                paddingRight: `${SIDE_PADDING}px`,
-                width: '100%',
-                boxSizing: 'border-box',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                background: 'transparent',
-              }}
-            >
+          <>
+            {/* Side Panel */}
+            <div className="absolute top-20 right-0 bottom-0 w-1/3 bg-white border-l border-gray-200 shadow-xl overflow-hidden flex flex-col z-60">
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="font-semibold text-gray-900 mb-2">Quick Actions</h3>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => onAddDestination && onAddDestination({ name: 'New Destination', nights: 0, lodging: '', estimatedCost: 0, startDate: trip.startDate, endDate: trip.endDate })}
+                    className="w-full text-left p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200 text-sm"
+                  >
+                    <div className="font-medium text-blue-900">Add Destination</div>
+                    <div className="text-blue-700 text-xs">Plan your next stop</div>
+                  </button>
+                  <button className="w-full text-left p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200 text-sm" onClick={() => alert('Use timeline to add activities')}>
+                    <div className="font-medium text-green-900">Add Activity</div>
+                    <div className="text-green-700 text-xs">Plan what to do</div>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-hidden">
+                <CompactEditor
+                  trip={trip}
+                  destinations={destinations}
+                  selectedDay={selectedDay}
+                  onUpdateDestination={(d) => onUpdateDestination && onUpdateDestination(d)}
+                  onRemoveDestination={(id) => onRemoveDestination && onRemoveDestination(id)}
+                  onAddDestination={(d) => onAddDestination && onAddDestination(d)}
+                  onDestinationClick={(d) => onDestinationClick && onDestinationClick(d)}
+                />
+              </div>
+
+              <div className="h-1/3 border-t border-gray-100 overflow-auto">
+                <TimelineView
+                  trip={trip}
+                  activeDestinationId={focusedDestinationId ?? ''}
+                  activeDay={selectedDay ? selectedDay.id : ''}
+                  destinationRefs={destinationRefs}
+                  onDaysUpdate={(updatedDays) => {
+                    if (onDaysUpdate) onDaysUpdate(updatedDays);
+                  }}
+                  onDaySelect={(dayId) => {
+                    const day = trip.days.find(d => d.id === dayId);
+                    if (day && onDaySelect) onDaySelect(day);
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Bottom Calendar */}
+            <div className="absolute left-0 bottom-0 z-60 pb-2" style={{ width: '66.666667%' }}>
               <div
-                className="relative"
+                ref={calendarContainerRef}
+                className="mx-auto"
                 style={{
+                  paddingLeft: `${SIDE_PADDING}px`,
+                  paddingRight: `${SIDE_PADDING}px`,
                   width: '100%',
-                  overflowX: calendarScrollable ? 'auto' : 'visible',
-                  WebkitOverflowScrolling: 'touch',
+                  boxSizing: 'border-box',
                   display: 'flex',
                   justifyContent: 'center',
+                  alignItems: 'center',
                   background: 'transparent',
                 }}
               >
                 <div
-                  ref={calendarInnerRef}
+                  className="relative"
                   style={{
-                    transform: `scale(${calendarScale})`,
-                    transformOrigin: 'center bottom',
-                    transition: 'transform 160ms ease-out',
-                    display: 'inline-block',
+                    width: '100%',
+                    overflowX: calendarScrollable ? 'auto' : 'visible',
+                    WebkitOverflowScrolling: 'touch',
+                    display: 'flex',
+                    justifyContent: 'center',
                     background: 'transparent',
                   }}
                 >
-                  <CalendarStrip
-                    days={trip.days}
-                    activeDay={selectedDayIndex !== null && trip.days[selectedDayIndex] ? trip.days[selectedDayIndex].id : ''}
-                    onDaySelect={(dayId: string) => {
-                      const dayIndex = trip.days.findIndex(d => d.id === dayId);
-                      if (dayIndex !== -1) {
-                        setSelectedDayIndex(dayIndex);
-                        const day = trip.days[dayIndex];
-                        if (onDaySelect) onDaySelect(day as Day);
-                        if (onActiveDay) onActiveDay(dayId);
-                      }
+                  <div
+                    ref={calendarInnerRef}
+                    style={{
+                      transform: `scale(${calendarScale})`,
+                      transformOrigin: 'center bottom',
+                      transition: 'transform 160ms ease-out',
+                      display: 'inline-block',
+                      background: 'transparent',
                     }}
-                    trip={trip}
-                    transparent
-                    centered
-                  />
+                  >
+                    <CalendarStrip
+                      days={trip.days}
+                      activeDay={selectedDay ? selectedDay.id : ''}
+                      onDaySelect={(dayId: string) => onDaySelect && onDaySelect(trip.days.find(d => d.id === dayId) as Day)}
+                      trip={trip}
+                      transparent
+                      centered
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </>
         )}
       </div>
     </>
   );
 }
+
