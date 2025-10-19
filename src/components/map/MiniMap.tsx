@@ -97,32 +97,30 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
     const map = mapRef.current;
     if (!map || status !== 'loaded') return;
 
+    // Remove existing line layer/source if present (do this BEFORE removing markers)
+    if (map.getLayer('mini-route-line')) map.removeLayer('mini-route-line');
+    if (map.getSource('mini-route-line')) map.removeSource('mini-route-line');
+
     // Remove existing markers
     (map as any).__mini_markers?.forEach((m: mapboxgl.Marker) => m.remove());
     (map as any).__mini_markers = [];
 
     const bounds = new mapboxgl.LngLatBounds();
     let any = false;
+    const lineCoords: [number, number][] = [];
 
     // Use visit order for numbering (1-based)
     const sorted = [...trip.destinations].sort((a, b) => a.order - b.order);
+    
+    // Collect coordinates and marker data
+    const svgMarkers: Array<{lng: number, lat: number, hex: string, number: number, name: string}> = [];
+    
     sorted.forEach((d, i) => {
       const lat = d.coordinates?.lat ?? fallbackCoords[d.id]?.lat;
       const lng = d.coordinates?.lng ?? fallbackCoords[d.id]?.lng;
       if (lat != null && lng != null) {
-        any = true;
-        // Container for marker + label
-        const container = document.createElement('div');
-        container.style.display = 'flex';
-        container.style.alignItems = 'center';
-        container.style.gap = '6px';
-        container.style.pointerEvents = 'auto';
-
-        // Numbered circle
-        const circle = document.createElement('div');
-        circle.style.width = '24px';
-        circle.style.height = '24px';
-        circle.style.borderRadius = '9999px';
+        lineCoords.push([lng, lat]);
+        
         // Match destination color
         const classes = getDestinationColors(d.id, trip.destinations, true);
         const bgToHex: Record<string, string> = {
@@ -145,40 +143,137 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
           'bg-slate-600': '#475569'
         };
         const hex = d.customColor ? resolveColorHex(d.customColor) : (bgToHex[classes.bg] || '#0ea5e9');
-        circle.style.backgroundColor = hex;
-        circle.style.border = '2px solid white';
-        circle.style.boxShadow = '0 2px 6px rgba(0,0,0,0.25)';
-        circle.style.display = 'flex';
-        circle.style.alignItems = 'center';
-        circle.style.justifyContent = 'center';
-        circle.style.color = 'white';
-        circle.style.fontWeight = '700';
-        circle.style.fontSize = '10px';
-        circle.textContent = String(i + 1);
-
-        // Always-visible label with destination name
-        const label = document.createElement('div');
-        label.style.whiteSpace = 'nowrap';
-        label.style.fontSize = '11px';
-        label.style.lineHeight = '1';
-        label.style.padding = '4px 6px';
-        label.style.borderRadius = '6px';
-        label.style.background = 'rgba(255,255,255,0.9)';
-        label.style.border = '1px solid #e5e7eb'; // gray-200
-        label.style.boxShadow = '0 1px 2px rgba(0,0,0,0.12)';
-        label.style.color = '#111827'; // gray-900
-        label.textContent = d.name || '';
-
-        container.appendChild(circle);
-        container.appendChild(label);
-        if (d.name) container.title = d.name;
-
-        const marker = new mapboxgl.Marker({ element: container, anchor: 'left' })
-          .setLngLat([lng, lat])
-          .addTo(map);
-        (map as any).__mini_markers.push(marker);
-        bounds.extend([lng, lat]);
+        
+        svgMarkers.push({
+          lng,
+          lat,
+          hex,
+          number: i + 1,
+          name: d.name || ''
+        });
       }
+    });
+    
+    // Add connecting line between destinations
+    if (lineCoords.length > 1) {
+      any = true;
+      map.addSource('mini-route-line', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: lineCoords
+          }
+        }
+      });
+      
+      map.addLayer({
+        id: 'mini-route-line',
+        type: 'line',
+        source: 'mini-route-line',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#94a3b8',
+          'line-width': 1.5,
+          'line-dasharray': [2, 4],
+          'line-opacity': 1
+        }
+      });
+    }
+    
+    // Create markers with center anchor and separate labels
+    svgMarkers.forEach((marker) => {
+      any = true;
+      
+      // Create wrapper to hold both ring and circle
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'relative';
+      wrapper.style.width = '0';
+      wrapper.style.height = '0';
+      
+      // Container for circle + pulsing ring - positioned relative to the wrapper
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.top = '-14px'; // Half of 28px to center
+      container.style.left = '-14px'; // Half of 28px to center
+      container.style.width = '28px';
+      container.style.height = '28px';
+      container.style.cursor = 'pointer';
+      
+      // Pulsing ring behind the circle
+      const ring = document.createElement('div');
+      ring.style.position = 'absolute';
+      ring.style.top = '0';
+      ring.style.left = '0';
+      ring.style.width = '100%';
+      ring.style.height = '100%';
+      ring.style.borderRadius = '50%';
+      ring.style.border = `2px solid ${marker.hex}`;
+      ring.style.animation = 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite';
+      
+      // Solid circle
+      const el = document.createElement('div');
+      el.style.position = 'absolute';
+      el.style.top = '0';
+      el.style.left = '0';
+      el.style.width = '100%';
+      el.style.height = '100%';
+      el.style.borderRadius = '50%';
+      el.style.backgroundColor = marker.hex;
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
+      el.style.justifyContent = 'center';
+      el.style.color = 'white';
+      el.style.fontWeight = '700';
+      el.style.fontSize = '11px';
+      el.textContent = String(marker.number);
+      
+      container.appendChild(ring);
+      container.appendChild(el);
+      wrapper.appendChild(container);
+      
+      const mapMarker = new mapboxgl.Marker({ element: wrapper, anchor: 'center' })
+        .setLngLat([marker.lng, marker.lat])
+        .addTo(map);
+      
+      (map as any).__mini_markers.push(mapMarker);
+      
+      // Add label as separate marker (hidden by default, shown on hover)
+      const labelEl = document.createElement('div');
+      labelEl.style.whiteSpace = 'nowrap';
+      labelEl.style.fontSize = '11px';
+      labelEl.style.lineHeight = '1';
+      labelEl.style.padding = '4px 6px';
+      labelEl.style.borderRadius = '6px';
+      labelEl.style.background = 'rgba(255,255,255,0.9)';
+      labelEl.style.border = '1px solid #e5e7eb';
+      labelEl.style.boxShadow = '0 1px 2px rgba(0,0,0,0.12)';
+      labelEl.style.color = '#111827';
+      labelEl.style.pointerEvents = 'none';
+      labelEl.style.opacity = '0';
+      labelEl.style.transition = 'opacity 0.2s ease-in-out';
+      labelEl.textContent = marker.name;
+      
+      const labelMarker = new mapboxgl.Marker({ element: labelEl, anchor: 'left', offset: [20, 0] })
+        .setLngLat([marker.lng, marker.lat])
+        .addTo(map);
+      
+      (map as any).__mini_markers.push(labelMarker);
+      
+      // Show/hide label on hover
+      wrapper.addEventListener('mouseenter', () => {
+        labelEl.style.opacity = '1';
+      });
+      wrapper.addEventListener('mouseleave', () => {
+        labelEl.style.opacity = '0';
+      });
+      
+      bounds.extend([marker.lng, marker.lat]);
     });
 
     if (any) {

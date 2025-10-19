@@ -154,7 +154,7 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
       <div ref={outerRef} className={`w-full flex ${centered && !isScrollable ? 'justify-center' : 'justify-start'}`}>
         <div
           ref={stripRef}
-          className={`flex gap-2 scrollbar-hide py-4 ${centered ? 'w-full' : ''} ${isScrollable ? 'px-2' : 'px-6'}`}
+          className={`flex gap-2 scrollbar-hide py-4 ${isScrollable ? 'px-2' : 'px-6'} ${centered && !isScrollable ? 'justify-center' : ''}`}
           onScroll={handleScroll}
           style={{
             scrollbarWidth: 'none',
@@ -162,7 +162,7 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
             overscrollBehavior: 'contain'
           }}
         >
-          <div ref={innerRef} className="flex gap-2 items-stretch" style={{ 
+          <div ref={innerRef} className={`flex gap-2 items-stretch ${centered && !isScrollable ? 'justify-center' : ''}`} style={{ 
             transform: `scale(${dayScale})`, 
             transformOrigin: centered && !isScrollable ? 'center' : 'center left' 
           }}>

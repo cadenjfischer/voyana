@@ -71,15 +71,27 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination }:
   useEffect(() => {
     const map = mapRef.current;
     if (!map || status !== 'loaded') return;
+    
+    // Remove existing line layer/source if present (do this BEFORE removing markers)
+    if (map.getLayer('route-line')) map.removeLayer('route-line');
+    if (map.getSource('route-line')) map.removeSource('route-line');
+    
     (map as any).__markers?.forEach((m: mapboxgl.Marker) => m.remove());
     (map as any).__markers = [];
+    
     const bounds = new mapboxgl.LngLatBounds();
     let any = false;
     const sorted = [...trip.destinations].sort((a,b) => a.order - b.order);
+    const lineCoords: [number, number][] = [];
+    
+    // Collect coordinates and create SVG data
+    const svgMarkers: Array<{lng: number, lat: number, hex: string, number: number, name: string}> = [];
+    
     sorted.forEach((d, i) => {
       const lat = d.coordinates?.lat; const lng = d.coordinates?.lng;
       if (lat != null && lng != null) {
-        any = true;
+        lineCoords.push([lng, lat]);
+        
         // Resolve destination color to hex
         const classes = getDestinationColors(d.id, trip.destinations, true);
         const bgToHex: Record<string, string> = {
@@ -102,43 +114,138 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination }:
           'bg-slate-600': '#475569'
         };
         const hex = d.customColor ? resolveColorHex(d.customColor) : (bgToHex[classes.bg] || '#0ea5e9');
-        const container = document.createElement('div');
-        container.style.display = 'flex';
-        container.style.alignItems = 'center';
-        container.style.gap = '6px';
-        const circle = document.createElement('div');
-        circle.style.width = '26px';
-        circle.style.height = '26px';
-        circle.style.borderRadius = '9999px';
-        circle.style.backgroundColor = hex;
-        circle.style.border = '2px solid white';
-        circle.style.boxShadow = '0 2px 6px rgba(0,0,0,0.25)';
-        circle.style.display = 'flex';
-        circle.style.alignItems = 'center';
-        circle.style.justifyContent = 'center';
-        circle.style.color = 'white';
-        circle.style.fontWeight = '700';
-        circle.style.fontSize = '11px';
-        circle.textContent = String(i + 1);
-        const label = document.createElement('div');
-        label.style.whiteSpace = 'nowrap';
-        label.style.fontSize = '12px';
-        label.style.padding = '6px 8px';
-        label.style.borderRadius = '6px';
-        label.style.background = 'rgba(255,255,255,0.92)';
-        label.style.border = '1px solid #e5e7eb';
-        label.style.boxShadow = '0 1px 2px rgba(0,0,0,0.12)';
-        label.style.color = '#111827';
-        label.textContent = d.name || '';
-        container.appendChild(circle);
-        container.appendChild(label);
-        const marker = new mapboxgl.Marker({ element: container, anchor: 'left' })
-          .setLngLat([lng, lat])
-          .addTo(map);
-        (map as any).__markers.push(marker);
-        bounds.extend([lng, lat]);
+        
+        svgMarkers.push({
+          lng,
+          lat,
+          hex,
+          number: i + 1,
+          name: d.name || ''
+        });
       }
     });
+    
+    // Add connecting line between destinations
+    if (lineCoords.length > 1) {
+      any = true;
+      map.addSource('route-line', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: lineCoords
+          }
+        }
+      });
+      
+      map.addLayer({
+        id: 'route-line',
+        type: 'line',
+        source: 'route-line',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#94a3b8',
+          'line-width': 2,
+          'line-dasharray': [2, 4],
+          'line-opacity': 1
+        }
+      });
+    }
+    
+    // Create SVG markers using Mapbox symbol layer
+    svgMarkers.forEach((marker) => {
+      any = true;
+      
+      // Create wrapper to hold both ring and circle
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'relative';
+      wrapper.style.width = '0';
+      wrapper.style.height = '0';
+      
+      // Container for circle + pulsing ring - positioned relative to the wrapper
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.top = '-16px'; // Half of 32px to center
+      container.style.left = '-16px'; // Half of 32px to center
+      container.style.width = '32px';
+      container.style.height = '32px';
+      container.style.cursor = 'pointer';
+      
+      // Pulsing ring behind the circle
+      const ring = document.createElement('div');
+      ring.style.position = 'absolute';
+      ring.style.top = '0';
+      ring.style.left = '0';
+      ring.style.width = '100%';
+      ring.style.height = '100%';
+      ring.style.borderRadius = '50%';
+      ring.style.border = `2px solid ${marker.hex}`;
+      ring.style.animation = 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite';
+      
+      // Solid circle
+      const el = document.createElement('div');
+      el.style.position = 'absolute';
+      el.style.top = '0';
+      el.style.left = '0';
+      el.style.width = '100%';
+      el.style.height = '100%';
+      el.style.borderRadius = '50%';
+      el.style.backgroundColor = marker.hex;
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
+      el.style.justifyContent = 'center';
+      el.style.color = 'white';
+      el.style.fontWeight = '700';
+      el.style.fontSize = '13px';
+      el.textContent = String(marker.number);
+      
+      container.appendChild(ring);
+      container.appendChild(el);
+      wrapper.appendChild(container);
+      
+      const mapMarker = new mapboxgl.Marker({ element: wrapper, anchor: 'center' })
+        .setLngLat([marker.lng, marker.lat])
+        .addTo(map);
+      
+      (map as any).__markers.push(mapMarker);
+      
+      // Add label as separate marker (hidden by default, shown on hover)
+      const labelEl = document.createElement('div');
+      labelEl.style.whiteSpace = 'nowrap';
+      labelEl.style.fontSize = '12px';
+      labelEl.style.padding = '6px 8px';
+      labelEl.style.borderRadius = '6px';
+      labelEl.style.background = 'rgba(255,255,255,0.92)';
+      labelEl.style.border = '1px solid #e5e7eb';
+      labelEl.style.boxShadow = '0 1px 2px rgba(0,0,0,0.12)';
+      labelEl.style.color = '#111827';
+      labelEl.style.pointerEvents = 'none';
+      labelEl.style.opacity = '0';
+      labelEl.style.transition = 'opacity 0.2s ease-in-out';
+      labelEl.textContent = marker.name;
+      
+      const labelMarker = new mapboxgl.Marker({ element: labelEl, anchor: 'left', offset: [22, 0] })
+        .setLngLat([marker.lng, marker.lat])
+        .addTo(map);
+      
+      (map as any).__markers.push(labelMarker);
+      
+      // Show/hide label on hover
+      wrapper.addEventListener('mouseenter', () => {
+        labelEl.style.opacity = '1';
+      });
+      wrapper.addEventListener('mouseleave', () => {
+        labelEl.style.opacity = '0';
+      });
+      
+      bounds.extend([marker.lng, marker.lat]);
+    });
+    
     if (any) {
       // Increase bottom padding so markers are not obscured by the bottom calendar overlay
       map.fitBounds(bounds, { padding: { top: 64, left: 64, right: 64, bottom: 200 }, maxZoom: 9, duration: 0 });
@@ -160,8 +267,8 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination }:
           Map · {status}
         </div>
         {/* Calendar overlay: centered at bottom within map area */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-4">
-          <div className="pointer-events-auto bg-transparent mx-auto w-[90%] max-w-[960px]">
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">
+          <div className="pointer-events-auto bg-transparent w-[90%] max-w-[960px]">
             <CalendarStrip
               days={trip.days}
               activeDay={selectedDay || trip.days[0]?.id || ''}
