@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { Trip } from '@/types/itinerary';
+import { useItineraryUI } from '@/contexts/ItineraryUIContext';
 
 interface MiniMapProps {
   trip: Trip;
@@ -20,7 +21,7 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const [status, setStatus] = useState<'mount' | 'no-token' | 'init' | 'loaded'>('mount');
   const [portalEl, setPortalEl] = useState<HTMLDivElement | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const { isExpanded, setIsExpanded } = useItineraryUI();
   const cameraRef = useRef<{ center: mapboxgl.LngLatLike; zoom: number } | null>(null);
   const [fallbackCoords, setFallbackCoords] = useState<Record<string, { lat: number; lng: number }>>({});
 
@@ -237,22 +238,7 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
 
   const content = (
     <>
-      {/* Backdrop for expanded mode */}
-      {isExpanded && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex }}
-          onClick={() => {
-            if (mapRef.current) {
-              const c = mapRef.current.getCenter();
-              const z = mapRef.current.getZoom();
-              cameraRef.current = { center: [c.lng, c.lat], zoom: z };
-            }
-            setIsExpanded(false);
-            setTimeout(() => mapRef.current?.resize(), 0);
-          }}
-          aria-hidden
-        />
-      )}
+      {/* Backdrop for expanded mode handled by ExpandedMap, not here */}
 
       <div
         className={`fixed ${isExpanded ? 'inset-0' : 'bottom-6 left-6'} rounded-2xl overflow-hidden shadow-2xl bg-white border border-gray-200 pointer-events-auto ${className}`}
@@ -271,21 +257,23 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
         }}
       >
         {/* Header */}
-        {isExpanded && (
+        {/* Expand button in mini mode */}
+        {!isExpanded && (
           <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, display: 'flex', gap: 8 }}>
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (mapRef.current && cameraRef.current) {
-                  mapRef.current.setCenter(cameraRef.current.center);
-                  mapRef.current.setZoom(cameraRef.current.zoom);
+                if (mapRef.current) {
+                  const c = mapRef.current.getCenter();
+                  const z = mapRef.current.getZoom();
+                  cameraRef.current = { center: [c.lng, c.lat], zoom: z };
                 }
-                setIsExpanded(false);
+                setIsExpanded(true);
                 setTimeout(() => mapRef.current?.resize(), 0);
               }}
               style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 8, padding: '6px 10px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', cursor: 'pointer' }}
             >
-              Close
+              Expand
             </button>
           </div>
         )}

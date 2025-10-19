@@ -3,7 +3,9 @@
 import { Trip } from '@/types/itinerary';
 import SyncedSplitView from './SyncedSplitView';
 import MiniMap from '@/components/map/MiniMap';
+import ExpandedMap from '@/components/map/ExpandedMap';
 import { useState } from 'react';
+import { useItineraryUI } from '@/contexts/ItineraryUIContext';
 
 interface ItineraryLayoutProps {
   trip: Trip;
@@ -15,6 +17,7 @@ interface ItineraryLayoutProps {
 
 export default function ItineraryLayout({ trip, onUpdateTrip, onRemoveDestination, onActiveDay, onDestinationMapCenterRequest }: ItineraryLayoutProps) {
   const [centerOn, setCenterOn] = useState<{ lat: number; lng: number } | null>(null);
+  const { isExpanded, selectedDestinationId, setSelectedDestinationId } = useItineraryUI();
   return (
     <>
       <SyncedSplitView
@@ -29,7 +32,10 @@ export default function ItineraryLayout({ trip, onUpdateTrip, onRemoveDestinatio
       />
 
       {/* Always-on-top Mini Map overlay */}
-      <MiniMap trip={trip} centerOn={centerOn} />
+      {!isExpanded && <MiniMap trip={trip} centerOn={centerOn} />}
+      {isExpanded && (
+        <ExpandedMap trip={trip} onUpdateTrip={onUpdateTrip} onRemoveDestination={onRemoveDestination} />
+      )}
 
       {/* Debug badge removed */}
     </>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useItineraryUI } from '@/contexts/ItineraryUIContext';
 import { Trip, Destination, Day, Activity, formatDate } from '@/types/itinerary';
 import { PREMIUM_COLOR_PALETTE } from '@/utils/colors';
 import TabbedDestinationRail from './TabbedDestinationRail';
@@ -21,6 +22,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
   const [activeDay, setActiveDay] = useState<string>('');
   const [isMobile, setIsMobile] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
+  const { selectedDestinationId, setSelectedDestinationId, selectedDay, setSelectedDay } = useItineraryUI();
   
   const timelineRef = useRef<HTMLDivElement>(null);
   const destinationRefs = useRef<{ [key: string]: HTMLDivElement }>({});
@@ -34,16 +36,24 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Initialize active destination and day
+  // Initialize/sync active destination and day with shared context
   useEffect(() => {
-    if (trip.destinations.length > 0 && !activeDestinationId) {
-      setActiveDestinationId(trip.destinations[0].id);
+    if (trip.destinations.length > 0) {
+      const firstId = trip.destinations[0].id;
+      const targetId = selectedDestinationId || activeDestinationId || firstId;
+      if (activeDestinationId !== targetId) setActiveDestinationId(targetId);
+      if (!selectedDestinationId) setSelectedDestinationId(targetId);
     }
-    if (trip.days.length > 0 && !activeDay) {
-      setActiveDay(trip.days[0].id);
-      onActiveDay?.(trip.days[0].id);
+    if (trip.days.length > 0) {
+      const firstDayId = trip.days[0].id;
+      const targetDay = selectedDay || activeDay || firstDayId;
+      if (activeDay !== targetDay) setActiveDay(targetDay);
+      if (!selectedDay) {
+        setSelectedDay(targetDay);
+        onActiveDay?.(targetDay);
+      }
     }
-  }, [trip.destinations, trip.days, activeDestinationId, activeDay]);
+  }, [trip.destinations, trip.days, selectedDestinationId, selectedDay]);
 
   // Auto-assign days to destinations - only when night counts change, not order changes
   useEffect(() => {
@@ -183,6 +193,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
   const handleDestinationSelect = (destinationId: string) => {
     const destination = trip.destinations.find(d => d.id === destinationId);
     setActiveDestinationId(destinationId);
+    setSelectedDestinationId(destinationId);
     // Request the parent to center the map on this destination instead of scrolling
     if (destination && destination.coordinates) {
       onDestinationMapCenterRequest?.({ lat: destination.coordinates.lat, lng: destination.coordinates.lng });
@@ -232,13 +243,15 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
     manualSelectionRef.current = true;
     
     // Set active day immediately for responsive UI
-    setActiveDay(dayId);
+  setActiveDay(dayId);
+  setSelectedDay(dayId);
     onActiveDay?.(dayId);
     
     // Find corresponding destination and set it active
     const day = trip.days.find(d => d.id === dayId);
     if (day && day.destinationId && day.destinationId !== activeDestinationId) {
       setActiveDestinationId(day.destinationId);
+      setSelectedDestinationId(day.destinationId);
     }
     
     // Scroll to the day in the timeline

@@ -4,24 +4,29 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface ItineraryUIContextType {
   isExpanded: boolean;
-  selectedDay: number | null;
+  selectedDay: string | null;
+  selectedDestinationId: string | null;
   setIsExpanded: (expanded: boolean) => void;
-  setSelectedDay: (day: number | null) => void;
+  setSelectedDay: (day: string | null) => void;
+  setSelectedDestinationId: (id: string | null) => void;
 }
 
 const ItineraryUIContext = createContext<ItineraryUIContextType | undefined>(undefined);
 
 export function ItineraryUIProvider({ children }: { children: ReactNode }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null);
 
   return (
     <ItineraryUIContext.Provider
       value={{
         isExpanded,
         selectedDay,
+        selectedDestinationId,
         setIsExpanded,
         setSelectedDay,
+        setSelectedDestinationId,
       }}
     >
       {children}

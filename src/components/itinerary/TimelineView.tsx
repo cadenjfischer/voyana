@@ -224,6 +224,9 @@ export default function TimelineView({
                             ? 'hover:brightness-95 cursor-pointer' 
                             : 'cursor-default'
                         }`}
+                        onClick={() => {
+                          if (onDaySelect) onDaySelect(day.id);
+                        }}
                       >
                         <div 
                           className={`border-b border-gray-100 p-4 ${isCollapsed ? 'rounded-xl' : 'rounded-t-xl'}`}
