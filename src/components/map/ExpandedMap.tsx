@@ -160,8 +160,8 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination }:
           Map · {status}
         </div>
         {/* Calendar overlay: centered at bottom within map area */}
-        <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-4 w-[90%] max-w-[960px]">
-          <div className="pointer-events-auto bg-transparent">
+        <div className="pointer-events-none absolute inset-x-0 bottom-4">
+          <div className="pointer-events-auto bg-transparent mx-auto w-[90%] max-w-[960px]">
             <CalendarStrip
               days={trip.days}
               activeDay={selectedDay || trip.days[0]?.id || ''}
