@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { Trip } from '@/types/itinerary';
+import { getDestinationColors, resolveColorHex } from '@/utils/colors';
 import { useItineraryUI } from '@/contexts/ItineraryUIContext';
 
 interface MiniMapProps {
@@ -122,7 +123,29 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
         circle.style.width = '24px';
         circle.style.height = '24px';
         circle.style.borderRadius = '9999px';
-        circle.style.backgroundColor = '#2563eb'; // blue-600
+        // Match destination color
+        const classes = getDestinationColors(d.id, trip.destinations, true);
+        const bgToHex: Record<string, string> = {
+          'bg-sky-500': '#0ea5e9',
+          'bg-green-500': '#22c55e',
+          'bg-purple-500': '#a855f7',
+          'bg-orange-500': '#f97316',
+          'bg-pink-500': '#ec4899',
+          'bg-indigo-500': '#6366f1',
+          'bg-red-500': '#ef4444',
+          'bg-teal-500': '#14b8a6',
+          'bg-yellow-500': '#eab308',
+          'bg-red-800': '#991b1b',
+          'bg-yellow-600': '#ca8a04',
+          'bg-slate-800': '#1e293b',
+          'bg-emerald-500': '#10b981',
+          'bg-orange-600': '#ff6b35',
+          'bg-cyan-500': '#06b6d4',
+          'bg-fuchsia-500': '#d946ef',
+          'bg-slate-600': '#475569'
+        };
+        const hex = d.customColor ? resolveColorHex(d.customColor) : (bgToHex[classes.bg] || '#0ea5e9');
+        circle.style.backgroundColor = hex;
         circle.style.border = '2px solid white';
         circle.style.boxShadow = '0 2px 6px rgba(0,0,0,0.25)';
         circle.style.display = 'flex';

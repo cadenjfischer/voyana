@@ -8,6 +8,7 @@ import { useItineraryUI } from '@/contexts/ItineraryUIContext';
 import TabbedDestinationRail from '@/components/itinerary/TabbedDestinationRail';
 import CalendarStrip from '@/components/itinerary/CalendarStrip';
 import TimelineView from '@/components/itinerary/TimelineView';
+import { getDestinationColors, resolveColorHex } from '@/utils/colors';
 
 interface ExpandedMapProps {
   trip: Trip;
@@ -79,6 +80,28 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination }:
       const lat = d.coordinates?.lat; const lng = d.coordinates?.lng;
       if (lat != null && lng != null) {
         any = true;
+        // Resolve destination color to hex
+        const classes = getDestinationColors(d.id, trip.destinations, true);
+        const bgToHex: Record<string, string> = {
+          'bg-sky-500': '#0ea5e9',
+          'bg-green-500': '#22c55e',
+          'bg-purple-500': '#a855f7',
+          'bg-orange-500': '#f97316',
+          'bg-pink-500': '#ec4899',
+          'bg-indigo-500': '#6366f1',
+          'bg-red-500': '#ef4444',
+          'bg-teal-500': '#14b8a6',
+          'bg-yellow-500': '#eab308',
+          'bg-red-800': '#991b1b',
+          'bg-yellow-600': '#ca8a04',
+          'bg-slate-800': '#1e293b',
+          'bg-emerald-500': '#10b981',
+          'bg-orange-600': '#ff6b35',
+          'bg-cyan-500': '#06b6d4',
+          'bg-fuchsia-500': '#d946ef',
+          'bg-slate-600': '#475569'
+        };
+        const hex = d.customColor ? resolveColorHex(d.customColor) : (bgToHex[classes.bg] || '#0ea5e9');
         const container = document.createElement('div');
         container.style.display = 'flex';
         container.style.alignItems = 'center';
@@ -87,7 +110,7 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination }:
         circle.style.width = '26px';
         circle.style.height = '26px';
         circle.style.borderRadius = '9999px';
-        circle.style.backgroundColor = '#2563eb';
+        circle.style.backgroundColor = hex;
         circle.style.border = '2px solid white';
         circle.style.boxShadow = '0 2px 6px rgba(0,0,0,0.25)';
         circle.style.display = 'flex';
@@ -117,7 +140,8 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination }:
       }
     });
     if (any) {
-      map.fitBounds(bounds, { padding: 64, maxZoom: 9, duration: 0 });
+      // Increase bottom padding so markers are not obscured by the bottom calendar overlay
+      map.fitBounds(bounds, { padding: { top: 64, left: 64, right: 64, bottom: 200 }, maxZoom: 9, duration: 0 });
       // Ensure map recomputes layout after bounds change
       map.resize();
     }
@@ -183,7 +207,7 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination }:
           {activeTab === 'destinations' ? (
             <div className="h-full overflow-y-auto">
               {/* Reuse rail for parity with main UI */}
-              <TabbedDestinationRail
+                <TabbedDestinationRail
                 destinations={trip.destinations}
                 activeDestinationId={selectedDestinationId || trip.destinations[0]?.id || ''}
                 onDestinationSelect={(id) => {
@@ -191,7 +215,7 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination }:
                   // Recenter map on selected destination
                   const d = trip.destinations.find(x => x.id === id);
                   if (d?.coordinates && mapRef.current) {
-                    mapRef.current.jumpTo({ center: [d.coordinates.lng, d.coordinates.lat], zoom: Math.max(mapRef.current.getZoom() || 4, 8) });
+                    mapRef.current.easeTo({ center: [d.coordinates.lng, d.coordinates.lat], zoom: Math.max(mapRef.current.getZoom() || 4, 8), padding: { top: 40, left: 40, right: 40, bottom: 200 }, duration: 300 });
                   }
                 }}
                 onDestinationsReorder={(dests) => onUpdateTrip({ ...trip, destinations: dests, updatedAt: new Date().toISOString() })}
@@ -221,7 +245,7 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination }:
                       if (dest?.coordinates && mapRef.current) {
                         const { lng, lat } = dest.coordinates;
                         try {
-                          mapRef.current.jumpTo({ center: [lng, lat], zoom: Math.max(mapRef.current.getZoom() || 4, 8) });
+                          mapRef.current.easeTo({ center: [lng, lat], zoom: Math.max(mapRef.current.getZoom() || 4, 8), padding: { top: 40, left: 40, right: 40, bottom: 200 }, duration: 300 });
                         } catch {}
                       }
                     }
