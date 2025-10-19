@@ -8,7 +8,6 @@ import ItineraryLayout from '@/components/itinerary/ItineraryLayout';
 import AddDestinationModal from '@/components/itinerary/AddDestinationModal';
 import AddActivityModal from '@/components/itinerary/AddActivityModal';
 import EditTripModal from '@/components/itinerary/EditTripModal';
-import ExpandableMapWidget from '@/components/map/ExpandableMapWidget';
 import { Trip, Destination, Activity, generateDays } from '@/types/itinerary';
 import { PREMIUM_COLOR_PALETTE } from '@/utils/colors';
 import { ItineraryUIProvider } from '@/contexts/ItineraryUIContext';
@@ -25,8 +24,6 @@ export default function TripDetailPage() {
   const [showAddActivityModal, setShowAddActivityModal] = useState(false);
   const [showEditTripModal, setShowEditTripModal] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string>('');
-  const [mapSelectedDay, setMapSelectedDay] = useState<any>(null);
-  const [mapCenterTarget, setMapCenterTarget] = useState<{ lat: number; lng: number } | null>(null);
 
   const handleUpdateTrip = (updatedTrip: Trip) => {
     if (user) {
@@ -529,13 +526,6 @@ export default function TripDetailPage() {
             trip={trip}
               onUpdateTrip={handleUpdateTrip}
               onRemoveDestination={handleRemoveDestination}
-              onActiveDay={(dayId) => {
-                const day = trip.days.find(d => d.id === dayId);
-                setMapSelectedDay(day || null);
-              }}
-              onDestinationMapCenterRequest={(coords: { lat: number; lng: number } | null) => {
-                setMapCenterTarget(coords);
-              }}
           />
         </div>
       </div>
@@ -568,43 +558,6 @@ export default function TripDetailPage() {
         trip={trip}
       />
 
-      {/* Expandable Map Widget */}
-      <ExpandableMapWidget
-        trip={trip}
-        destinations={trip.destinations}
-        selectedDay={mapSelectedDay}
-        onDestinationClick={(destination) => {
-          console.log('Destination clicked:', destination);
-        }}
-        onActivityClick={(activity) => {
-          console.log('Activity clicked:', activity);
-        }}
-        centerOn={mapCenterTarget}
-        onCentered={() => setTimeout(() => setMapCenterTarget(null), 300)}
-        onUpdateTrip={handleUpdateTrip}
-        onUpdateDestination={(updated) => {
-          handleUpdateTrip({ ...trip, destinations: trip.destinations.map(d => d.id === updated.id ? updated : d), updatedAt: new Date().toISOString() });
-        }}
-        onRemoveDestination={(id) => {
-          const filtered = trip.destinations.filter(d => d.id !== id).map((d, idx) => ({ ...d, order: idx }));
-          handleUpdateTrip({ ...trip, destinations: filtered, updatedAt: new Date().toISOString() });
-        }}
-        onAddDestination={(dest) => {
-          // Delegate to existing add flow which geocodes and assigns color
-          handleAddDestination(dest);
-        }}
-        onDaysUpdate={(updatedDays) => {
-          const updatedTrip = { ...trip, days: updatedDays, updatedAt: new Date().toISOString() };
-          handleUpdateTrip(updatedTrip);
-        }}
-        onActiveDay={(dayId) => {
-          const day = trip.days.find(d => d.id === dayId);
-          setMapSelectedDay(day || null);
-        }}
-        onDestinationMapCenterRequest={(coords) => {
-          setMapCenterTarget(coords);
-        }}
-      />
     </ItineraryUIProvider>
   );
 }
