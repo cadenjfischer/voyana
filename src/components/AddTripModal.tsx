@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import CustomAutocomplete from './CustomAutocomplete';
+import { formatGooglePlace, type GooglePlace } from '@/utils/google-places';
 import { searchDestinationPhotos } from '../utils/unsplash';
 import AirlineDatePicker from './AirlineDatePicker';
 
@@ -16,6 +17,7 @@ interface AddTripModalProps {
     endDate: string;
     description: string;
     photo: string;
+    destinationCoords?: Record<string, { lat: number; lng: number }>;
   }) => void;
 }
 
@@ -36,6 +38,7 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
   const [currentDestination, setCurrentDestination] = useState('');
   const [photoGallery, setPhotoGallery] = useState<string[]>([]);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+  const [destinationCoords, setDestinationCoords] = useState<Record<string, { lat: number; lng: number }>>({});
 
   // Fetch photo gallery when user selects a destination
   const fetchPhotoGallery = async (destination: string) => {
@@ -152,9 +155,26 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
     }
   };
 
+  // Capture coordinates when a place is selected from autocomplete
+  const handleSelectPlace = (place: GooglePlace) => {
+    const name = formatGooglePlace(place);
+    const coords = place?.geometry?.location;
+    if (coords && typeof coords.lat === 'number' && typeof coords.lng === 'number') {
+      setDestinationCoords(prev => ({ ...prev, [name]: { lat: coords.lat, lng: coords.lng } }));
+    }
+  };
+
   const handleRemoveDestination = (indexToRemove: number) => {
+    const removed = destinations[indexToRemove];
     const newDestinations = destinations.filter((_, index) => index !== indexToRemove);
     setDestinations(newDestinations);
+    // Also remove stored coordinates for the removed destination
+    if (removed && destinationCoords[removed]) {
+      setDestinationCoords(prev => {
+        const { [removed]: _omit, ...rest } = prev;
+        return rest;
+      });
+    }
     
     // If we removed the first destination, update the main destination and photo
     if (indexToRemove === 0) {
@@ -199,7 +219,8 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
       ...formData,
       destination: multipleCities && destinations.length > 0 
         ? destinations // Pass array of destinations instead of joined string
-        : formData.destination
+        : formData.destination,
+      destinationCoords: destinationCoords
     };
     
     onAddTrip(tripData);
@@ -216,6 +237,7 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
     setDestinations([]);
     setCurrentDestination('');
     setPhotoGallery([]);
+    setDestinationCoords({});
   };
 
   const handleClose = () => {
@@ -229,6 +251,7 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
     });
     setPhotoPreview('/default-trip-image.jpg');
     setPhotoGallery([]);
+    setDestinationCoords({});
     onClose();
   };
 
@@ -343,6 +366,7 @@ export default function AddTripModal({ isOpen, onClose, onAddTrip }: AddTripModa
                       onSelect={(value) => {
                         handleAddDestination(value);
                       }}
+                      onSelectPlace={handleSelectPlace}
                       placeholder={multipleCities ? "Add another city..." : "Search for a city or ski resort..."}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none transition-colors duration-200 text-gray-900 placeholder-gray-500"
                       required={!multipleCities}

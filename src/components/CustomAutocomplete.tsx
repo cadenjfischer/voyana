@@ -15,6 +15,7 @@ interface CustomAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
   onSelect?: (value: string) => void;
+  onSelectPlace?: (place: GooglePlace) => void;
   placeholder?: string;
   className?: string;
   required?: boolean;
@@ -27,6 +28,7 @@ export default function CustomAutocomplete({
   value,
   onChange,
   onSelect,
+  onSelectPlace,
   placeholder = "Search for a city, country, or destination...",
   className = "",
   required = false
@@ -71,6 +73,7 @@ export default function CustomAutocomplete({
     const placeName = formatGooglePlace(place);
     onChange(placeName);
     onSelect?.(placeName);
+    onSelectPlace?.(place);
     setShowSuggestions(false);
     setSuggestions([]);
     setSelectedIndex(-1);
@@ -97,6 +100,7 @@ export default function CustomAutocomplete({
           const placeName = formatGooglePlace(selected);
           onChange(placeName);
           onSelect?.(placeName);
+          onSelectPlace?.(selected);
           setShowSuggestions(false);
           setSuggestions([]);
           setSelectedIndex(-1);

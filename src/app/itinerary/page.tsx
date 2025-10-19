@@ -28,6 +28,7 @@ interface LocalTrip {
   description: string;
   photo: string;
   activities: LocalActivity[];
+  destinationCoords?: Record<string, { lat: number; lng: number }>; // optional coords keyed by destination name
 }
 
 export default function ItineraryPage() {
@@ -62,7 +63,8 @@ export default function ItineraryPage() {
     startDate: string; 
     endDate: string; 
     description: string; 
-    photo: string; 
+    photo: string;
+    destinationCoords?: Record<string, { lat: number; lng: number }>; 
   }) => {
     const isMultiple = Array.isArray(newTrip.destination);
     const destinationArray = isMultiple ? newTrip.destination as string[] : [newTrip.destination as string];
@@ -76,7 +78,8 @@ export default function ItineraryPage() {
       endDate: newTrip.endDate,
       description: newTrip.description,
       photo: newTrip.photo,
-      activities: []
+      activities: [],
+      destinationCoords: newTrip.destinationCoords
     };
     setTrips(prev => [...prev, trip]);
     setIsAddTripOpen(false);
@@ -98,6 +101,7 @@ export default function ItineraryPage() {
   const convertToTrip = (localTrip: LocalTrip): Trip => {
     // Check if we have multiple destinations stored
     const destinationNames = localTrip.destinations || [localTrip.destination];
+    const coordsMap = localTrip.destinationCoords || {};
     
     return {
       id: localTrip.id,
@@ -114,7 +118,8 @@ export default function ItineraryPage() {
         nights: 0,
         lodging: '',
         estimatedCost: 0,
-        order: index
+        order: index,
+        coordinates: coordsMap[name] ? { lat: coordsMap[name].lat, lng: coordsMap[name].lng } : undefined
       })),
       days: [],
       totalCost: 0,
@@ -126,6 +131,10 @@ export default function ItineraryPage() {
   // Convert Trip back to LocalTrip
   const convertToLocalTrip = (trip: Trip): LocalTrip => {
     const destinationNames = trip.destinations.map(d => d.name);
+    const destinationCoords = trip.destinations.reduce<Record<string, { lat: number; lng: number }>>((acc, d) => {
+      if (d.coordinates) acc[d.name] = { lat: d.coordinates.lat, lng: d.coordinates.lng };
+      return acc;
+    }, {});
     return {
       id: trip.id,
       title: trip.title,
@@ -135,7 +144,8 @@ export default function ItineraryPage() {
       endDate: trip.endDate,
       description: trip.description,
       photo: trip.photo,
-      activities: []
+      activities: [],
+      destinationCoords: Object.keys(destinationCoords).length ? destinationCoords : undefined
     };
   };
 
