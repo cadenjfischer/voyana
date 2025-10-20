@@ -1,12 +1,13 @@
  'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type { Trip } from '@/types/itinerary';
 import { getDestinationColors, resolveColorHex } from '@/utils/colors';
 import { useItineraryUI } from '@/contexts/ItineraryUIContext';
+import { X, Map as MapIcon } from 'lucide-react';
 
 interface MiniMapProps {
   trip: Trip;
@@ -18,13 +19,74 @@ interface MiniMapProps {
 
 // A lightweight, fixed-position mini map for the itinerary page.
 export default function MiniMap({ trip, width = 320, height = 200, className = '', centerOn = null }: MiniMapProps) {
+  const instanceId = useRef(Math.random().toString(36).substring(7));
+  console.log('🏗️ MiniMap INSTANCE:', instanceId.current);
+  
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const [status, setStatus] = useState<'mount' | 'no-token' | 'init' | 'loaded'>('mount');
   const [portalEl, setPortalEl] = useState<HTMLDivElement | null>(null);
-  const { isExpanded, setIsExpanded } = useItineraryUI();
+  const { isExpanded, setIsExpanded, isMiniMapVisible: isVisible, setIsMiniMapVisible: setIsVisible } = useItineraryUI();
   const cameraRef = useRef<{ center: mapboxgl.LngLatLike; zoom: number } | null>(null);
   const [fallbackCoords, setFallbackCoords] = useState<Record<string, { lat: number; lng: number }>>({});
+  const [mapKey, setMapKey] = useState(0); // Force remount when needed
+  const hasToggledRef = useRef(false); // Track if we've toggled at least once
+  const isTogglingRef = useRef(false); // Prevent double-toggle
+
+  // Save visibility preference to localStorage and handle map resize  
+  const toggleVisibility = () => {
+    // Prevent double-clicks/double-calls
+    if (isTogglingRef.current) {
+      console.log('⚠️ TOGGLE BLOCKED - already toggling');
+      return;
+    }
+    
+    isTogglingRef.current = true;
+    console.log('🔴 TOGGLE CALLED - current isVisible:', isVisible);
+    hasToggledRef.current = true;
+    
+    const newVisibility = !isVisible;
+    console.log('🔵 Setting to:', newVisibility);
+    
+    // Save to localStorage synchronously
+    localStorage.setItem('miniMapVisible', String(newVisibility));
+    
+    // Update state
+    setIsVisible(newVisibility);
+    
+    // Reset toggle lock after state update
+    setTimeout(() => {
+      isTogglingRef.current = false;
+    }, 100);
+    
+    // If showing the map again, resize it after a short delay
+    if (newVisibility) {
+      setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.resize();
+          // Trigger a repaint by forcing a small camera movement
+          const center = mapRef.current.getCenter();
+          mapRef.current.jumpTo({ center: [center.lng, center.lat] });
+        }
+      }, 100);
+    }
+  };
+
+  // Resize map when visibility changes
+  useEffect(() => {
+    if (isVisible && mapRef.current && status === 'loaded') {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.resize();
+          // Force a render by triggering a minimal camera update
+          const center = mapRef.current.getCenter();
+          const zoom = mapRef.current.getZoom();
+          mapRef.current.jumpTo({ center: [center.lng, center.lat], zoom });
+        }
+      }, 50);
+    }
+  }, [isVisible, status]);
 
   // Prepare a body-level portal so the overlay isn't clipped by stacking contexts
   useEffect(() => {
@@ -35,6 +97,16 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
     return () => {
       el.remove();
       setPortalEl(null);
+    };
+  }, []);
+
+  // Cleanup map on unmount
+  useEffect(() => {
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, []);
 
@@ -87,10 +159,9 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
 
     return () => {
       cancelled = true;
-      mapRef.current?.remove();
-      mapRef.current = null;
+      // Don't remove map, we'll do that in the main cleanup effect
     };
-  }, []);
+  }, []); // Only run once on mount
 
   // Add markers (numbered by visit order) with visible labels and fit bounds when destinations change
   useEffect(() => {
@@ -354,17 +425,61 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
   const isDev = process.env.NODE_ENV !== 'production';
   const zIndex = isDev ? 1000 : 2147483647; // In dev, let Next.js error toasts sit above the mini map
 
+  // Debug logging
+  console.log('MiniMap render:', { isVisible, isExpanded, showButton: !isVisible && !isExpanded });
+
   const content = (
     <>
-      {/* Backdrop for expanded mode handled by ExpandedMap, not here */}
+      {/* Show Map Button - Only visible when map is truly hidden */}
+      {!isVisible && !isExpanded && (
+        <button
+          onClick={() => {
+            toggleVisibility();
+            // Give the map time to become visible before resizing
+            setTimeout(() => {
+              if (mapRef.current) {
+                mapRef.current.resize();
+                // Fit bounds to show all destinations
+                const coords = trip.destinations
+                  .filter(d => d.coordinates)
+                  .map(d => ({ lat: d.coordinates!.lat, lng: d.coordinates!.lng }));
+                if (coords.length > 0) {
+                  const bounds = new mapboxgl.LngLatBounds();
+                  coords.forEach(c => bounds.extend([c.lng, c.lat]));
+                  mapRef.current.fitBounds(bounds, { padding: 40, maxZoom: 9, duration: 800 });
+                }
+              }
+            }, 150);
+          }}
+          className="fixed bottom-6 left-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg rounded-full p-3 hover:from-blue-700 hover:to-blue-800 transition-all flex items-center gap-2"
+          style={{ zIndex }}
+          title="Show Trip Map"
+        >
+          <MapIcon className="w-5 h-5" />
+          <span className="text-sm font-medium pr-1">Show Map</span>
+        </button>
+      )}
 
+      {/* Map Container - Always rendered but hidden when isVisible is false */}
       <div
-        className={`fixed ${isExpanded ? 'inset-0' : 'bottom-6 left-6'} pointer-events-auto ${className}`}
-        style={{ width: isExpanded ? '100vw' : width, zIndex }}
+        style={{ 
+          position: 'fixed',
+          bottom: isExpanded ? 0 : '1.5rem',
+          left: isExpanded ? 0 : '1.5rem',
+          top: isExpanded ? 0 : 'auto',
+          right: isExpanded ? 0 : 'auto',
+          width: isExpanded ? '100vw' : width, 
+          height: isExpanded ? '100vh' : 'auto',
+          zIndex,
+          display: isVisible || isExpanded ? 'block' : 'none',
+          visibility: isVisible || isExpanded ? 'visible' : 'hidden',
+          opacity: isVisible || isExpanded ? 1 : 0,
+          pointerEvents: isVisible || isExpanded ? 'auto' : 'none'
+        }}
         aria-label="Itinerary mini map"
       >
-        {/* Mini map header */}
-        {!isExpanded && (
+        {/* Mini map header - Only show when visible */}
+        {!isExpanded && isVisible && (
           <div style={{ 
             background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', 
             borderTopLeftRadius: '16px',
@@ -399,23 +514,43 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
               Reset
             </button>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'white', letterSpacing: '0.5px' }}>Map</span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (mapRef.current) {
-                  const c = mapRef.current.getCenter();
-                  const z = mapRef.current.getZoom();
-                  cameraRef.current = { center: [c.lng, c.lat], zoom: z };
-                }
-                setIsExpanded(true);
-                setTimeout(() => mapRef.current?.resize(), 0);
-              }}
-              style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: '11px', fontWeight: 600, color: '#1e40af', transition: 'all 0.2s' }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'white'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.9)'}
-            >
-              Expand
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (mapRef.current) {
+                    const c = mapRef.current.getCenter();
+                    const z = mapRef.current.getZoom();
+                    cameraRef.current = { center: [c.lng, c.lat], zoom: z };
+                  }
+                  setIsExpanded(true);
+                  setTimeout(() => mapRef.current?.resize(), 0);
+                }}
+                style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: '11px', fontWeight: 600, color: '#1e40af', transition: 'all 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'white'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.9)'}
+              >
+                Expand
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Save current camera position before hiding
+                  if (mapRef.current) {
+                    const c = mapRef.current.getCenter();
+                    const z = mapRef.current.getZoom();
+                    cameraRef.current = { center: [c.lng, c.lat], zoom: z };
+                  }
+                  toggleVisibility();
+                }}
+                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 6, padding: '4px 6px', cursor: 'pointer', color: 'white', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                title="Hide map"
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
 

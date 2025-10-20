@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Trip } from '@/types/itinerary';
+import { X, Map } from 'lucide-react';
 
 interface TripMapProps {
   trip: Trip;
@@ -16,6 +17,22 @@ export default function TripMap({ trip, isExpanded, onToggleExpand }: TripMapPro
   const fullRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const currentContainerRef = isExpanded ? fullRef : miniRef;
+  const [isVisible, setIsVisible] = useState(true);
+
+  // Load visibility preference from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('tripMapVisible');
+    if (saved !== null) {
+      setIsVisible(saved === 'true');
+    }
+  }, []);
+
+  // Save visibility preference to localStorage
+  const toggleVisibility = () => {
+    const newVisibility = !isVisible;
+    setIsVisible(newVisibility);
+    localStorage.setItem('tripMapVisible', String(newVisibility));
+  };
 
   // Init once, then move container when expanded
   useEffect(() => {
@@ -31,7 +48,7 @@ export default function TripMap({ trip, isExpanded, onToggleExpand }: TripMapPro
         style: 'mapbox://styles/mapbox/outdoors-v12',
         center: [-98, 38.5],
         zoom: 3,
-        projection: 'globe' as any,
+        projection: { name: 'globe' },
       });
 
       mapRef.current.on('load', () => {
@@ -43,7 +60,7 @@ export default function TripMap({ trip, isExpanded, onToggleExpand }: TripMapPro
       });
     } else {
       // swap DOM container instantly
-      (mapRef.current as any).resize();
+      mapRef.current.resize();
     }
   }, [isExpanded]);
 
@@ -53,27 +70,28 @@ export default function TripMap({ trip, isExpanded, onToggleExpand }: TripMapPro
     const map = mapRef.current;
 
     // remove existing markers stored on map instance
-    (map as any).__markers?.forEach((m: mapboxgl.Marker) => m.remove());
-    (map as any).__markers = [];
+    const existingMarkers = (map as mapboxgl.Map & { __markers?: mapboxgl.Marker[] }).__markers;
+    existingMarkers?.forEach((m: mapboxgl.Marker) => m.remove());
+    (map as mapboxgl.Map & { __markers?: mapboxgl.Marker[] }).__markers = [];
 
     const bounds = new mapboxgl.LngLatBounds();
-    let any = false;
+    let hasCoordinates = false;
 
     trip.destinations.forEach((d, i) => {
       const lat = d.coordinates?.lat;
       const lng = d.coordinates?.lng;
       if (lat && lng) {
-        any = true;
+        hasCoordinates = true;
         const el = document.createElement('div');
         el.className = 'w-7 h-7 bg-blue-600 rounded-full border-2 border-white shadow flex items-center justify-center text-white text-xs font-bold';
         el.textContent = String(i + 1);
         const marker = new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(map);
-        (map as any).__markers.push(marker);
+        (map as mapboxgl.Map & { __markers?: mapboxgl.Marker[] }).__markers?.push(marker);
         bounds.extend([lng, lat]);
       }
     });
 
-    if (any) {
+    if (hasCoordinates) {
       map.fitBounds(bounds, { padding: 50, duration: 0 });
     }
   }, [trip.destinations]);
@@ -92,18 +110,46 @@ export default function TripMap({ trip, isExpanded, onToggleExpand }: TripMapPro
     );
   }
 
+  // Show floating "Show Map" button when map is hidden
+  if (!isVisible) {
+    return (
+      <button
+        onClick={toggleVisibility}
+        className="fixed bottom-6 left-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg rounded-full p-3 hover:from-blue-700 hover:to-blue-800 transition-all z-[1000] flex items-center gap-2"
+        title="Show Trip Map"
+      >
+        <Map className="w-5 h-5" />
+        <span className="text-sm font-medium pr-1">Show Map</span>
+      </button>
+    );
+  }
+
   return (
     <>
       <div
-        className="fixed bottom-[206px] left-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg rounded-t-2xl cursor-pointer z-[1000]"
+        className="fixed bottom-[206px] left-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg rounded-t-2xl z-[1000]"
         style={{ width: 320, height: 48 }}
-        onClick={onToggleExpand}
       >
         <div className="flex items-center justify-between h-full px-4">
-          <span className="font-semibold text-sm">Trip Map</span>
-          <span className="text-xs bg-white/20 px-2 py-1 rounded">
-            {trip.destinations.length} {trip.destinations.length === 1 ? 'stop' : 'stops'}
-          </span>
+          <button
+            onClick={onToggleExpand}
+            className="flex items-center gap-2 flex-1 cursor-pointer"
+          >
+            <span className="font-semibold text-sm">Trip Map</span>
+            <span className="text-xs bg-white/20 px-2 py-1 rounded">
+              {trip.destinations.length} {trip.destinations.length === 1 ? 'stop' : 'stops'}
+            </span>
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleVisibility();
+            }}
+            className="ml-2 p-1 hover:bg-white/20 rounded transition-colors"
+            title="Hide map"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
