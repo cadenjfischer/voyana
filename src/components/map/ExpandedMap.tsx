@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import type { Trip } from '@/types/itinerary';
+import type { Trip, Destination } from '@/types/itinerary';
 import { useItineraryUI } from '@/contexts/ItineraryUIContext';
 import TabbedDestinationRail from '@/components/itinerary/TabbedDestinationRail';
 import CalendarStrip from '@/components/itinerary/CalendarStrip';
@@ -14,9 +14,10 @@ interface ExpandedMapProps {
   trip: Trip;
   onUpdateTrip: (trip: Trip) => void;
   onRemoveDestination?: (destinationId: string) => void;
+  onAddDestination?: (destination: Omit<Destination, 'id' | 'order'>) => void;
 }
 
-export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination }: ExpandedMapProps) {
+export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, onAddDestination }: ExpandedMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const [status, setStatus] = useState<'mount' | 'no-token' | 'init' | 'loaded'>('mount');
@@ -328,7 +329,7 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination }:
                 onDestinationsReorder={(dests) => onUpdateTrip({ ...trip, destinations: dests, updatedAt: new Date().toISOString() })}
                 onUpdateDestination={(d) => onUpdateTrip({ ...trip, destinations: trip.destinations.map(x => x.id === d.id ? d : x), updatedAt: new Date().toISOString() })}
                 onRemoveDestination={onRemoveDestination}
-                onAddDestination={async () => {}}
+                onAddDestination={onAddDestination || (() => {})}
                 trip={trip}
               />
             </div>
