@@ -145,9 +145,9 @@ export default function TripDetailPage() {
             
             // Get destination names - prefer the destinations array if it exists, otherwise parse the destination string
             let destinationNames: string[];
-            if ((foundTrip as any).destinations && Array.isArray((foundTrip as any).destinations)) {
+            if ((foundTrip as { destinations?: string[] }).destinations && Array.isArray((foundTrip as { destinations?: string[] }).destinations)) {
               // Has destinations array (new LocalTrip format)
-              destinationNames = (foundTrip as any).destinations;
+              destinationNames = (foundTrip as { destinations: string[] }).destinations;
             } else {
               // Parse from destination string (old format)
               const destinationString = foundTrip.destination || 'Main Destination';
@@ -193,7 +193,7 @@ export default function TripDetailPage() {
             };
             
             // Pull through any saved coordinates from LocalTrip creation (if present)
-            const savedCoords: Record<string, { lat: number; lng: number }> = (foundTrip as any).destinationCoords || {};
+            const savedCoords: Record<string, { lat: number; lng: number }> = (foundTrip as { destinationCoords?: Record<string, { lat: number; lng: number }> }).destinationCoords || {};
 
             // Create separate destination objects for each city with auto-assigned colors
             const destinations = destinationNames.map((name: string, index: number) => {

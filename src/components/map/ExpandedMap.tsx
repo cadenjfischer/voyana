@@ -77,8 +77,8 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
     if (map.getLayer('route-line')) map.removeLayer('route-line');
     if (map.getSource('route-line')) map.removeSource('route-line');
     
-    (map as any).__markers?.forEach((m: mapboxgl.Marker) => m.remove());
-    (map as any).__markers = [];
+    (map as unknown as { __markers?: mapboxgl.Marker[] }).__markers?.forEach((m: mapboxgl.Marker) => m.remove());
+    (map as unknown as { __markers?: mapboxgl.Marker[] }).__markers = [];
     
     const bounds = new mapboxgl.LngLatBounds();
     let any = false;
@@ -213,7 +213,7 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
         .setLngLat([marker.lng, marker.lat])
         .addTo(map);
       
-      (map as any).__markers.push(mapMarker);
+      (map as unknown as { __markers: mapboxgl.Marker[] }).__markers.push(mapMarker);
       
       // Add label as separate marker (hidden by default, shown on hover)
       const labelEl = document.createElement('div');
@@ -234,7 +234,7 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
         .setLngLat([marker.lng, marker.lat])
         .addTo(map);
       
-      (map as any).__markers.push(labelMarker);
+      (map as unknown as { __markers: mapboxgl.Marker[] }).__markers.push(labelMarker);
       
       // Show/hide label on hover
       wrapper.addEventListener('mouseenter', () => {
@@ -416,7 +416,7 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
                   trip={trip}
                   activeDestinationId={selectedDestinationId || trip.destinations[0]?.id || ''}
                   activeDay={selectedDay || trip.days[0]?.id || ''}
-                  destinationRefs={{ current: {} as any }}
+                  destinationRefs={{ current: {} as Record<string, HTMLDivElement> }}
                   onDaysUpdate={(days) => onUpdateTrip({ ...trip, days, updatedAt: new Date().toISOString() })}
                   onDaySelect={(id) => {
                     // Update shared day selection

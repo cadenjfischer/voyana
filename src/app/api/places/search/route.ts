@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
 
     // Map Mapbox features to GooglePlace-like shape for UI compatibility
-    const results = (data.features || []).map((f: any) => {
+    const results = (data.features || []).map((f: { center?: number[]; text?: string; place_name?: string; id?: string; place_type?: string[] }) => {
       const [lng, lat] = f.center || [0, 0];
       const name = f.text || f.place_name || '';
       const formatted = f.place_name || name;

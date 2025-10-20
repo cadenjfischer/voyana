@@ -102,8 +102,8 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
     if (map.getSource('mini-route-line')) map.removeSource('mini-route-line');
 
     // Remove existing markers
-    (map as any).__mini_markers?.forEach((m: mapboxgl.Marker) => m.remove());
-    (map as any).__mini_markers = [];
+    (map as unknown as { __mini_markers?: mapboxgl.Marker[] }).__mini_markers?.forEach((m: mapboxgl.Marker) => m.remove());
+    (map as unknown as { __mini_markers?: mapboxgl.Marker[] }).__mini_markers = [];
 
     const bounds = new mapboxgl.LngLatBounds();
     let any = false;
@@ -241,7 +241,7 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
         .setLngLat([marker.lng, marker.lat])
         .addTo(map);
       
-      (map as any).__mini_markers.push(mapMarker);
+      (map as unknown as { __mini_markers: mapboxgl.Marker[] }).__mini_markers.push(mapMarker);
       
       // Add label as separate marker (hidden by default, shown on hover)
       const labelEl = document.createElement('div');
@@ -263,7 +263,7 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
         .setLngLat([marker.lng, marker.lat])
         .addTo(map);
       
-      (map as any).__mini_markers.push(labelMarker);
+      (map as unknown as { __mini_markers: mapboxgl.Marker[] }).__mini_markers.push(labelMarker);
       
       // Show/hide label on hover
       wrapper.addEventListener('mouseenter', () => {
@@ -360,7 +360,7 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
 
       <div
         className={`fixed ${isExpanded ? 'inset-0' : 'bottom-6 left-6'} pointer-events-auto ${className}`}
-        style={{ width: isExpanded ? '100vw' as any : width, zIndex }}
+        style={{ width: isExpanded ? '100vw' : width, zIndex }}
         aria-label="Itinerary mini map"
       >
         {/* Mini map header */}
@@ -422,7 +422,7 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
         {/* Map container */}
         <div
           className={`${isExpanded ? 'rounded-none' : 'rounded-b-2xl'} overflow-hidden shadow-2xl bg-white border border-gray-200`}
-          style={{ height: isExpanded ? '100vh' as any : height }}
+          style={{ height: isExpanded ? '100vh' : height }}
           onClick={() => {
             if (!isExpanded) {
               if (mapRef.current) {
