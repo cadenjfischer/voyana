@@ -30,6 +30,7 @@ export default function TabbedDestinationRail({
 }: TabbedDestinationRailProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState<string | null>(null);
   
   // Auto-fill nights if only one destination
   useEffect(() => {
@@ -359,9 +360,7 @@ export default function TabbedDestinationRail({
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (confirm(`Remove ${destination.name} from this trip?`)) {
-                                    onRemoveDestination(destination.id);
-                                  }
+                                  setDeleteConfirmOpen(destination.id);
                                 }}
                                 className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 group"
                                 title={`Remove ${destination.name}`}
@@ -385,7 +384,36 @@ export default function TabbedDestinationRail({
         </DragDropContext>
       </div>
 
-
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]" onClick={() => setDeleteConfirmOpen(null)}>
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Delete {destinations.find(d => d.id === deleteConfirmOpen)?.name}
+            </h3>
+            <p className="text-gray-600 text-sm mb-6">
+              Are you sure you want to delete {destinations.find(d => d.id === deleteConfirmOpen)?.name}?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  onRemoveDestination?.(deleteConfirmOpen);
+                  setDeleteConfirmOpen(null);
+                }}
+                className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => setDeleteConfirmOpen(null)}
+                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors duration-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -263,13 +263,43 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
       {/* Map canvas area (left 2/3) with overlay */}
       <div className="relative w-[67vw] min-w-[640px] h-full min-h-0">
   <div ref={containerRef} className="w-full h-full" />
-        {/* Small status badge for load/debug */}
-        <div className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 rounded bg-white/80 border border-gray-200 text-gray-700">
-          Map · {status}
+        
+        {/* Reset button overlay: top-right corner */}
+        <div className="absolute top-4 right-4 z-10">
+          <button
+            onClick={() => {
+              if (mapRef.current) {
+                const bounds = new mapboxgl.LngLatBounds();
+                trip.destinations.forEach(d => {
+                  if (d.coordinates) {
+                    bounds.extend([d.coordinates.lng, d.coordinates.lat]);
+                  }
+                });
+                if (!bounds.isEmpty()) {
+                  mapRef.current.fitBounds(bounds, { padding: { top: 64, left: 64, right: 64, bottom: 200 }, maxZoom: 9, duration: 800 });
+                }
+              }
+            }}
+            style={{ 
+              background: 'white', 
+              border: '1px solid #e5e7eb', 
+              borderRadius: 6, 
+              padding: '6px 12px', 
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)', 
+              cursor: 'pointer', 
+              fontSize: '13px', 
+              fontWeight: 600, 
+              color: '#111827' 
+            }}
+            title="Reset map view"
+          >
+            Reset
+          </button>
         </div>
+
         {/* Calendar overlay: centered at bottom within map area */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center px-8">
-          <div className="pointer-events-auto bg-transparent">
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center px-4">
+          <div className="pointer-events-auto bg-transparent w-full max-w-full overflow-x-auto">
             <CalendarStrip
               days={trip.days}
               activeDay={selectedDay || trip.days[0]?.id || ''}
@@ -323,7 +353,7 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
                   // Recenter map on selected destination
                   const d = trip.destinations.find(x => x.id === id);
                   if (d?.coordinates && mapRef.current) {
-                    mapRef.current.easeTo({ center: [d.coordinates.lng, d.coordinates.lat], zoom: Math.max(mapRef.current.getZoom() || 4, 8), padding: { top: 40, left: 40, right: 40, bottom: 200 }, duration: 300 });
+                    mapRef.current.easeTo({ center: [d.coordinates.lng, d.coordinates.lat], zoom: Math.max(mapRef.current.getZoom() || 4, 8), padding: { top: 40, left: 40, right: 40, bottom: 200 }, duration: 800 });
                   }
                 }}
                 onDestinationsReorder={(dests) => {
@@ -399,7 +429,7 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
                       if (dest?.coordinates && mapRef.current) {
                         const { lng, lat } = dest.coordinates;
                         try {
-                          mapRef.current.easeTo({ center: [lng, lat], zoom: Math.max(mapRef.current.getZoom() || 4, 8), padding: { top: 40, left: 40, right: 40, bottom: 200 }, duration: 300 });
+                          mapRef.current.easeTo({ center: [lng, lat], zoom: Math.max(mapRef.current.getZoom() || 4, 8), padding: { top: 40, left: 40, right: 40, bottom: 200 }, duration: 800 });
                         } catch {}
                       }
                     }

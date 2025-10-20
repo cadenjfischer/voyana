@@ -359,25 +359,46 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
       {/* Backdrop for expanded mode handled by ExpandedMap, not here */}
 
       <div
-        className={`fixed ${isExpanded ? 'inset-0' : 'bottom-6 left-6'} rounded-2xl overflow-hidden shadow-2xl bg-white border border-gray-200 pointer-events-auto ${className}`}
-        style={{ width: isExpanded ? '100vw' as any : width, height: isExpanded ? '100vh' as any : height, zIndex }}
+        className={`fixed ${isExpanded ? 'inset-0' : 'bottom-6 left-6'} pointer-events-auto ${className}`}
+        style={{ width: isExpanded ? '100vw' as any : width, zIndex }}
         aria-label="Itinerary mini map"
-        onClick={() => {
-          if (!isExpanded) {
-            if (mapRef.current) {
-              const c = mapRef.current.getCenter();
-              const z = mapRef.current.getZoom();
-              cameraRef.current = { center: [c.lng, c.lat], zoom: z };
-            }
-            setIsExpanded(true);
-            setTimeout(() => mapRef.current?.resize(), 0);
-          }
-        }}
       >
-        {/* Header */}
-        {/* Expand button in mini mode */}
+        {/* Mini map header */}
         {!isExpanded && (
-          <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 2, display: 'flex', gap: 8 }}>
+          <div style={{ 
+            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', 
+            borderTopLeftRadius: '16px',
+            borderTopRightRadius: '16px',
+            padding: '10px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (mapRef.current) {
+                  // Reset to show all destinations
+                  const bounds = new mapboxgl.LngLatBounds();
+                  trip.destinations.forEach(d => {
+                    if (d.coordinates) {
+                      bounds.extend([d.coordinates.lng, d.coordinates.lat]);
+                    }
+                  });
+                  if (!bounds.isEmpty()) {
+                    mapRef.current.fitBounds(bounds, { padding: 40, maxZoom: 9, duration: 800 });
+                  }
+                }
+              }}
+              style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: '11px', fontWeight: 600, color: '#1e40af', transition: 'all 0.2s' }}
+              title="Reset map view"
+              onMouseEnter={(e) => e.currentTarget.style.background = 'white'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.9)'}
+            >
+              Reset
+            </button>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'white', letterSpacing: '0.5px' }}>Map</span>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -389,27 +410,39 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
                 setIsExpanded(true);
                 setTimeout(() => mapRef.current?.resize(), 0);
               }}
-              style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 8, padding: '6px 10px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', cursor: 'pointer' }}
+              style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: '11px', fontWeight: 600, color: '#1e40af', transition: 'all 0.2s' }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'white'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.9)'}
             >
               Expand
             </button>
           </div>
         )}
 
-        {/* Status label (small) */}
-        {!isExpanded && (
-          <div className="absolute top-1 left-2 z-[1] text-[10px] font-medium text-gray-600 bg-white/80 px-1.5 py-0.5 rounded">
-            Mini Map · {status}
-          </div>
-        )}
-
-        {noToken ? (
-          <div className="w-full h-full flex items-center justify-center text-xs text-gray-600">
-            Add NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
-          </div>
-        ) : (
-          <div ref={containerRef} className="w-full h-full" />
-        )}
+        {/* Map container */}
+        <div
+          className={`${isExpanded ? 'rounded-none' : 'rounded-b-2xl'} overflow-hidden shadow-2xl bg-white border border-gray-200`}
+          style={{ height: isExpanded ? '100vh' as any : height }}
+          onClick={() => {
+            if (!isExpanded) {
+              if (mapRef.current) {
+                const c = mapRef.current.getCenter();
+                const z = mapRef.current.getZoom();
+                cameraRef.current = { center: [c.lng, c.lat], zoom: z };
+              }
+              setIsExpanded(true);
+              setTimeout(() => mapRef.current?.resize(), 0);
+            }
+          }}
+        >
+          {noToken ? (
+            <div className="w-full h-full flex items-center justify-center text-xs text-gray-600">
+              Add NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
+            </div>
+          ) : (
+            <div ref={containerRef} className="w-full h-full" />
+          )}
+        </div>
       </div>
     </>
   );
