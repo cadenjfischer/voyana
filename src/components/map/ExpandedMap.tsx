@@ -268,8 +268,8 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
           Map · {status}
         </div>
         {/* Calendar overlay: centered at bottom within map area */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">
-          <div className="pointer-events-auto bg-transparent w-[90%] max-w-[960px]">
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center px-8">
+          <div className="pointer-events-auto bg-transparent">
             <CalendarStrip
               days={trip.days}
               activeDay={selectedDay || trip.days[0]?.id || ''}
@@ -326,10 +326,56 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
                     mapRef.current.easeTo({ center: [d.coordinates.lng, d.coordinates.lat], zoom: Math.max(mapRef.current.getZoom() || 4, 8), padding: { top: 40, left: 40, right: 40, bottom: 200 }, duration: 300 });
                   }
                 }}
-                onDestinationsReorder={(dests) => onUpdateTrip({ ...trip, destinations: dests, updatedAt: new Date().toISOString() })}
-                onUpdateDestination={(d) => onUpdateTrip({ ...trip, destinations: trip.destinations.map(x => x.id === d.id ? d : x), updatedAt: new Date().toISOString() })}
+                onDestinationsReorder={(dests) => {
+                  // Reassign days when reordering (same logic as SyncedSplitView)
+                  const sortedDestinations = [...dests].sort((a, b) => a.order - b.order);
+                  let dayIndex = 0;
+                  const updatedDays = trip.days.map(day => ({ ...day, destinationId: undefined as string | undefined }));
+                  
+                  for (let destIndex = 0; destIndex < sortedDestinations.length; destIndex++) {
+                    const destination = sortedDestinations[destIndex];
+                    if (destination.nights === 0) continue;
+                    
+                    const hasActiveNextDestination = sortedDestinations.slice(destIndex + 1).some(dest => dest.nights > 0);
+                    const daysToAssign = hasActiveNextDestination ? destination.nights : destination.nights + 1;
+                    
+                    for (let i = 0; i < daysToAssign && dayIndex < updatedDays.length; i++) {
+                      updatedDays[dayIndex] = { ...updatedDays[dayIndex], destinationId: destination.id };
+                      dayIndex++;
+                    }
+                  }
+                  
+                  onUpdateTrip({ ...trip, destinations: dests, days: updatedDays, updatedAt: new Date().toISOString() });
+                }}
+                onUpdateDestination={(d) => {
+                  // Update destinations
+                  const updatedDestinations = trip.destinations.map(x => x.id === d.id ? d : x);
+                  
+                  // Reassign days based on nights (same logic as SyncedSplitView)
+                  const sortedDestinations = [...updatedDestinations].sort((a, b) => a.order - b.order);
+                  let dayIndex = 0;
+                  const updatedDays = trip.days.map(day => ({ ...day, destinationId: undefined as string | undefined }));
+                  
+                  for (let destIndex = 0; destIndex < sortedDestinations.length; destIndex++) {
+                    const destination = sortedDestinations[destIndex];
+                    if (destination.nights === 0) continue;
+                    
+                    const hasActiveNextDestination = sortedDestinations.slice(destIndex + 1).some(dest => dest.nights > 0);
+                    const daysToAssign = hasActiveNextDestination ? destination.nights : destination.nights + 1;
+                    
+                    for (let i = 0; i < daysToAssign && dayIndex < updatedDays.length; i++) {
+                      updatedDays[dayIndex] = { ...updatedDays[dayIndex], destinationId: destination.id };
+                      dayIndex++;
+                    }
+                  }
+                  
+                  onUpdateTrip({ ...trip, destinations: updatedDestinations, days: updatedDays, updatedAt: new Date().toISOString() });
+                }}
                 onRemoveDestination={onRemoveDestination}
-                onAddDestination={onAddDestination || (() => {})}
+                onAddDestination={(dest) => {
+                  console.log('ExpandedMap onAddDestination called with:', dest);
+                  onAddDestination?.(dest);
+                }}
                 trip={trip}
               />
             </div>

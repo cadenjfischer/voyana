@@ -70,6 +70,7 @@ export default function InlineDestinationSearch({
       }
     };
 
+    console.log('InlineDestinationSearch calling onAddDestination with:', newTripDestination);
     onAddDestination(newTripDestination);
     
     // Reset and close

@@ -12,6 +12,8 @@ import { Trip, Destination, Activity, generateDays } from '@/types/itinerary';
 import { PREMIUM_COLOR_PALETTE } from '@/utils/colors';
 import { ItineraryUIProvider } from '@/contexts/ItineraryUIContext';
 import Link from 'next/link';
+import TripMap from '@/components/map/TripMap';
+import MiniMap from '@/components/map/MiniMap';
 
 export default function TripDetailPage() {
   const { user } = useUser();
@@ -24,6 +26,9 @@ export default function TripDetailPage() {
   const [showAddActivityModal, setShowAddActivityModal] = useState(false);
   const [showEditTripModal, setShowEditTripModal] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string>('');
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+
+  console.log('🚀 PAGE COMPONENT RENDER - trip exists?', !!trip, 'loading?', loading);
 
   const handleUpdateTrip = (updatedTrip: Trip) => {
     if (user) {
@@ -187,6 +192,9 @@ export default function TripDetailPage() {
               return undefined;
             };
             
+            // Pull through any saved coordinates from LocalTrip creation (if present)
+            const savedCoords: Record<string, { lat: number; lng: number }> = (foundTrip as any).destinationCoords || {};
+
             // Create separate destination objects for each city with auto-assigned colors
             const destinations = destinationNames.map((name: string, index: number) => {
               const availableColors = PREMIUM_COLOR_PALETTE.map(color => color.id);
@@ -202,7 +210,7 @@ export default function TripDetailPage() {
                 estimatedCost: 0,
                 order: index,
                 customColor: assignedColor,
-                coordinates: getKnownCoordinates(name)
+                coordinates: savedCoords[name] || getKnownCoordinates(name)
               };
             });
 
@@ -376,11 +384,13 @@ export default function TripDetailPage() {
       coordinates // Always include coordinates (or undefined if geocoding failed)
     };
 
+    console.log('===== PAGE handleAddDestination =====');
     console.log('NEW DESTINATION CREATED:', {
       name: newDestination.name,
       id: newDestination.id,
       customColor: newDestination.customColor,
       order: newDestination.order,
+      nights: newDestination.nights,
       hasCoordinates: !!newDestination.coordinates
     });
 
@@ -392,11 +402,14 @@ export default function TripDetailPage() {
 
     console.log('UPDATED TRIP DESTINATIONS:', updatedTrip.destinations.map(d => ({
       name: d.name,
-      color: d.customColor
+      color: d.customColor,
+      nights: d.nights
     })));
+    console.log('Calling handleUpdateTrip with', updatedTrip.destinations.length, 'destinations');
 
     handleUpdateTrip(updatedTrip);
     setShowAddDestinationModal(false);
+    console.log('===== END handleAddDestination =====');
   };
 
 
@@ -494,6 +507,8 @@ export default function TripDetailPage() {
 
   const selectedDay = trip.days?.find(day => day.id === selectedDayId);
 
+  console.log('🚀 PAGE - About to render. handleAddDestination:', typeof handleAddDestination, !!handleAddDestination, handleAddDestination?.name);
+
   return (
     <ItineraryUIProvider>
       <Header />
@@ -524,8 +539,12 @@ export default function TripDetailPage() {
         <div className="flex-1 min-h-0">
           <ItineraryLayout
             trip={trip}
-              onUpdateTrip={handleUpdateTrip}
-              onRemoveDestination={handleRemoveDestination}
+            onUpdateTrip={handleUpdateTrip}
+            onRemoveDestination={handleRemoveDestination}
+            onAddDestination={(dest) => {
+              console.log('🎯 INLINE HANDLER CALLED:', dest);
+              handleAddDestination(dest);
+            }}
           />
         </div>
       </div>
@@ -558,6 +577,12 @@ export default function TripDetailPage() {
         trip={trip}
       />
 
+      {/* Trip Map disabled while testing MiniMap */}
+
+      {/* New Mini Map (bottom-left) */}
+      {trip && (
+        <MiniMap trip={trip} />
+      )}
     </ItineraryUIProvider>
   );
 }
