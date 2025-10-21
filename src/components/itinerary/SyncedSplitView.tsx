@@ -18,7 +18,7 @@ interface SyncedSplitViewProps {
 }
 
 export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestination, onActiveDay, onDestinationMapCenterRequest }: SyncedSplitViewProps) {
-  const [activeDestinationId, setActiveDestinationId] = useState<string>('');
+  const [expandedDestinationIds, setExpandedDestinationIds] = useState<Set<string>>(new Set());
   const [activeDay, setActiveDay] = useState<string>('');
   const [isMobile, setIsMobile] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
@@ -38,12 +38,15 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
 
   // Initialize/sync active destination and day with shared context
   useEffect(() => {
-    if (trip.destinations.length > 0) {
-      const firstId = trip.destinations[0].id;
-      const targetId = selectedDestinationId || activeDestinationId || firstId;
-      if (activeDestinationId !== targetId) setActiveDestinationId(targetId);
-      if (!selectedDestinationId) setSelectedDestinationId(targetId);
+    // Only expand if there's an explicit selectedDestinationId from context
+    if (trip.destinations.length > 0 && selectedDestinationId) {
+      setExpandedDestinationIds(prev => {
+        const newSet = new Set(prev);
+        newSet.add(selectedDestinationId);
+        return newSet;
+      });
     }
+    
     if (trip.days.length > 0) {
       const firstDayId = trip.days[0].id;
       const targetDay = selectedDay || activeDay || firstDayId;
@@ -145,8 +148,8 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
         case 'ArrowLeft':
           e.preventDefault();
           // Navigate to previous destination
-          if (trip.destinations.length > 0) {
-            const currentIndex = trip.destinations.findIndex(d => d.id === activeDestinationId);
+          if (trip.destinations.length > 0 && selectedDestinationId) {
+            const currentIndex = trip.destinations.findIndex(d => d.id === selectedDestinationId);
             const prevIndex = currentIndex === 0 ? trip.destinations.length - 1 : currentIndex - 1;
             const prevDestination = trip.destinations[prevIndex];
             handleDestinationSelect(prevDestination.id);
@@ -156,8 +159,8 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
         case 'ArrowRight':
           e.preventDefault();
           // Navigate to next destination
-          if (trip.destinations.length > 0) {
-            const currentIndex = trip.destinations.findIndex(d => d.id === activeDestinationId);
+          if (trip.destinations.length > 0 && selectedDestinationId) {
+            const currentIndex = trip.destinations.findIndex(d => d.id === selectedDestinationId);
             const nextIndex = (currentIndex + 1) % trip.destinations.length;
             const nextDestination = trip.destinations[nextIndex];
             handleDestinationSelect(nextDestination.id);
@@ -168,7 +171,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [trip.days, trip.destinations, activeDay, activeDestinationId]);
+  }, [trip.days, trip.destinations, activeDay, selectedDestinationId]);
 
   // Sync timeline scroll to destination selection
   const scrollToDestination = useCallback((destinationId: string) => {
@@ -192,9 +195,20 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
   // Handle destination selection
   const handleDestinationSelect = (destinationId: string) => {
     const destination = trip.destinations.find(d => d.id === destinationId);
-    setActiveDestinationId(destinationId);
+    
+    // Toggle expanded state - can have multiple open at once
+    setExpandedDestinationIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(destinationId)) {
+        newSet.delete(destinationId);
+      } else {
+        newSet.add(destinationId);
+      }
+      return newSet;
+    });
+    
+    // Update selected destination for map centering
     setSelectedDestinationId(destinationId);
-    // Request the parent to center the map on this destination instead of scrolling
     if (destination && destination.coordinates) {
       onDestinationMapCenterRequest?.({ lat: destination.coordinates.lat, lng: destination.coordinates.lng });
     } else {
@@ -228,14 +242,8 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
     if (closestDay && closestDay !== activeDay) {
       setActiveDay(closestDay);
       onActiveDay?.(closestDay);
-      
-      // Find corresponding destination
-      const day = trip.days.find(d => d.id === closestDay);
-      if (day && day.destinationId && day.destinationId !== activeDestinationId) {
-        setActiveDestinationId(day.destinationId);
-      }
     }
-  }, [isScrolling, activeDay, activeDestinationId, trip.days]);
+  }, [isScrolling, activeDay, trip.days]);
 
   // Handle calendar day selection
   const handleDaySelect = (dayId: string) => {
@@ -247,10 +255,9 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
   setSelectedDay(dayId);
     onActiveDay?.(dayId);
     
-    // Find corresponding destination and set it active
+    // Find corresponding destination and set it as selected for map
     const day = trip.days.find(d => d.id === dayId);
-    if (day && day.destinationId && day.destinationId !== activeDestinationId) {
-      setActiveDestinationId(day.destinationId);
+    if (day && day.destinationId) {
       setSelectedDestinationId(day.destinationId);
     }
     
@@ -455,8 +462,12 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
       updatedAt: new Date().toISOString()
     });
 
-    // Set the new destination as active
-    setActiveDestinationId(newDestination.id);
+    // Expand the new destination
+    setExpandedDestinationIds(prev => {
+      const newSet = new Set(prev);
+      newSet.add(newDestination.id);
+      return newSet;
+    });
   }, [trip, onUpdateTrip]);
 
   if (isMobile) {
@@ -476,12 +487,12 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
               <button
                 key={destination.id}
                 role="tab"
-                aria-selected={activeDestinationId === destination.id}
+                aria-selected={selectedDestinationId === destination.id}
                 aria-controls={`timeline-${destination.id}`}
-                tabIndex={activeDestinationId === destination.id ? 0 : -1}
+                tabIndex={selectedDestinationId === destination.id ? 0 : -1}
                 onClick={() => handleDestinationSelect(destination.id)}
                 className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  activeDestinationId === destination.id
+                  selectedDestinationId === destination.id
                     ? 'bg-blue-600 text-white shadow-lg'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
@@ -510,7 +521,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
         >
           <TimelineView
             trip={trip}
-            activeDestinationId={activeDestinationId}
+            activeDestinationId={selectedDestinationId || ''}
             activeDay={activeDay}
             destinationRefs={destinationRefs}
             onDaysUpdate={handleDaysUpdate}
@@ -521,7 +532,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
         {/* Floating Add Button */}
         <FloatingAddButton
           trip={trip}
-          activeDestinationId={activeDestinationId}
+          activeDestinationId={selectedDestinationId || ''}
           activeDay={activeDay}
           onUpdateTrip={onUpdateTrip}
         />
@@ -538,7 +549,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
       <div className="w-[35%] border-r border-gray-200 flex flex-col bg-white">
         <TabbedDestinationRail
           destinations={trip.destinations}
-          activeDestinationId={activeDestinationId}
+          expandedDestinationIds={expandedDestinationIds}
           onDestinationSelect={handleDestinationSelect}
           onDestinationsReorder={handleDestinationReorder}
           onUpdateDestination={handleDestinationUpdate}
@@ -568,7 +579,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
         >
           <TimelineView
             trip={trip}
-            activeDestinationId={activeDestinationId}
+            activeDestinationId={selectedDestinationId || ''}
             activeDay={activeDay}
             destinationRefs={destinationRefs}
             onDaysUpdate={handleDaysUpdate}
@@ -579,7 +590,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
         {/* Floating Add Button */}
         <FloatingAddButton
           trip={trip}
-          activeDestinationId={activeDestinationId}
+          activeDestinationId={selectedDestinationId || ''}
           activeDay={activeDay}
           onUpdateTrip={onUpdateTrip}
         />

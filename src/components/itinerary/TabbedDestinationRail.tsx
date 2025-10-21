@@ -9,7 +9,7 @@ import InlineDestinationSearch from './InlineDestinationSearch';
 
 interface TabbedDestinationRailProps {
   destinations: Destination[];
-  activeDestinationId: string;
+  expandedDestinationIds: Set<string>;
   onDestinationSelect: (id: string) => void;
   onDestinationsReorder: (destinations: Destination[]) => void;
   onUpdateDestination: (destination: Destination) => void;
@@ -20,7 +20,7 @@ interface TabbedDestinationRailProps {
 
 export default function TabbedDestinationRail({
   destinations,
-  activeDestinationId,
+  expandedDestinationIds,
   onDestinationSelect,
   onDestinationsReorder,
   onUpdateDestination,
@@ -241,7 +241,7 @@ export default function TabbedDestinationRail({
               >
                 {destinations.map((destination, index) => {
                   const colors = getDestinationColors(destination.id, trip.destinations);
-                  const isActive = destination.id === activeDestinationId;
+                  const isActive = expandedDestinationIds.has(destination.id);
 
                   return (
                     <Draggable
