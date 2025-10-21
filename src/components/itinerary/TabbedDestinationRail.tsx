@@ -2,10 +2,11 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Destination, Trip, calculateNights } from '@/types/itinerary';
+import { Destination, Trip, calculateNights, Lodging } from '@/types/itinerary';
 import { getDestinationColors, PREMIUM_COLOR_PALETTE } from '@/utils/colors';
 import ColorPicker from './ColorPicker';
 import InlineDestinationSearch from './InlineDestinationSearch';
+import AddLodgingModal from './AddLodgingModal';
 
 interface TabbedDestinationRailProps {
   destinations: Destination[];
@@ -31,6 +32,7 @@ export default function TabbedDestinationRail({
   const [isUpdating, setIsUpdating] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState<string | null>(null);
+  const [addLodgingModalOpen, setAddLodgingModalOpen] = useState<string | null>(null);
   
   // Auto-fill nights if only one destination
   useEffect(() => {
@@ -197,10 +199,41 @@ export default function TabbedDestinationRail({
     return PREMIUM_COLOR_PALETTE[defaultColorIndex]?.hex || '#6366f1';
   };
 
+  // Handle adding lodging
+  const handleAddLodging = useCallback((destinationId: string, lodging: Omit<Lodging, 'id'>) => {
+    const destination = destinations.find(d => d.id === destinationId);
+    if (!destination) return;
+
+    const newLodging: Lodging = {
+      ...lodging,
+      id: `lodging-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    };
+
+    const updatedDestination = {
+      ...destination,
+      lodgings: [...(destination.lodgings || []), newLodging],
+    };
+
+    onUpdateDestination(updatedDestination);
+  }, [destinations, onUpdateDestination]);
+
+  // Handle removing lodging
+  const handleRemoveLodging = useCallback((destinationId: string, lodgingId: string) => {
+    const destination = destinations.find(d => d.id === destinationId);
+    if (!destination) return;
+
+    const updatedDestination = {
+      ...destination,
+      lodgings: (destination.lodgings || []).filter(l => l.id !== lodgingId),
+    };
+
+    onUpdateDestination(updatedDestination);
+  }, [destinations, onUpdateDestination]);
+
 
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-white relative">
       {/* Night allocation status */}
       <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
         <div className="flex items-center justify-between text-xs">
@@ -420,42 +453,46 @@ export default function TabbedDestinationRail({
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        // TODO: Open add lodging modal
-                                        console.log('Add lodging for', destination.name);
+                                        setAddLodgingModalOpen(destination.id);
                                       }}
                                       className="px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors duration-200"
                                     >
                                       + Add
                                     </button>
                                   </div>
-                                  {destination.lodging ? (
-                                    <p className="text-sm text-gray-600">{destination.lodging}</p>
+                                  
+                                  {/* List of lodging entries */}
+                                  {destination.lodgings && destination.lodgings.length > 0 ? (
+                                    <div className="space-y-2">
+                                      {destination.lodgings.map((lodging) => (
+                                        <div
+                                          key={lodging.id}
+                                          className="flex items-center justify-between p-2 bg-gray-50 rounded-md border border-gray-200"
+                                        >
+                                          <div className="flex-1">
+                                            <p className="text-sm font-medium text-gray-900">{lodging.name}</p>
+                                            <p className="text-xs text-gray-500">
+                                              {lodging.nights} {lodging.nights === 1 ? 'night' : 'nights'}
+                                            </p>
+                                          </div>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleRemoveLodging(destination.id, lodging.id);
+                                            }}
+                                            className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                            title="Remove lodging"
+                                          >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
                                   ) : (
                                     <p className="text-sm text-gray-400 italic">No lodging added yet</p>
                                   )}
-                                </div>
-
-                                {/* Transport Section */}
-                                <div className="bg-white rounded-lg p-3 border border-gray-200">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                                      </svg>
-                                      Transport
-                                    </div>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        // TODO: Open add transport modal
-                                        console.log('Add transport for', destination.name);
-                                      }}
-                                      className="px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors duration-200"
-                                    >
-                                      + Add
-                                    </button>
-                                  </div>
-                                  <p className="text-sm text-gray-400 italic">No transport added yet</p>
                                 </div>
 
                                 {/* Notes Section (if exists) */}
@@ -515,6 +552,18 @@ export default function TabbedDestinationRail({
           </div>
         </div>
       )}
+
+      {/* Add Lodging Modal */}
+      {addLodgingModalOpen && (() => {
+        const destination = destinations.find(d => d.id === addLodgingModalOpen);
+        return destination ? (
+          <AddLodgingModal
+            destination={destination}
+            onClose={() => setAddLodgingModalOpen(null)}
+            onSave={(lodging) => handleAddLodging(addLodgingModalOpen, lodging)}
+          />
+        ) : null;
+      })()}
     </div>
   );
 }

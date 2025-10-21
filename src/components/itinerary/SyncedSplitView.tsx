@@ -545,8 +545,8 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
       {/* Screen reader live region for desktop */}
       <div aria-live="polite" aria-atomic="true" className="sr-only" />
       
-      {/* Desktop: Left Pane - Destinations Rail (35%) */}
-      <div className="w-[35%] border-r border-gray-200 flex flex-col bg-white">
+      {/* Desktop: Left Pane - Destinations Rail (40%) */}
+      <div className="w-[40%] border-r border-gray-200 flex flex-col bg-white">
         <TabbedDestinationRail
           destinations={trip.destinations}
           expandedDestinationIds={expandedDestinationIds}
@@ -559,8 +559,8 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
         />
       </div>
 
-      {/* Desktop: Right Pane - Timeline (65%) */}
-      <div className="w-[65%] flex flex-col">
+      {/* Desktop: Right Pane - Timeline (60%) */}
+      <div className="w-[60%] flex flex-col">
         {/* Fixed Calendar Strip */}
         <div className="z-20 bg-white border-b border-gray-200">
           <CalendarStrip

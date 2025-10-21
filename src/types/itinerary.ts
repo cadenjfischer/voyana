@@ -1,12 +1,23 @@
 // Core data types for the itinerary system
 
+export interface Lodging {
+  id: string;
+  name: string;
+  nights: number; // How many nights this lodging covers
+  checkIn?: string; // Optional check-in date
+  checkOut?: string; // Optional check-out date
+  cost?: number;
+  notes?: string;
+}
+
 export interface Destination {
   id: string;
   name: string;
   startDate: string;
   endDate: string;
   nights: number;
-  lodging: string;
+  lodging: string; // Legacy field - keep for backwards compatibility
+  lodgings?: Lodging[]; // New field for multiple lodging options
   notes?: string;
   estimatedCost: number;
   order: number;
