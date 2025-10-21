@@ -132,13 +132,13 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex-shrink-0">
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex-shrink-0 sticky bottom-0">
                 <button
                   onClick={handleContinue}
                   disabled={availableNights === 0}
-                  className="w-full px-4 py-3 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg transition-colors"
+                  className="w-full px-4 py-3 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg transition-colors shadow-lg"
                 >
-                  Continue
+                  Continue to Hotel Details
                 </button>
               </div>
             </>
