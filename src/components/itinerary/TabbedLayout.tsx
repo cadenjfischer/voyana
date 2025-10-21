@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Trip } from '@/types/itinerary';
 import TabbedDestinationRail from './TabbedDestinationRail';
 import TimelineView from './TimelineView';
-import CalendarStrip from './CalendarStrip';
 
 interface TabbedLayoutProps {
   trip: Trip;
@@ -90,28 +89,15 @@ export default function TabbedLayout({
             trip={trip}
           />
         ) : (
-          <div className="flex flex-col h-full">
-            {/* Calendar Strip for Day by Day */}
-            <div className="bg-white border-b border-gray-200 flex-shrink-0">
-              <CalendarStrip
-                days={trip.days}
-                activeDay={activeDay}
-                onDaySelect={onDaySelect}
-                trip={trip}
-              />
-            </div>
-
-            {/* Timeline Content */}
-            <div className="flex-1 overflow-y-auto">
-              <TimelineView
-                trip={trip}
-                activeDestinationId={selectedDestinationId || ''}
-                activeDay={activeDay}
-                destinationRefs={destinationRefs}
-                onDaysUpdate={onDaysUpdate}
-                onDaySelect={onDaySelect}
-              />
-            </div>
+          <div className="flex-1 overflow-y-auto">
+            <TimelineView
+              trip={trip}
+              activeDestinationId={selectedDestinationId || ''}
+              activeDay={activeDay}
+              destinationRefs={destinationRefs}
+              onDaysUpdate={onDaysUpdate}
+              onDaySelect={onDaySelect}
+            />
           </div>
         )}
       </div>

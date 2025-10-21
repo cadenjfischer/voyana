@@ -160,9 +160,9 @@ export default function TripMap({ trip, isExpanded, onToggleExpand, embedded = f
     if (hasCoordinates) {
       // Use larger padding to ensure both destinations are visible
       // Use object notation for different padding on each side
-      // Extra padding on bottom and right to account for floating button and UI elements
+      // Extra padding on bottom and right to account for floating button, calendar strip and UI elements
       const padding = embedded 
-        ? { top: 60, bottom: 220, left: 60, right: 160 } 
+        ? { top: 60, bottom: 300, left: 60, right: 160 } 
         : 40;
       map.fitBounds(bounds, { 
         padding: padding, 

@@ -7,6 +7,7 @@ import { PREMIUM_COLOR_PALETTE } from '@/utils/colors';
 import TabbedLayout from './TabbedLayout';
 import TripMap from '@/components/map/TripMap';
 import FloatingAddButton from './FloatingAddButton';
+import CalendarStrip from './CalendarStrip';
 
 interface SyncedSplitViewProps {
   trip: Trip;
@@ -472,7 +473,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
 
   // Desktop tabbed layout with full map
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-full bg-gray-50">
       {/* Screen reader live region for desktop */}
       <div aria-live="polite" aria-atomic="true" className="sr-only" />
       
@@ -497,14 +498,29 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
       </div>
 
       {/* Right Pane - Full Map (60%) */}
-      <div className="w-[60%] h-screen flex flex-col relative overflow-hidden">
-        <TripMap
-          trip={trip}
-          isExpanded={false}
-          onToggleExpand={() => {}}
-          embedded={true}
-          selectedDestinationId={selectedDestinationId || undefined}
-        />
+      <div className="w-[60%] h-full flex flex-col relative">
+        {/* Map Container */}
+        <div className="flex-1 relative overflow-hidden">
+          <TripMap
+            trip={trip}
+            isExpanded={false}
+            onToggleExpand={() => {}}
+            embedded={true}
+            selectedDestinationId={selectedDestinationId || undefined}
+          />
+          
+          {/* Calendar Strip - Overlaying the map */}
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-[1000] pointer-events-auto">
+            <CalendarStrip
+              days={trip.days}
+              activeDay={activeDay}
+              onDaySelect={handleDaySelect}
+              trip={trip}
+              transparent={true}
+              centered={true}
+            />
+          </div>
+        </div>
         
         {/* Floating Add Button */}
         <FloatingAddButton
