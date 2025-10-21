@@ -9,7 +9,7 @@ import {
   getCountryFromGooglePlace, 
   getGooglePlaceType,
   GooglePlace 
-} from '@/utils/google-places';
+} from '@/utils/places';
 
 interface AddDestinationModalProps {
   isOpen: boolean;

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Destination, Lodging } from '@/types/itinerary';
+import CustomAutocomplete from '@/components/CustomAutocomplete';
 
 interface AddLodgingModalProps {
   destination: Destination;
@@ -11,11 +12,25 @@ interface AddLodgingModalProps {
 
 export default function AddLodgingModal({ destination, onClose, onSave }: AddLodgingModalProps) {
   const [step, setStep] = useState<'nights' | 'details'>('nights');
+  const [entryMode, setEntryMode] = useState<'search' | 'custom'>('search');
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
   const [hoverDate, setHoverDate] = useState<string | null>(null);
   const [stayAllNights, setStayAllNights] = useState(false);
+  
+  // Basic fields
   const [hotelName, setHotelName] = useState('');
+  
+  // Extended fields for custom mode
+  const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
+  const [website, setWebsite] = useState('');
+  const [email, setEmail] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [totalCost, setTotalCost] = useState('');
+  const [notes, setNotes] = useState('');
+  const [checkInTime, setCheckInTime] = useState('');
+  const [checkOutTime, setCheckOutTime] = useState('');
   
   // Calculate how many nights are already allocated
   const allocatedNights = destination.lodgings?.reduce((sum, l) => sum + l.nights, 0) || 0;
@@ -239,28 +254,31 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
 
   return (
     <>
-      {/* Slide-up Panel - Covers entire left panel */}
-      <div className="absolute inset-0 bg-white z-50 animate-slide-up h-full">
+      {/* Overlay backdrop for left 40% of screen */}
+      <div className="fixed inset-y-0 left-0 w-[40%] bg-black/30 z-[100] animate-fade-in" onClick={onClose} />
+      
+      {/* Slide-up Panel - Fixed to left 40% from top */}
+      <div className="fixed inset-y-0 left-0 w-[40%] bg-white z-[101] animate-slide-up flex flex-col shadow-2xl">
         {step === 'nights' ? (
-          <div className="flex flex-col h-full">
+          <>
             {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0 bg-white z-10">
+            <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0 bg-white">
               <div className="flex items-center justify-between mb-1">
-                <h2 className="text-lg font-semibold text-gray-900">Add Lodging</h2>
+                <h2 className="text-xl font-bold text-gray-900">Add Lodging</h2>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-              <p className="text-sm text-gray-500">{destination.name}</p>
+              <p className="text-sm text-gray-600">{destination.name}</p>
             </div>
 
             {/* Content */}
-            <div className="px-6 py-4 space-y-4 flex-1 overflow-y-auto min-h-0 pb-24">
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
                 {/* Context Note */}
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
                   <div className="flex items-start gap-3">
@@ -416,131 +434,318 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
                     </p>
                   )}
                 </div>
-
-                {/* Continue Button - Inside content area */}
-                <div className="mt-6">
-                  <button
-                    onClick={handleContinue}
-                    disabled={getSelectedNights() === 0}
-                    className="w-full px-6 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed rounded-xl transition-all shadow-lg hover:shadow-xl disabled:transform-none disabled:shadow-md flex items-center justify-center gap-2"
-                  >
-                    <span>Continue</span>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </button>
-                </div>
             </div>
-          </div>
+
+            {/* Footer with Continue Button */}
+            <div className="p-6 border-t border-gray-200 bg-gray-50">
+              <button
+                onClick={handleContinue}
+                disabled={getSelectedNights() === 0}
+                className="w-full px-6 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed rounded-xl transition-all shadow-lg hover:shadow-xl disabled:transform-none disabled:shadow-md flex items-center justify-center gap-2"
+              >
+                <span>Continue</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
+            </div>
+          </>
         ) : (
-            <>
-              {/* Header - Details Step */}
-              <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
-                <div className="flex items-center gap-3 mb-1">
-                  <button
-                    onClick={() => setStep('nights')}
-                    className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <div className="flex-1">
-                    <h2 className="text-lg font-semibold text-gray-900">Add Lodging Details</h2>
-                    <p className="text-sm text-gray-500">{getSelectedNights()} {getSelectedNights() === 1 ? 'night' : 'nights'} in {destination.name}</p>
-                  </div>
-                  <button
-                    onClick={onClose}
-                    className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              {/* Content - Details Step */}
-              <div className="px-6 py-6 space-y-4 flex-1 overflow-y-auto">
-                {/* Booking Provider Options */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Search for hotels
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Booking.com */}
-                    <button className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group">
-                      <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-2">
-                        <span className="text-white font-bold text-lg">B</span>
-                      </div>
-                      <span className="text-xs font-medium text-gray-700 group-hover:text-blue-700">Booking.com</span>
-                    </button>
-
-                    {/* Expedia */}
-                    <button className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group">
-                      <div className="w-12 h-12 bg-yellow-400 rounded-lg flex items-center justify-center mb-2">
-                        <span className="text-blue-900 font-bold text-lg">E</span>
-                      </div>
-                      <span className="text-xs font-medium text-gray-700 group-hover:text-blue-700">Expedia</span>
-                    </button>
-
-                    {/* Hotels.com */}
-                    <button className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group">
-                      <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center mb-2">
-                        <span className="text-white font-bold text-lg">H</span>
-                      </div>
-                      <span className="text-xs font-medium text-gray-700 group-hover:text-blue-700">Hotels.com</span>
-                    </button>
-
-                    {/* Airbnb */}
-                    <button className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group">
-                      <div className="w-12 h-12 bg-pink-500 rounded-lg flex items-center justify-center mb-2">
-                        <span className="text-white font-bold text-lg">A</span>
-                      </div>
-                      <span className="text-xs font-medium text-gray-700 group-hover:text-blue-700">Airbnb</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-200"></div>
-                  </div>
-                  <div className="relative flex justify-center text-xs">
-                    <span className="px-2 bg-white text-gray-500">or add manually</span>
-                  </div>
-                </div>
-
-                {/* Manual Entry Form */}
-                <div>
-                  <label htmlFor="hotel-name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Hotel Name
-                  </label>
-                  <input
-                    id="hotel-name"
-                    type="text"
-                    value={hotelName}
-                    onChange={(e) => setHotelName(e.target.value)}
-                    placeholder="e.g., Hilton Paris Opera"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    autoFocus
-                  />
-                </div>
-              </div>
-
-              {/* Footer - Details Step */}
-              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex-shrink-0">
+          <>
+            {/* Header - Details Step */}
+            <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0 bg-white">
+              <div className="flex items-center gap-3 mb-2">
                 <button
-                  onClick={handleSave}
-                  disabled={!hotelName.trim()}
-                  className="w-full px-4 py-3 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg transition-colors"
+                  onClick={() => setStep('nights')}
+                  className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                 >
-                  Add Lodging
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-900">Add Lodging Details</h2>
+                  <p className="text-sm text-gray-600">{getSelectedNights()} {getSelectedNights() === 1 ? 'night' : 'nights'} in {destination.name}</p>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
-            </>
-          )}
+              
+              {/* Tabs */}
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => setEntryMode('search')}
+                  className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
+                    entryMode === 'search'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Quick Search
+                </button>
+                <button
+                  onClick={() => setEntryMode('custom')}
+                  className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-all ${
+                    entryMode === 'custom'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Add Custom
+                </button>
+              </div>
+            </div>
+
+            {/* Content - Details Step */}
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+              {entryMode === 'search' ? (
+                <>
+                  {/* Quick Search Mode */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Search for hotels
+                    </label>
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      {/* Booking.com */}
+                      <button className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group">
+                        <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center mb-2">
+                          <span className="text-white font-bold text-xl">B</span>
+                        </div>
+                        <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700">Booking.com</span>
+                      </button>
+
+                      {/* Expedia */}
+                      <button className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group">
+                        <div className="w-14 h-14 bg-yellow-400 rounded-xl flex items-center justify-center mb-2">
+                          <span className="text-blue-900 font-bold text-xl">E</span>
+                        </div>
+                        <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700">Expedia</span>
+                      </button>
+
+                      {/* Hotels.com */}
+                      <button className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group">
+                        <div className="w-14 h-14 bg-red-600 rounded-xl flex items-center justify-center mb-2">
+                          <span className="text-white font-bold text-xl">H</span>
+                        </div>
+                        <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700">Hotels.com</span>
+                      </button>
+
+                      {/* Airbnb */}
+                      <button className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group">
+                        <div className="w-14 h-14 bg-pink-500 rounded-xl flex items-center justify-center mb-2">
+                          <span className="text-white font-bold text-xl">A</span>
+                        </div>
+                        <span className="text-sm font-medium text-gray-700 group-hover:text-blue-700">Airbnb</span>
+                      </button>
+                    </div>
+                    
+                    <p className="text-xs text-gray-500 text-center">
+                      Opens in new tab with your dates pre-filled
+                    </p>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-200"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-3 bg-white text-gray-500">or enter manually</span>
+                    </div>
+                  </div>
+
+                  {/* Hotel Name for Quick Search */}
+                  <div>
+                    <label htmlFor="hotel-name-search" className="block text-sm font-medium text-gray-700 mb-2">
+                      Hotel Name
+                    </label>
+                    <input
+                      id="hotel-name-search"
+                      type="text"
+                      value={hotelName}
+                      onChange={(e) => setHotelName(e.target.value)}
+                      placeholder="e.g., Hilton Paris Opera"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-base"
+                      autoFocus
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Custom Mode - Comprehensive Form */}
+                  <div className="space-y-4">
+                    {/* Hotel Name * Required */}
+                    <div>
+                      <label htmlFor="hotel-name" className="block text-sm font-medium text-gray-900 mb-1.5">
+                        Lodging Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="hotel-name"
+                        type="text"
+                        value={hotelName}
+                        onChange={(e) => setHotelName(e.target.value)}
+                        placeholder="Enter lodging name"
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900 placeholder-gray-400"
+                        required
+                      />
+                    </div>
+
+                    {/* Check-in/Check-out Times */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label htmlFor="checkin-time" className="block text-sm font-medium text-gray-900 mb-1.5">
+                          Check-in Time
+                        </label>
+                        <input
+                          id="checkin-time"
+                          type="time"
+                          value={checkInTime}
+                          onChange={(e) => setCheckInTime(e.target.value)}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="checkout-time" className="block text-sm font-medium text-gray-900 mb-1.5">
+                          Check-out Time
+                        </label>
+                        <input
+                          id="checkout-time"
+                          type="time"
+                          value={checkOutTime}
+                          onChange={(e) => setCheckOutTime(e.target.value)}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Address with Google Places */}
+                    <div>
+                      <label htmlFor="address" className="block text-sm font-medium text-gray-900 mb-1.5">
+                        Address
+                      </label>
+                      <CustomAutocomplete
+                        value={address}
+                        onChange={setAddress}
+                        placeholder="Search for address"
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900 placeholder-gray-400"
+                      />
+                    </div>
+
+                    {/* Phone & Website */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label htmlFor="phone" className="block text-sm font-medium text-gray-900 mb-1.5">
+                          Phone
+                        </label>
+                        <input
+                          id="phone"
+                          type="tel"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          placeholder="Enter phone"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900 placeholder-gray-400"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="website" className="block text-sm font-medium text-gray-900 mb-1.5">
+                          Website
+                        </label>
+                        <input
+                          id="website"
+                          type="url"
+                          value={website}
+                          onChange={(e) => setWebsite(e.target.value)}
+                          placeholder="Enter website"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900 placeholder-gray-400"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-1.5">
+                        Email
+                      </label>
+                      <input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter email"
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900 placeholder-gray-400"
+                      />
+                    </div>
+
+                    {/* Confirmation & Total Cost */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label htmlFor="confirmation" className="block text-sm font-medium text-gray-900 mb-1.5">
+                          Confirmation #
+                        </label>
+                        <input
+                          id="confirmation"
+                          type="text"
+                          value={confirmation}
+                          onChange={(e) => setConfirmation(e.target.value)}
+                          placeholder="Enter confirmation"
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900 placeholder-gray-400"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="total-cost" className="block text-sm font-medium text-gray-900 mb-1.5">
+                          Total Cost
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-900 text-sm font-medium">$</span>
+                          <input
+                            id="total-cost"
+                            type="number"
+                            value={totalCost}
+                            onChange={(e) => setTotalCost(e.target.value)}
+                            placeholder="0.00"
+                            className="w-full pl-7 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900 placeholder-gray-400"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                      <label htmlFor="notes" className="block text-sm font-medium text-gray-900 mb-1.5">
+                        Notes
+                      </label>
+                      <textarea
+                        id="notes"
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="e.g., Don't forget your charger!"
+                        rows={3}
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900 placeholder-gray-400 resize-none"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Footer - Details Step */}
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex-shrink-0">
+              <button
+                onClick={handleSave}
+                disabled={!hotelName.trim()}
+                className="w-full px-6 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed rounded-xl transition-all shadow-lg hover:shadow-xl"
+              >
+                Save Lodging
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       <style jsx>{`
@@ -552,9 +757,22 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
             transform: translateY(0);
           }
         }
+        
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
 
         .animate-slide-up {
-          animation: slide-up 0.3s ease-out;
+          animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
         }
       `}</style>
     </>

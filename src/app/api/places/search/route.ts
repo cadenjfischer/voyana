@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const types = ['country', 'region', 'place', 'locality', 'neighborhood', 'poi'].join(',');
+    // Include 'address' type to allow street addresses, not just cities/towns
+    const types = ['address', 'country', 'region', 'place', 'locality', 'neighborhood', 'poi'].join(',');
     const url = new URL(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query.trim())}.json`);
     url.searchParams.set('access_token', MAPBOX_TOKEN);
     url.searchParams.set('autocomplete', 'true');

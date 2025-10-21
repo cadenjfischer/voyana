@@ -8,7 +8,7 @@ import {
   getCountryFromGooglePlace, 
   getGooglePlaceType,
   GooglePlace 
-} from '@/utils/google-places';
+} from '@/utils/places';
 
 // Props for the autocomplete component
 interface CustomAutocompleteProps {
@@ -221,11 +221,6 @@ export default function CustomAutocomplete({
               </div>
             );
           })}
-          
-          {/* Google attribution */}
-          <div className="px-4 py-2 border-t border-gray-100 text-xs text-gray-400 text-center">
-            Powered by Google Places
-          </div>
         </div>
       )}
       

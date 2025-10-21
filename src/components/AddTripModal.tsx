@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import CustomAutocomplete from './CustomAutocomplete';
-import { formatGooglePlace, type GooglePlace } from '@/utils/google-places';
+import { formatGooglePlace, type GooglePlace } from '@/utils/places';
 import { searchDestinationPhotos } from '../utils/unsplash';
 import AirlineDatePicker from './AirlineDatePicker';
 
