@@ -22,9 +22,9 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
   const innerRef = useRef<HTMLDivElement>(null);
   const [dayScale, setDayScale] = useState(1);
   const [isScrollable, setIsScrollable] = useState(false);
-  const MIN_SCALE = 0.85; // don't scale below this
-  const BASE_DAY_WIDTH = 112; // matches w-28 + padding approximation
-  const GAP = 8; // gap between items (approx px)
+  const MIN_SCALE = 0.75; // don't scale below this - reduced for smaller size
+  const BASE_DAY_WIDTH = 88; // reduced from 112 for smaller cards
+  const GAP = 6; // reduced gap between items
   
   // Auto-scroll to active day
   useEffect(() => {
@@ -33,7 +33,7 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
     const activeIndex = days.findIndex(day => day.id === activeDay);
     if (activeIndex === -1) return;
     
-    const dayWidth = 120; // Approximate width of each day button
+    const dayWidth = 94; // Approximate width of each day button - reduced
     const containerWidth = stripRef.current.clientWidth;
     const targetScroll = (activeIndex * dayWidth) - (containerWidth / 2) + (dayWidth / 2);
     
@@ -151,20 +151,20 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
       )}
 
       {/* Calendar strip */}
-      <div ref={outerRef} className={`w-full flex ${centered && !isScrollable ? 'justify-center' : 'justify-start'}`}>
+      <div ref={outerRef} className="w-full flex justify-center">
         <div
           ref={stripRef}
-          className={`flex gap-2 scrollbar-hide py-4 ${isScrollable ? 'px-2' : 'px-6'} ${centered && !isScrollable ? 'justify-center' : ''}`}
+          className={`flex gap-1.5 scrollbar-thin py-2 ${isScrollable ? 'px-1' : 'px-3'} justify-center`}
           onScroll={handleScroll}
           style={{
-            scrollbarWidth: 'none',
+            scrollbarWidth: 'thin',
             msOverflowStyle: 'none',
             overscrollBehavior: 'contain'
           }}
         >
-          <div ref={innerRef} className={`flex gap-2 items-stretch ${centered && !isScrollable ? 'justify-center' : ''}`} style={{ 
+          <div ref={innerRef} className="flex gap-1.5 items-stretch justify-center" style={{ 
             transform: `scale(${dayScale})`, 
-            transformOrigin: centered && !isScrollable ? 'center' : 'center left' 
+            transformOrigin: 'center'
           }}>
             {days.map((day, index) => {
           const info = getDayInfo(day, index);
@@ -201,8 +201,8 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
             <button
               key={day.id}
               onClick={() => onDaySelect(day.id)}
-              className={`flex-shrink-0 w-28 p-3 rounded-xl border-2 text-center transition-all duration-300 relative overflow-hidden transform hover:scale-105 active:scale-95 ${
-                isActive ? 'border-gray-800 shadow-xl scale-105' : 'border-gray-300 hover:shadow-md hover:border-gray-400'
+              className={`flex-shrink-0 w-20 p-2 rounded-lg border-2 text-center transition-all duration-300 relative overflow-hidden transform hover:scale-105 active:scale-95 ${
+                isActive ? 'border-gray-800 shadow-lg scale-105' : 'border-gray-300 hover:shadow-md hover:border-gray-400'
               } ${dynamicColors.isTransfer ? 'ring-2 ring-orange-400' : ''}`}
               style={{
                 background: dynamicColors.bg,
@@ -211,46 +211,46 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
             >
               {/* Transfer day indicator */}
               {dynamicColors.isTransfer && (
-                <div className="absolute top-1 right-1">
-                  <div className="w-3 h-3 bg-orange-500 rounded-full border border-white flex items-center justify-center">
-                    <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <div className="absolute top-0.5 right-0.5">
+                  <div className="w-2.5 h-2.5 bg-orange-500 rounded-full border border-white flex items-center justify-center">
+                    <svg className="w-1.5 h-1.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
                   </div>
                 </div>
               )}
               {/* Day number */}
-              <div className="text-xs font-medium opacity-75 mb-1">
+              <div className="text-[10px] font-medium opacity-75 mb-0.5">
                 Day {info.dayNumber}
               </div>
               
 
               
               {/* Weekday */}
-              <div className="text-sm font-medium">
+              <div className="text-xs font-medium">
                 {info.weekday}
               </div>
               
               {/* Date */}
-              <div className="text-lg font-bold">
+              <div className="text-base font-bold">
                 {info.date}
               </div>
               
               {/* Month */}
-              <div className="text-xs opacity-75">
+              <div className="text-[10px] opacity-75">
                 {info.month}
               </div>
               
               {/* Today indicator */}
               {info.isToday && (
-                <div className="w-2 h-2 bg-red-500 rounded-full mx-auto mt-1" />
+                <div className="w-1.5 h-1.5 bg-red-500 rounded-full mx-auto mt-0.5" />
               )}
               
               {/* Activity indicator */}
               {hasActivities && !isActive && (
-                <div className="flex justify-center gap-0.5 mt-1">
+                <div className="flex justify-center gap-0.5 mt-0.5">
                                     {Array.from({ length: 3 }, (_, i) => (
-                    <div key={i} className="w-1 h-1 rounded-full bg-gray-400" />
+                    <div key={i} className="w-0.5 h-0.5 rounded-full bg-gray-400" />
                   ))}
                 </div>
               )}
@@ -259,28 +259,6 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
             })}
           </div>
         </div>
-      </div>
-      
-      {/* Current position indicator */}
-      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-100">
-        <div 
-          className={`h-full transition-all duration-300 ${
-            (() => {
-              const activeIndex = days.findIndex(day => day.id === activeDay);
-              if (activeIndex >= 0) {
-                const activeDay = days[activeIndex];
-                const activeDayData = days[activeIndex];
-                if (activeDayData && activeDayData.destinationId) {
-                  return getProgressIndicatorClass(activeDayData.destinationId, trip.destinations);
-                }
-              }
-              return 'bg-gray-500';
-            })()
-          }`}
-          style={{
-            width: days.length > 0 ? `${(days.findIndex(day => day.id === activeDay) + 1) / days.length * 100}%` : '0%'
-          }}
-        />
       </div>
     </div>
   );

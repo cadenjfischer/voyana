@@ -510,14 +510,14 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
           />
           
           {/* Calendar Strip - Overlaying the map */}
-          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-[1000] pointer-events-auto">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000] pointer-events-auto w-[95%] max-w-full">
             <CalendarStrip
               days={trip.days}
               activeDay={activeDay}
               onDaySelect={handleDaySelect}
               trip={trip}
               transparent={true}
-              centered={true}
+              centered={false}
             />
           </div>
         </div>
