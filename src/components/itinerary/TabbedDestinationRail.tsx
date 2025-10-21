@@ -21,7 +21,7 @@ interface TabbedDestinationRailProps {
 
 export default function TabbedDestinationRail({
   destinations,
-  expandedDestinationIds,
+  expandedDestinationIds = new Set(),
   onDestinationSelect,
   onDestinationsReorder,
   onUpdateDestination,

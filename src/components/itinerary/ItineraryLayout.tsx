@@ -2,7 +2,6 @@
 
 import { Trip, Destination } from '@/types/itinerary';
 import SyncedSplitView from './SyncedSplitView';
-import MiniMap from '@/components/map/MiniMap';
 import ExpandedMap from '@/components/map/ExpandedMap';
 import { useState } from 'react';
 import { useItineraryUI } from '@/contexts/ItineraryUIContext';
@@ -39,8 +38,7 @@ export default function ItineraryLayout(props: ItineraryLayoutProps) {
         />
       )}
 
-      {/* Always-on-top Mini Map overlay */}
-      {!isExpanded && <MiniMap trip={trip} centerOn={centerOn} />}
+      {/* Expanded Map View */}
       {isExpanded && (
         <ExpandedMap 
           trip={trip} 
@@ -52,8 +50,6 @@ export default function ItineraryLayout(props: ItineraryLayoutProps) {
           }}
         />
       )}
-
-      {/* Debug badge removed */}
     </>
   );
 }

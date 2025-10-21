@@ -4,9 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useItineraryUI } from '@/contexts/ItineraryUIContext';
 import { Trip, Destination, Day, Activity, formatDate } from '@/types/itinerary';
 import { PREMIUM_COLOR_PALETTE } from '@/utils/colors';
-import TabbedDestinationRail from './TabbedDestinationRail';
-import TimelineView from './TimelineView';
-import CalendarStrip from './CalendarStrip';
+import TabbedLayout from './TabbedLayout';
+import TripMap from '@/components/map/TripMap';
 import FloatingAddButton from './FloatingAddButton';
 
 interface SyncedSplitViewProps {
@@ -470,123 +469,40 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
     });
   }, [trip, onUpdateTrip]);
 
-  if (isMobile) {
-    return (
-      <div className="flex flex-col h-screen bg-gray-50">
-        {/* Screen reader live region */}
-        <div aria-live="polite" aria-atomic="true" className="sr-only" />
-        
-        {/* Mobile: Destination chips at top */}
-        <div className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3">
-          <div 
-            className="flex gap-2 overflow-x-auto scrollbar-hide"
-            role="tablist"
-            aria-label="Trip destinations"
-          >
-            {trip.destinations.map((destination) => (
-              <button
-                key={destination.id}
-                role="tab"
-                aria-selected={selectedDestinationId === destination.id}
-                aria-controls={`timeline-${destination.id}`}
-                tabIndex={selectedDestinationId === destination.id ? 0 : -1}
-                onClick={() => handleDestinationSelect(destination.id)}
-                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  selectedDestinationId === destination.id
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {destination.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Fixed Calendar Strip */}
-        <div className="z-20 bg-white border-b border-gray-200">
-          <CalendarStrip
-            days={trip.days}
-            activeDay={activeDay}
-            onDaySelect={handleDaySelect}
-            trip={trip}
-          />
-        </div>
-
-        {/* Scrollable Timeline */}
-        <div 
-          ref={timelineRef}
-          className="flex-1 min-h-0 overflow-y-auto scroll-smooth"
-          onScroll={handleTimelineScroll}
-        >
-          <TimelineView
-            trip={trip}
-            activeDestinationId={selectedDestinationId || ''}
-            activeDay={activeDay}
-            destinationRefs={destinationRefs}
-            onDaysUpdate={handleDaysUpdate}
-            onDaySelect={handleDaySelect}
-          />
-        </div>
-
-        {/* Floating Add Button */}
-        <FloatingAddButton
-          trip={trip}
-          activeDestinationId={selectedDestinationId || ''}
-          activeDay={activeDay}
-          onUpdateTrip={onUpdateTrip}
-        />
-      </div>
-    );
-  }
-
+  // Desktop tabbed layout with full map
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Screen reader live region for desktop */}
       <div aria-live="polite" aria-atomic="true" className="sr-only" />
       
-      {/* Desktop: Left Pane - Destinations Rail (40%) */}
+      {/* Left Pane - Tabbed Interface (40%) */}
       <div className="w-[40%] border-r border-gray-200 flex flex-col bg-white">
-        <TabbedDestinationRail
-          destinations={trip.destinations}
+        <TabbedLayout
+          trip={trip}
           expandedDestinationIds={expandedDestinationIds}
+          selectedDestinationId={selectedDestinationId}
+          activeDay={activeDay}
+          destinationRefs={destinationRefs}
           onDestinationSelect={handleDestinationSelect}
           onDestinationsReorder={handleDestinationReorder}
           onUpdateDestination={handleDestinationUpdate}
           onRemoveDestination={onRemoveDestination}
           onAddDestination={handleAddDestination}
-          trip={trip}
+          onDaysUpdate={handleDaysUpdate}
+          onDaySelect={handleDaySelect}
+          onUpdateTrip={onUpdateTrip}
         />
       </div>
 
-      {/* Desktop: Right Pane - Timeline (60%) */}
-      <div className="w-[60%] flex flex-col">
-        {/* Fixed Calendar Strip */}
-        <div className="z-20 bg-white border-b border-gray-200">
-          <CalendarStrip
-            days={trip.days}
-            activeDay={activeDay}
-            onDaySelect={handleDaySelect}
-            trip={trip}
-          />
-        </div>
-
-        {/* Scrollable Timeline - Vertical */}
-        <div 
-          ref={timelineRef}
-          className="flex-1 min-h-0 overflow-y-auto scroll-smooth"
-          onScroll={handleTimelineScroll}
-        >
-          <TimelineView
-            trip={trip}
-            activeDestinationId={selectedDestinationId || ''}
-            activeDay={activeDay}
-            destinationRefs={destinationRefs}
-            onDaysUpdate={handleDaysUpdate}
-            onDaySelect={handleDaySelect}
-          />
-        </div>
-
+      {/* Right Pane - Full Map (60%) */}
+      <div className="w-[60%] flex flex-col relative">
+        <TripMap
+          trip={trip}
+          isExpanded={false}
+          onToggleExpand={() => {}}
+          embedded={true}
+        />
+        
         {/* Floating Add Button */}
         <FloatingAddButton
           trip={trip}

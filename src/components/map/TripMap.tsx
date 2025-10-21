@@ -5,19 +5,23 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Trip } from '@/types/itinerary';
 import { X, Map } from 'lucide-react';
+import { getDestinationColors, resolveColorHex } from '@/utils/colors';
 
 interface TripMapProps {
   trip: Trip;
   isExpanded: boolean;
   onToggleExpand: () => void;
+  embedded?: boolean; // New prop for embedded mode (fills container)
 }
 
-export default function TripMap({ trip, isExpanded, onToggleExpand }: TripMapProps) {
+export default function TripMap({ trip, isExpanded, onToggleExpand, embedded = false }: TripMapProps) {
   const miniRef = useRef<HTMLDivElement>(null);
   const fullRef = useRef<HTMLDivElement>(null);
+  const embeddedRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
-  const currentContainerRef = isExpanded ? fullRef : miniRef;
+  const currentContainerRef = embedded ? embeddedRef : (isExpanded ? fullRef : miniRef);
   const [isVisible, setIsVisible] = useState(true);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   // Load visibility preference from localStorage on mount
   useEffect(() => {
@@ -48,26 +52,26 @@ export default function TripMap({ trip, isExpanded, onToggleExpand }: TripMapPro
         style: 'mapbox://styles/mapbox/outdoors-v12',
         center: [-98, 38.5],
         zoom: 3,
-        projection: { name: 'globe' },
+        projection: 'mercator', // Explicitly set 2D projection
       });
 
       mapRef.current.on('load', () => {
-        mapRef.current?.setFog({
-          color: 'rgb(220, 230, 240)',
-          'high-color': 'rgb(180, 200, 220)',
-          'horizon-blend': 0.02,
-        });
+        setIsMapLoaded(true);
       });
     } else {
       // swap DOM container instantly
       mapRef.current.resize();
     }
-  }, [isExpanded]);
+  }, [isExpanded, embedded]);
 
   // Markers + fitBounds (instant)
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !isMapLoaded) return;
     const map = mapRef.current;
+
+    // Remove existing line layer/source if present
+    if (map.getLayer('route-line')) map.removeLayer('route-line');
+    if (map.getSource('route-line')) map.removeSource('route-line');
 
     // remove existing markers stored on map instance
     const existingMarkers = (map as mapboxgl.Map & { __markers?: mapboxgl.Marker[] }).__markers;
@@ -76,14 +80,44 @@ export default function TripMap({ trip, isExpanded, onToggleExpand }: TripMapPro
 
     const bounds = new mapboxgl.LngLatBounds();
     let hasCoordinates = false;
+    const lineCoords: [number, number][] = [];
 
-    trip.destinations.forEach((d, i) => {
+    // Sort destinations by order
+    const sorted = [...trip.destinations].sort((a, b) => a.order - b.order);
+
+    sorted.forEach((d, i) => {
       const lat = d.coordinates?.lat;
       const lng = d.coordinates?.lng;
       if (lat && lng) {
         hasCoordinates = true;
+        lineCoords.push([lng, lat]);
+
+        // Get destination color
+        const classes = getDestinationColors(d.id, trip.destinations, true);
+        const bgToHex: Record<string, string> = {
+          'bg-sky-500': '#0ea5e9',
+          'bg-green-500': '#22c55e',
+          'bg-purple-500': '#a855f7',
+          'bg-orange-500': '#f97316',
+          'bg-pink-500': '#ec4899',
+          'bg-indigo-500': '#6366f1',
+          'bg-red-500': '#ef4444',
+          'bg-teal-500': '#14b8a6',
+          'bg-yellow-500': '#eab308',
+          'bg-red-800': '#991b1b',
+          'bg-yellow-600': '#ca8a04',
+          'bg-slate-800': '#1e293b',
+          'bg-emerald-500': '#10b981',
+          'bg-orange-600': '#ff6b35',
+          'bg-cyan-500': '#06b6d4',
+          'bg-fuchsia-500': '#d946ef',
+          'bg-slate-600': '#475569'
+        };
+        const hex = d.customColor ? resolveColorHex(d.customColor) : (bgToHex[classes.bg] || '#0ea5e9');
+
         const el = document.createElement('div');
-        el.className = 'w-7 h-7 bg-blue-600 rounded-full border-2 border-white shadow flex items-center justify-center text-white text-xs font-bold';
+        el.className = 'w-7 h-7 rounded-full border-2 border-white shadow flex items-center justify-center text-white text-xs font-bold';
+        el.style.backgroundColor = hex;
         el.textContent = String(i + 1);
         const marker = new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(map);
         (map as mapboxgl.Map & { __markers?: mapboxgl.Marker[] }).__markers?.push(marker);
@@ -91,10 +125,46 @@ export default function TripMap({ trip, isExpanded, onToggleExpand }: TripMapPro
       }
     });
 
+    // Add connecting line between destinations
+    if (lineCoords.length > 1) {
+      map.addSource('route-line', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: lineCoords
+          }
+        }
+      });
+
+      map.addLayer({
+        id: 'route-line',
+        type: 'line',
+        source: 'route-line',
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#94a3b8',
+          'line-width': 2,
+          'line-dasharray': [2, 4],
+          'line-opacity': 1
+        }
+      });
+    }
+
     if (hasCoordinates) {
       map.fitBounds(bounds, { padding: 50, duration: 0 });
     }
-  }, [trip.destinations]);
+  }, [trip.destinations, isMapLoaded]);
+
+  // Embedded mode - fills the container
+  if (embedded) {
+    return <div ref={embeddedRef} className="w-full h-full" />;
+  }
 
   if (isExpanded) {
     return (

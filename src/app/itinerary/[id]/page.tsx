@@ -12,8 +12,6 @@ import { Trip, Destination, Activity, generateDays } from '@/types/itinerary';
 import { PREMIUM_COLOR_PALETTE } from '@/utils/colors';
 import { ItineraryUIProvider } from '@/contexts/ItineraryUIContext';
 import Link from 'next/link';
-import TripMap from '@/components/map/TripMap';
-import MiniMap from '@/components/map/MiniMap';
 
 export default function TripDetailPage() {
   const { user } = useUser();
@@ -576,13 +574,6 @@ export default function TripDetailPage() {
         onUpdateTrip={handleUpdateTrip}
         trip={trip}
       />
-
-      {/* Trip Map disabled while testing MiniMap */}
-
-      {/* New Mini Map (bottom-left) */}
-      {trip && (
-        <MiniMap trip={trip} />
-      )}
     </ItineraryUIProvider>
   );
 }
