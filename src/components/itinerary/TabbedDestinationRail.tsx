@@ -32,6 +32,7 @@ export default function TabbedDestinationRail({
   const [isUpdating, setIsUpdating] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState<string | null>(null);
+  const [deleteLodgingConfirm, setDeleteLodgingConfirm] = useState<{ destinationId: string; lodgingId: string; lodgingName: string } | null>(null);
   const [addLodgingModalOpen, setAddLodgingModalOpen] = useState<string | null>(null);
   
   // Auto-fill nights if only one destination
@@ -473,12 +474,21 @@ export default function TabbedDestinationRail({
                                             <p className="text-sm font-medium text-gray-900">{lodging.name}</p>
                                             <p className="text-xs text-gray-500">
                                               {lodging.nights} {lodging.nights === 1 ? 'night' : 'nights'}
+                                              {lodging.checkIn && lodging.checkOut && (
+                                                <span className="ml-1">
+                                                  • {new Date(lodging.checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(lodging.checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                </span>
+                                              )}
                                             </p>
                                           </div>
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
-                                              handleRemoveLodging(destination.id, lodging.id);
+                                              setDeleteLodgingConfirm({
+                                                destinationId: destination.id,
+                                                lodgingId: lodging.id,
+                                                lodgingName: lodging.name
+                                              });
                                             }}
                                             className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                                             title="Remove lodging"
@@ -544,6 +554,37 @@ export default function TabbedDestinationRail({
               </button>
               <button
                 onClick={() => setDeleteConfirmOpen(null)}
+                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors duration-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Lodging Confirmation Modal */}
+      {deleteLodgingConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]" onClick={() => setDeleteLodgingConfirm(null)}>
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Delete Lodging
+            </h3>
+            <p className="text-gray-600 text-sm mb-6">
+              Are you sure you want to delete <span className="font-medium">{deleteLodgingConfirm.lodgingName}</span>? This will free up the nights for other lodging bookings.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  handleRemoveLodging(deleteLodgingConfirm.destinationId, deleteLodgingConfirm.lodgingId);
+                  setDeleteLodgingConfirm(null);
+                }}
+                className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => setDeleteLodgingConfirm(null)}
                 className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors duration-200"
               >
                 Cancel

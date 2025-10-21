@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Destination, Lodging } from '@/types/itinerary';
 
 interface AddLodgingModalProps {
@@ -11,56 +11,220 @@ interface AddLodgingModalProps {
 
 export default function AddLodgingModal({ destination, onClose, onSave }: AddLodgingModalProps) {
   const [step, setStep] = useState<'nights' | 'details'>('nights');
-  const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
+  const [startDate, setStartDate] = useState<string | null>(null);
+  const [endDate, setEndDate] = useState<string | null>(null);
+  const [hoverDate, setHoverDate] = useState<string | null>(null);
+  const [stayAllNights, setStayAllNights] = useState(false);
   const [hotelName, setHotelName] = useState('');
   
   // Calculate how many nights are already allocated
   const allocatedNights = destination.lodgings?.reduce((sum, l) => sum + l.nights, 0) || 0;
   const availableNights = destination.nights - allocatedNights;
   
-  // Generate all dates in the destination stay period and preselect them
-  useEffect(() => {
-    if (!destination.startDate || !destination.endDate) return;
+  // Generate all available dates
+  const getAllDates = () => {
+    if (!destination.startDate || !destination.endDate) return [];
     
     const start = new Date(destination.startDate);
     const end = new Date(destination.endDate);
-    const dates = new Set<string>();
+    const dates: string[] = [];
     
-    // Generate all dates except the last day (since we count nights, not days)
     const current = new Date(start);
     while (current < end) {
-      dates.add(current.toISOString().split('T')[0]);
+      dates.push(current.toISOString().split('T')[0]);
       current.setDate(current.getDate() + 1);
     }
     
-    setSelectedDates(dates);
-  }, [destination.startDate, destination.endDate]);
+    return dates;
+  };
+  
+  // Get all dates that are already booked by existing lodgings
+  const getBookedDates = (): Set<string> => {
+    const booked = new Set<string>();
+    
+    if (!destination.lodgings) return booked;
+    
+    destination.lodgings.forEach(lodging => {
+      if (lodging.checkIn && lodging.checkOut) {
+        const start = new Date(lodging.checkIn);
+        const end = new Date(lodging.checkOut);
+        const current = new Date(start);
+        
+        // Add all dates from check-in to the day before check-out (nights)
+        while (current < end) {
+          booked.add(current.toISOString().split('T')[0]);
+          current.setDate(current.getDate() + 1);
+        }
+      }
+    });
+    
+    return booked;
+  };
+  
+  // Check if a date is already booked
+  const isDateBooked = (dateStr: string): boolean => {
+    return getBookedDates().has(dateStr);
+  };
+  
+  // Get available (unbooked) dates
+  const getAvailableDates = (): string[] => {
+    const allDates = getAllDates();
+    const booked = getBookedDates();
+    return allDates.filter(date => !booked.has(date));
+  };
+  
+  // Calculate selected dates count
+  const getSelectedNights = () => {
+    if (stayAllNights) {
+      return getAvailableDates().length;
+    }
+    if (!startDate || !endDate) return 0;
+    
+    const allDates = getAllDates();
+    const startIdx = allDates.indexOf(startDate);
+    const endIdx = allDates.indexOf(endDate);
+    
+    if (startIdx === -1 || endIdx === -1) return 0;
+    return endIdx - startIdx + 1;
+  };
 
   const handleContinue = () => {
     setStep('details');
   };
 
   const handleSave = () => {
-    if (!hotelName.trim() || selectedDates.size === 0) return;
+    if (!hotelName.trim() || getSelectedNights() === 0) return;
+    
+    let checkIn: string | undefined;
+    let checkOut: string | undefined;
+    
+    if (stayAllNights) {
+      // Use all available (unbooked) dates
+      const availableDates = getAvailableDates();
+      if (availableDates.length > 0) {
+        checkIn = availableDates[0];
+        // Check-out is the day after the last night
+        const lastNight = new Date(availableDates[availableDates.length - 1]);
+        lastNight.setDate(lastNight.getDate() + 1);
+        checkOut = lastNight.toISOString().split('T')[0];
+      }
+    } else if (startDate && endDate) {
+      checkIn = startDate;
+      // Check-out is the day after the end date (since end date is the last night)
+      const checkOutDate = new Date(endDate);
+      checkOutDate.setDate(checkOutDate.getDate() + 1);
+      checkOut = checkOutDate.toISOString().split('T')[0];
+    }
     
     onSave({
       name: hotelName.trim(),
-      nights: selectedDates.size,
+      nights: getSelectedNights(),
+      checkIn,
+      checkOut,
     });
     
     onClose();
   };
 
-  const toggleDate = (dateStr: string) => {
-    setSelectedDates(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(dateStr)) {
-        newSet.delete(dateStr);
+  const handleDateClick = (dateStr: string) => {
+    // Don't allow clicking booked dates
+    if (isDateBooked(dateStr)) return;
+    
+    // If "stay all nights" is checked, uncheck it first
+    if (stayAllNights) {
+      setStayAllNights(false);
+    }
+    
+    // If no start date or both dates are set, set as new start
+    if (!startDate || (startDate && endDate)) {
+      setStartDate(dateStr);
+      setEndDate(null);
+    } 
+    // If start date exists but no end date
+    else if (startDate && !endDate) {
+      const allDates = getAllDates();
+      const startIdx = allDates.indexOf(startDate);
+      const clickedIdx = allDates.indexOf(dateStr);
+      
+      // If clicked date is before start, make it the new start
+      if (clickedIdx < startIdx) {
+        setStartDate(dateStr);
+        setEndDate(null);
       } else {
-        newSet.add(dateStr);
+        // Check if any dates in between are booked
+        const hasBookedInBetween = allDates
+          .slice(startIdx, clickedIdx + 1)
+          .some(date => isDateBooked(date));
+        
+        if (hasBookedInBetween) {
+          // Don't allow selecting end date if there are booked dates in between
+          return;
+        }
+        
+        // Set as end date
+        setEndDate(dateStr);
       }
-      return newSet;
-    });
+    }
+  };
+  
+  const handleStayAllNightsChange = (checked: boolean) => {
+    if (checked && getAvailableDates().length === 0) {
+      // Don't allow checking if no available dates
+      return;
+    }
+    
+    setStayAllNights(checked);
+    if (checked) {
+      setStartDate(null);
+      setEndDate(null);
+    }
+  };
+  
+  const isDateInRange = (dateStr: string) => {
+    if (stayAllNights) return !isDateBooked(dateStr);
+    if (!startDate) return false;
+    
+    const allDates = getAllDates();
+    const startIdx = allDates.indexOf(startDate);
+    const dateIdx = allDates.indexOf(dateStr);
+    
+    if (!endDate && !hoverDate) {
+      return dateStr === startDate;
+    }
+    
+    const endOrHover = endDate || hoverDate;
+    if (!endOrHover) return dateStr === startDate;
+    
+    const endIdx = allDates.indexOf(endOrHover);
+    const minIdx = Math.min(startIdx, endIdx);
+    const maxIdx = Math.max(startIdx, endIdx);
+    
+    // Check if this date is in range and not booked
+    if (dateIdx >= minIdx && dateIdx <= maxIdx) {
+      // For hover preview, stop at first booked date
+      if (hoverDate && !endDate) {
+        const rangeSlice = allDates.slice(minIdx, maxIdx + 1);
+        const firstBookedIdx = rangeSlice.findIndex(d => isDateBooked(d));
+        
+        if (firstBookedIdx !== -1) {
+          const actualMaxIdx = minIdx + firstBookedIdx - 1;
+          return dateIdx >= minIdx && dateIdx <= actualMaxIdx;
+        }
+      }
+      return true;
+    }
+    
+    return false;
+  };
+  
+  const isDateStart = (dateStr: string) => {
+    if (stayAllNights) return false;
+    return dateStr === startDate;
+  };
+  
+  const isDateEnd = (dateStr: string) => {
+    if (stayAllNights) return false;
+    return dateStr === endDate;
   };
 
   const formatDate = (dateStr: string) => {
@@ -113,7 +277,7 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
                         {availableNights === destination.nights ? (
                           `How many nights would you like to book lodging for?`
                         ) : availableNights > 0 ? (
-                          `You have ${availableNights} ${availableNights === 1 ? 'night' : 'nights'} remaining. How many would you like to book?`
+                          `${allocatedNights} ${allocatedNights === 1 ? 'night' : 'nights'} already booked. ${availableNights} ${availableNights === 1 ? 'night' : 'nights'} remaining.`
                         ) : (
                           `All ${destination.nights} nights are already booked.`
                         )}
@@ -124,29 +288,52 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
 
                 {/* Date Selection Calendar */}
                 <div>
+                  {/* Stay All Nights Checkbox */}
+                  <div className={`mb-4 p-4 border rounded-lg ${
+                    availableNights === 0 
+                      ? 'bg-gray-50 border-gray-200 opacity-60' 
+                      : 'bg-blue-50 border-blue-200'
+                  }`}>
+                    <label className={`flex items-center gap-3 ${availableNights > 0 ? 'cursor-pointer' : 'cursor-not-allowed'}`}>
+                      <input
+                        type="checkbox"
+                        checked={stayAllNights}
+                        onChange={(e) => handleStayAllNightsChange(e.target.checked)}
+                        disabled={availableNights === 0}
+                        className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
+                      />
+                      <div className="flex-1">
+                        <span className="text-sm font-medium text-gray-900">
+                          Stay all {availableNights === destination.nights ? '' : 'remaining '}nights in {destination.name}
+                        </span>
+                        <p className="text-xs text-gray-600 mt-0.5">
+                          {availableNights === 0 ? (
+                            'No available nights to book'
+                          ) : availableNights === destination.nights ? (
+                            `Book lodging for all ${destination.nights} ${destination.nights === 1 ? 'night' : 'nights'}`
+                          ) : (
+                            `Book lodging for the ${availableNights} remaining ${availableNights === 1 ? 'night' : 'nights'}`
+                          )}
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+
                   <div className="flex items-center justify-between mb-4">
                     <label className="text-sm font-medium text-gray-700">
-                      Select nights
+                      {stayAllNights ? 'All nights selected' : 'Select check-in and check-out dates'}
                     </label>
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-gray-900">{selectedDates.size}</span>
+                      <span className="text-2xl font-bold text-gray-900">{getSelectedNights()}</span>
                       <span className="text-sm text-gray-500">
-                        {selectedDates.size === 1 ? 'night' : 'nights'}
+                        {getSelectedNights() === 1 ? 'night' : 'nights'}
                       </span>
                     </div>
                   </div>
 
                   {/* Calendar Grid */}
-                  {destination.startDate && destination.endDate && (() => {
-                    const start = new Date(destination.startDate);
-                    const end = new Date(destination.endDate);
-                    const dates: string[] = [];
-                    
-                    const current = new Date(start);
-                    while (current < end) {
-                      dates.push(current.toISOString().split('T')[0]);
-                      current.setDate(current.getDate() + 1);
-                    }
+                  {!stayAllNights && destination.startDate && destination.endDate && (() => {
+                    const dates = getAllDates();
 
                     return (
                       <div className="space-y-2">
@@ -168,24 +355,43 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
                           
                           {/* Date cells */}
                           {dates.map((dateStr) => {
-                            const isSelected = selectedDates.has(dateStr);
+                            const isInRange = isDateInRange(dateStr);
+                            const isStart = isDateStart(dateStr);
+                            const isEnd = isDateEnd(dateStr);
+                            const isBooked = isDateBooked(dateStr);
                             const date = new Date(dateStr);
                             const day = date.getDate();
                             
                             return (
                               <button
                                 key={dateStr}
-                                onClick={() => toggleDate(dateStr)}
+                                onClick={() => handleDateClick(dateStr)}
+                                onMouseEnter={() => !isBooked && setHoverDate(dateStr)}
+                                onMouseLeave={() => setHoverDate(null)}
+                                disabled={isBooked}
                                 className={`
                                   aspect-square rounded-lg flex flex-col items-center justify-center
-                                  text-sm font-medium transition-all
-                                  ${isSelected 
-                                    ? 'bg-blue-600 text-white shadow-md hover:bg-blue-700' 
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                  text-sm font-medium transition-all relative
+                                  ${isBooked
+                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed line-through'
+                                    : isInRange
+                                      ? isStart || isEnd
+                                        ? 'bg-blue-600 text-white shadow-md hover:bg-blue-700 z-10'
+                                        : 'bg-blue-100 text-blue-900 hover:bg-blue-200'
+                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer'
                                   }
                                 `}
                               >
                                 <span>{day}</span>
+                                {isBooked && (
+                                  <span className="text-[8px] font-semibold mt-0.5">Booked</span>
+                                )}
+                                {!isBooked && isStart && (
+                                  <span className="text-[9px] font-semibold mt-0.5">Check-in</span>
+                                )}
+                                {!isBooked && isEnd && (
+                                  <span className="text-[9px] font-semibold mt-0.5">Check-out</span>
+                                )}
                               </button>
                             );
                           })}
@@ -193,7 +399,9 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
 
                         {/* Helper text */}
                         <p className="text-xs text-gray-500 text-center">
-                          Tap dates to select or deselect nights for this lodging
+                          {!startDate && 'Select your check-in date'}
+                          {startDate && !endDate && 'Now select your check-out date'}
+                          {startDate && endDate && 'Click to change dates'}
                         </p>
                       </div>
                     );
@@ -213,7 +421,7 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
                 <div className="mt-6">
                   <button
                     onClick={handleContinue}
-                    disabled={selectedDates.size === 0}
+                    disabled={getSelectedNights() === 0}
                     className="w-full px-6 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed rounded-xl transition-all shadow-lg hover:shadow-xl disabled:transform-none disabled:shadow-md flex items-center justify-center gap-2"
                   >
                     <span>Continue</span>
@@ -239,7 +447,7 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
                   </button>
                   <div className="flex-1">
                     <h2 className="text-lg font-semibold text-gray-900">Add Lodging Details</h2>
-                    <p className="text-sm text-gray-500">{selectedDates.size} {selectedDates.size === 1 ? 'night' : 'nights'} in {destination.name}</p>
+                    <p className="text-sm text-gray-500">{getSelectedNights()} {getSelectedNights() === 1 ? 'night' : 'nights'} in {destination.name}</p>
                   </div>
                   <button
                     onClick={onClose}
