@@ -37,14 +37,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
 
   // Initialize/sync active destination and day with shared context
   useEffect(() => {
-    // Only expand if there's an explicit selectedDestinationId from context
-    if (trip.destinations.length > 0 && selectedDestinationId) {
-      setExpandedDestinationIds(prev => {
-        const newSet = new Set(prev);
-        newSet.add(selectedDestinationId);
-        return newSet;
-      });
-    }
+    // Don't auto-expand destinations when selected - let user control expansion manually via arrow button
     
     if (trip.days.length > 0) {
       const firstDayId = trip.days[0].id;
@@ -191,11 +184,24 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
     }
   }, [trip.days, trip.destinations, isScrolling]);
 
-  // Handle destination selection
+  // Handle destination selection (for map zoom only)
   const handleDestinationSelect = (destinationId: string) => {
     const destination = trip.destinations.find(d => d.id === destinationId);
     
-    // Toggle expanded state - can have multiple open at once
+    // Just update selected destination for map zoom - don't toggle expansion
+    setSelectedDestinationId(destinationId);
+    if (destination && destination.coordinates) {
+      onDestinationMapCenterRequest?.({ lat: destination.coordinates.lat, lng: destination.coordinates.lng });
+    } else {
+      onDestinationMapCenterRequest?.(null);
+    }
+  };
+
+  // Handle destination expansion toggle (called from arrow button only)
+  const handleDestinationToggle = (destinationId: string) => {
+    const destination = trip.destinations.find(d => d.id === destinationId);
+    
+    // Toggle the expansion state
     setExpandedDestinationIds(prev => {
       const newSet = new Set(prev);
       if (newSet.has(destinationId)) {
@@ -206,7 +212,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
       return newSet;
     });
     
-    // Update selected destination for map centering
+    // Also update selected destination for map zoom
     setSelectedDestinationId(destinationId);
     if (destination && destination.coordinates) {
       onDestinationMapCenterRequest?.({ lat: destination.coordinates.lat, lng: destination.coordinates.lng });
@@ -461,12 +467,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
       updatedAt: new Date().toISOString()
     });
 
-    // Expand the new destination
-    setExpandedDestinationIds(prev => {
-      const newSet = new Set(prev);
-      newSet.add(newDestination.id);
-      return newSet;
-    });
+    // Don't auto-expand new destinations - let user expand them manually
   }, [trip, onUpdateTrip]);
 
   // Desktop tabbed layout with full map
@@ -484,6 +485,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
           activeDay={activeDay}
           destinationRefs={destinationRefs}
           onDestinationSelect={handleDestinationSelect}
+          onDestinationToggle={handleDestinationToggle}
           onDestinationsReorder={handleDestinationReorder}
           onUpdateDestination={handleDestinationUpdate}
           onRemoveDestination={onRemoveDestination}
@@ -495,12 +497,13 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
       </div>
 
       {/* Right Pane - Full Map (60%) */}
-      <div className="w-[60%] flex flex-col relative">
+      <div className="w-[60%] h-screen flex flex-col relative overflow-hidden">
         <TripMap
           trip={trip}
           isExpanded={false}
           onToggleExpand={() => {}}
           embedded={true}
+          selectedDestinationId={selectedDestinationId || undefined}
         />
         
         {/* Floating Add Button */}

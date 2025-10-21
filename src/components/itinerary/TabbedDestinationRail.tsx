@@ -11,7 +11,8 @@ import AddLodgingModal from './AddLodgingModal';
 interface TabbedDestinationRailProps {
   destinations: Destination[];
   expandedDestinationIds: Set<string>;
-  onDestinationSelect: (id: string) => void;
+  onDestinationSelect: (id: string) => void; // For map zoom when clicking card
+  onDestinationToggle?: (id: string) => void; // For expanding/collapsing when clicking arrow
   onDestinationsReorder: (destinations: Destination[]) => void;
   onUpdateDestination: (destination: Destination) => void;
   onAddDestination: (destination: Omit<Destination, 'id' | 'order'>) => void;
@@ -23,6 +24,7 @@ export default function TabbedDestinationRail({
   destinations,
   expandedDestinationIds = new Set(),
   onDestinationSelect,
+  onDestinationToggle,
   onDestinationsReorder,
   onUpdateDestination,
   onAddDestination,
@@ -342,10 +344,14 @@ export default function TabbedDestinationRail({
                                 />
                               </div>
 
-                              {/* Clickable content area */}
+                              {/* Content area - clickable to zoom to destination on map */}
                               <div 
-                                className="flex items-center gap-3 flex-1 cursor-pointer" 
-                                onClick={() => onDestinationSelect(destination.id)}
+                                className="flex items-center gap-3 flex-1 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Only select for map zoom, don't toggle expansion
+                                  onDestinationSelect(destination.id);
+                                }}
                               >
                                 {/* Destination info */}
                                 <div className="flex-1 min-w-0">
@@ -402,7 +408,12 @@ export default function TabbedDestinationRail({
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  onDestinationSelect(destination.id);
+                                  // Use toggle handler if provided, otherwise fall back to select
+                                  if (onDestinationToggle) {
+                                    onDestinationToggle(destination.id);
+                                  } else {
+                                    onDestinationSelect(destination.id);
+                                  }
                                 }}
                                 className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
                                 title={isActive ? 'Collapse' : 'Expand'}

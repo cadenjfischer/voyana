@@ -12,9 +12,10 @@ interface TripMapProps {
   isExpanded: boolean;
   onToggleExpand: () => void;
   embedded?: boolean; // New prop for embedded mode (fills container)
+  selectedDestinationId?: string; // Selected destination to zoom to
 }
 
-export default function TripMap({ trip, isExpanded, onToggleExpand, embedded = false }: TripMapProps) {
+export default function TripMap({ trip, isExpanded, onToggleExpand, embedded = false, selectedDestinationId }: TripMapProps) {
   const miniRef = useRef<HTMLDivElement>(null);
   const fullRef = useRef<HTMLDivElement>(null);
   const embeddedRef = useRef<HTMLDivElement>(null);
@@ -157,13 +158,40 @@ export default function TripMap({ trip, isExpanded, onToggleExpand, embedded = f
     }
 
     if (hasCoordinates) {
-      map.fitBounds(bounds, { padding: 50, duration: 0 });
+      // Use larger padding to ensure both destinations are visible
+      // Use object notation for different padding on each side
+      // Extra padding on bottom and right to account for floating button and UI elements
+      const padding = embedded 
+        ? { top: 60, bottom: 220, left: 60, right: 160 } 
+        : 40;
+      map.fitBounds(bounds, { 
+        padding: padding, 
+        duration: 0,
+        maxZoom: 12 // Prevent zooming in too close when destinations are far apart
+      });
     }
   }, [trip.destinations, isMapLoaded]);
 
+  // Zoom to selected destination
+  useEffect(() => {
+    if (!mapRef.current || !isMapLoaded || !selectedDestinationId) return;
+    
+    const selectedDestination = trip.destinations.find(d => d.id === selectedDestinationId);
+    if (selectedDestination && selectedDestination.coordinates) {
+      const { lat, lng } = selectedDestination.coordinates;
+      
+      mapRef.current.flyTo({
+        center: [lng, lat],
+        zoom: 10,
+        duration: 1500,
+        essential: true
+      });
+    }
+  }, [selectedDestinationId, trip.destinations, isMapLoaded]);
+
   // Embedded mode - fills the container
   if (embedded) {
-    return <div ref={embeddedRef} className="w-full h-full" />;
+    return <div ref={embeddedRef} className="w-full h-full overflow-hidden" />;
   }
 
   if (isExpanded) {

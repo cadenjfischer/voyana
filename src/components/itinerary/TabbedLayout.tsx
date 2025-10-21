@@ -13,6 +13,7 @@ interface TabbedLayoutProps {
   activeDay: string;
   destinationRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement }>;
   onDestinationSelect: (id: string) => void;
+  onDestinationToggle?: (id: string) => void;
   onDestinationsReorder: (destinations: any[]) => void;
   onUpdateDestination: (destination: any) => void;
   onRemoveDestination?: (destinationId: string) => void;
@@ -31,6 +32,7 @@ export default function TabbedLayout({
   activeDay,
   destinationRefs,
   onDestinationSelect,
+  onDestinationToggle,
   onDestinationsReorder,
   onUpdateDestination,
   onRemoveDestination,
@@ -80,6 +82,7 @@ export default function TabbedLayout({
             destinations={trip.destinations}
             expandedDestinationIds={expandedDestinationIds}
             onDestinationSelect={onDestinationSelect}
+            onDestinationToggle={onDestinationToggle}
             onDestinationsReorder={onDestinationsReorder}
             onUpdateDestination={onUpdateDestination}
             onRemoveDestination={onRemoveDestination}
