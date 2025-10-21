@@ -189,9 +189,56 @@ export default function TripMap({ trip, isExpanded, onToggleExpand, embedded = f
     }
   }, [selectedDestinationId, trip.destinations, isMapLoaded]);
 
+  // Function to reset map to show all destinations
+  const resetMapView = () => {
+    if (!mapRef.current || !isMapLoaded) return;
+    const map = mapRef.current;
+
+    const bounds = new mapboxgl.LngLatBounds();
+    let hasCoordinates = false;
+
+    trip.destinations.forEach((d) => {
+      const lat = d.coordinates?.lat;
+      const lng = d.coordinates?.lng;
+      if (lat && lng) {
+        hasCoordinates = true;
+        bounds.extend([lng, lat]);
+      }
+    });
+
+    if (hasCoordinates) {
+      const padding = embedded 
+        ? { top: 60, bottom: 300, left: 60, right: 160 } 
+        : 40;
+      map.fitBounds(bounds, { 
+        padding: padding, 
+        duration: 1000,
+        maxZoom: 12
+      });
+    }
+  };
+
   // Embedded mode - fills the container
   if (embedded) {
-    return <div ref={embeddedRef} className="w-full h-full overflow-hidden" />;
+    return (
+      <div className="relative w-full h-full overflow-hidden">
+        <div ref={embeddedRef} className="w-full h-full" />
+        
+        {/* Reset button */}
+        {trip.destinations.length > 0 && (
+          <button
+            onClick={resetMapView}
+            className="absolute top-4 right-4 z-[999] bg-white hover:bg-gray-50 shadow-lg rounded-lg px-3 py-2 transition-all duration-200 flex items-center gap-2 text-sm font-medium text-gray-700"
+            title="Reset map view"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+            Reset View
+          </button>
+        )}
+      </div>
+    );
   }
 
   if (isExpanded) {

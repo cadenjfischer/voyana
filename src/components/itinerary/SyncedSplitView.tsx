@@ -477,9 +477,23 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
       {/* Screen reader live region for desktop */}
       <div aria-live="polite" aria-atomic="true" className="sr-only" />
       
-      {/* Left Pane - Tabbed Interface (40%) */}
+      {/* Left Pane - Trip Header + Tabbed Interface (40%) */}
       <div className="w-[40%] border-r border-gray-200 flex flex-col bg-white">
-        <TabbedLayout
+        {/* Trip Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{trip.title}</h1>
+            <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
+              <span>{trip.destinations?.map(d => d.name).join(', ')}</span>
+              <span>•</span>
+              <span>{new Date(trip.startDate).toLocaleDateString()} - {new Date(trip.endDate).toLocaleDateString()}</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Tabbed Content */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <TabbedLayout
           trip={trip}
           expandedDestinationIds={expandedDestinationIds}
           selectedDestinationId={selectedDestinationId}
@@ -495,6 +509,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
           onDaySelect={handleDaySelect}
           onUpdateTrip={onUpdateTrip}
         />
+        </div>
       </div>
 
       {/* Right Pane - Full Map (60%) */}

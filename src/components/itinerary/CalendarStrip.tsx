@@ -22,6 +22,8 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
   const innerRef = useRef<HTMLDivElement>(null);
   const [dayScale, setDayScale] = useState(1);
   const [isScrollable, setIsScrollable] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
   const MIN_SCALE = 0.75; // don't scale below this - reduced for smaller size
   const BASE_DAY_WIDTH = 88; // reduced from 112 for smaller cards
   const GAP = 6; // reduced gap between items
@@ -57,18 +59,27 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
         setDayScale(1);
         setIsScrollable(false);
         // disable overflow when fits
-        stripRef.current?.classList.remove('overflow-x-auto');
+        if (stripRef.current) {
+          stripRef.current.classList.remove('overflow-x-auto');
+          stripRef.current.style.justifyContent = 'center';
+        }
       } else {
         const candidate = availableWidth / totalBaseWidth;
         if (candidate >= MIN_SCALE) {
           setDayScale(candidate);
           setIsScrollable(false);
-          stripRef.current?.classList.remove('overflow-x-auto');
+          if (stripRef.current) {
+            stripRef.current.classList.remove('overflow-x-auto');
+            stripRef.current.style.justifyContent = 'center';
+          }
         } else {
           setDayScale(MIN_SCALE);
           setIsScrollable(true);
           // enable scrolling when too many days
-          stripRef.current?.classList.add('overflow-x-auto');
+          if (stripRef.current) {
+            stripRef.current.classList.add('overflow-x-auto');
+            stripRef.current.style.justifyContent = 'flex-start';
+          }
         }
       }
     }
@@ -108,7 +119,12 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
       container.scrollLeft = 0;
     }
     
-    setScrollPosition(container.scrollLeft);
+    const currentScroll = container.scrollLeft;
+    setScrollPosition(currentScroll);
+    
+    // Update arrow visibility based on scroll position
+    setCanScrollLeft(currentScroll > 5);
+    setCanScrollRight(currentScroll < maxScroll - 5);
   }, [dayScale, isScrollable]);
 
   // Get destination for a day
@@ -149,12 +165,46 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
           className={`absolute right-0 top-0 w-8 h-full bg-gradient-to-l from-white to-transparent z-10 pointer-events-none transition-opacity duration-200`}
         />
       )}
+      
+      {/* Left Arrow Button - shows when scrollable and can scroll left */}
+      {isScrollable && canScrollLeft && (
+        <button
+          onClick={() => {
+            if (stripRef.current) {
+              stripRef.current.scrollBy({ left: -100, behavior: 'smooth' });
+            }
+          }}
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 transition-all duration-200 hover:scale-110"
+          aria-label="Scroll left"
+        >
+          <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+      )}
+      
+      {/* Right Arrow Button - shows when scrollable and can scroll right */}
+      {isScrollable && canScrollRight && (
+        <button
+          onClick={() => {
+            if (stripRef.current) {
+              stripRef.current.scrollBy({ left: 100, behavior: 'smooth' });
+            }
+          }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 transition-all duration-200 hover:scale-110"
+          aria-label="Scroll right"
+        >
+          <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      )}
 
       {/* Calendar strip */}
-      <div ref={outerRef} className="w-full flex justify-center">
+      <div ref={outerRef} className="w-full flex justify-start">
         <div
           ref={stripRef}
-          className={`flex gap-1.5 scrollbar-thin py-2 ${isScrollable ? 'px-1' : 'px-3'} justify-center`}
+          className={`flex gap-1.5 scrollbar-thin py-2 ${isScrollable ? 'px-1 overflow-x-auto' : 'px-3 mx-auto'}`}
           onScroll={handleScroll}
           style={{
             scrollbarWidth: 'thin',
@@ -162,9 +212,9 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
             overscrollBehavior: 'contain'
           }}
         >
-          <div ref={innerRef} className="flex gap-1.5 items-stretch justify-center" style={{ 
+          <div ref={innerRef} className="flex gap-1.5 items-stretch" style={{ 
             transform: `scale(${dayScale})`, 
-            transformOrigin: 'center'
+            transformOrigin: 'left center'
           }}>
             {days.map((day, index) => {
           const info = getDayInfo(day, index);
