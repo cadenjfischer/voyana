@@ -257,120 +257,221 @@ export default function TabbedDestinationRail({
                             snapshot.isDragging ? 'z-50 rotate-2 scale-105 shadow-lg' : ''
                           }`}
                         >
+                          {/* Card Container */}
                           <div
-                            className={`w-full p-4 border-b border-gray-100 transition-all duration-200 flex items-center gap-3 ${
+                            className={`w-full border-b border-gray-100 transition-all duration-200 ${
                               snapshot.isDragging 
-                                ? `${colors.light} border-l-4 ${colors.border} ${colors.text} bg-white shadow-xl rounded-lg border border-gray-300`
-                                : isActive
-                                ? `${colors.light} border-l-4 ${colors.border} ${colors.text}`
-                                : 'hover:bg-gray-50 border-l-4 border-transparent'
+                                ? 'bg-white shadow-xl rounded-lg border border-gray-300'
+                                : ''
                             }`}
                           >
-                            {/* Dedicated drag handle */}
-                            <div 
-                              {...provided.dragHandleProps} 
-                              className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing transition-colors duration-200"
-                              title="Drag to reorder destinations"
+                            {/* Card Header */}
+                            <div
+                              className={`p-4 transition-all duration-200 flex items-center gap-3 ${
+                                snapshot.isDragging 
+                                  ? `${colors.light} border-l-4 ${colors.border} ${colors.text}`
+                                  : isActive
+                                  ? `${colors.light} border-l-4 ${colors.border} ${colors.text}`
+                                  : 'hover:bg-gray-50 border-l-4 border-transparent'
+                              }`}
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-                              </svg>
-                            </div>
-                            
-                            {/* Color chip (clickable) */}
-                            <div className="relative flex-shrink-0">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setColorPickerOpen(colorPickerOpen === destination.id ? null : destination.id);
-                                }}
-                                className="w-6 h-6 rounded-full border-2 border-white shadow-sm hover:scale-110 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                style={{ backgroundColor: getCurrentColor(destination) }}
-                                title="Change destination color"
-                                aria-label={`Change color for ${destination.name}`}
-                              />
+                              {/* Dedicated drag handle */}
+                              <div 
+                                {...provided.dragHandleProps} 
+                                className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing transition-colors duration-200"
+                                title="Drag to reorder destinations"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                                </svg>
+                              </div>
                               
-                              {/* Color Picker */}
-                              <ColorPicker
-                                currentColor={destination.customColor}
-                                onColorSelect={(colorId) => handleColorSelect(destination.id, colorId)}
-                                onClose={() => setColorPickerOpen(null)}
-                                isOpen={colorPickerOpen === destination.id}
-                              />
-                            </div>
+                              {/* Color chip (clickable) */}
+                              <div className="relative flex-shrink-0">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setColorPickerOpen(colorPickerOpen === destination.id ? null : destination.id);
+                                  }}
+                                  className="w-6 h-6 rounded-full border-2 border-white shadow-sm hover:scale-110 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                  style={{ backgroundColor: getCurrentColor(destination) }}
+                                  title="Change destination color"
+                                  aria-label={`Change color for ${destination.name}`}
+                                />
+                                
+                                {/* Color Picker */}
+                                <ColorPicker
+                                  currentColor={destination.customColor}
+                                  onColorSelect={(colorId) => handleColorSelect(destination.id, colorId)}
+                                  onClose={() => setColorPickerOpen(null)}
+                                  isOpen={colorPickerOpen === destination.id}
+                                />
+                              </div>
 
-                            {/* Clickable content area */}
-                            <div 
-                              className="flex items-center gap-3 flex-1 cursor-pointer" 
-                              onClick={() => onDestinationSelect(destination.id)}
-                            >
-                              {/* Destination info */}
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium text-gray-900 truncate">{destination.name}</div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                  {getDestinationDateRange(destination)}
+                              {/* Clickable content area */}
+                              <div 
+                                className="flex items-center gap-3 flex-1 cursor-pointer" 
+                                onClick={() => onDestinationSelect(destination.id)}
+                              >
+                                {/* Destination info */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium text-gray-900 truncate">{destination.name}</div>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {getDestinationDateRange(destination)}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
 
-                            {/* Night counter */}
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-1 text-xs text-gray-500">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                                </svg>
-                                NIGHTS
-                              </div>
-                              {destinations.length > 1 ? (
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      updateNights(destination, -1);
-                                    }}
-                                    className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all duration-200"
-                                    disabled={destination.nights <= 0 || isUpdating}
-                                  >
-                                    −
-                                  </button>
+                              {/* Night counter */}
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                                  </svg>
+                                  NIGHTS
+                                </div>
+                                {destinations.length > 1 ? (
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        updateNights(destination, -1);
+                                      }}
+                                      className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all duration-200"
+                                      disabled={destination.nights <= 0 || isUpdating}
+                                    >
+                                      −
+                                    </button>
+                                    <span className="min-w-[24px] text-center font-medium text-gray-900">
+                                      {destination.nights}
+                                    </span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        updateNights(destination, 1);
+                                      }}
+                                      className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-50 hover:border-green-300 hover:text-green-600 transition-all duration-200"
+                                      disabled={isUpdating || getRemainingNights() <= 0}
+                                      title={getRemainingNights() <= 0 ? 'No more nights available for this trip' : 'Add one night'}
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                ) : (
                                   <span className="min-w-[24px] text-center font-medium text-gray-900">
                                     {destination.nights}
                                   </span>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      updateNights(destination, 1);
-                                    }}
-                                    className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-50 hover:border-green-300 hover:text-green-600 transition-all duration-200"
-                                    disabled={isUpdating || getRemainingNights() <= 0}
-                                    title={getRemainingNights() <= 0 ? 'No more nights available for this trip' : 'Add one night'}
-                                  >
-                                    +
-                                  </button>
-                                </div>
-                              ) : (
-                                <span className="min-w-[24px] text-center font-medium text-gray-900">
-                                  {destination.nights}
-                                </span>
-                              )}
-                            </div>
+                                )}
+                              </div>
 
-                            {/* Delete button */}
-                            {onRemoveDestination && (
+                              {/* Expand/Collapse button */}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setDeleteConfirmOpen(destination.id);
+                                  onDestinationSelect(destination.id);
                                 }}
-                                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 group"
-                                title={`Remove ${destination.name}`}
-                                aria-label={`Remove ${destination.name}`}
+                                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                                title={isActive ? 'Collapse' : 'Expand'}
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                <svg 
+                                  className={`w-4 h-4 transition-transform duration-200 ${isActive ? 'rotate-180' : ''}`} 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                 </svg>
                               </button>
-                            )}
+
+                              {/* Delete button */}
+                              {onRemoveDestination && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteConfirmOpen(destination.id);
+                                  }}
+                                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 group"
+                                  title={`Remove ${destination.name}`}
+                                  aria-label={`Remove ${destination.name}`}
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Expandable Content */}
+                            <div 
+                              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                                isActive ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                              }`}
+                            >
+                              <div className="px-4 pb-4 pt-2 space-y-3 bg-gray-50/50">
+                                {/* Lodging Section */}
+                                <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                      </svg>
+                                      Lodging
+                                    </div>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        // TODO: Open add lodging modal
+                                        console.log('Add lodging for', destination.name);
+                                      }}
+                                      className="px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors duration-200"
+                                    >
+                                      + Add
+                                    </button>
+                                  </div>
+                                  {destination.lodging ? (
+                                    <p className="text-sm text-gray-600">{destination.lodging}</p>
+                                  ) : (
+                                    <p className="text-sm text-gray-400 italic">No lodging added yet</p>
+                                  )}
+                                </div>
+
+                                {/* Transport Section */}
+                                <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                      </svg>
+                                      Transport
+                                    </div>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        // TODO: Open add transport modal
+                                        console.log('Add transport for', destination.name);
+                                      }}
+                                      className="px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors duration-200"
+                                    >
+                                      + Add
+                                    </button>
+                                  </div>
+                                  <p className="text-sm text-gray-400 italic">No transport added yet</p>
+                                </div>
+
+                                {/* Notes Section (if exists) */}
+                                {destination.notes && (
+                                  <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                      </svg>
+                                      Notes
+                                    </div>
+                                    <p className="text-sm text-gray-600">{destination.notes}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )}
