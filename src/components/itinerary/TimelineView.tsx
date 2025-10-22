@@ -185,28 +185,26 @@ export default function TimelineView({
     <div className="px-6 py-4 pb-[800px] space-y-6">
       {/* Header with View Toggle and Expand/Collapse */}
       <div className="flex justify-between items-center">
-        {/* View Mode Toggle */}
-        <div className="flex items-center bg-gray-100 rounded-lg p-1">
+        {/* Minimal Segmented Control */}
+        <div className="inline-flex items-center bg-gray-100 rounded-md p-0.5">
           <button
             onClick={() => setViewMode('day')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+            className={`px-3 py-1.5 text-xs font-medium rounded transition-all ${
               viewMode === 'day'
                 ? 'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            <span>🗓️</span>
-            Day View
+            Planning
           </button>
           <button
             onClick={() => setViewMode('timeline')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+            className={`px-3 py-1.5 text-xs font-medium rounded transition-all ${
               viewMode === 'timeline'
                 ? 'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            <span>📜</span>
             Timeline
           </button>
         </div>
