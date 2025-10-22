@@ -182,9 +182,9 @@ export default function TimelineView({
   }, {} as { [key: string]: { destination: Destination | null; days: Day[] } });
 
   return (
-    <div className="px-6 py-4 pb-[800px] space-y-6">
+    <div className="h-full flex flex-col">
       {/* Header with View Toggle and Expand/Collapse */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-white">
         {/* Minimal Segmented Control */}
         <div className="inline-flex items-center bg-gray-100 rounded-md p-0.5">
           <button
@@ -241,9 +241,9 @@ export default function TimelineView({
           const colors = getDestinationColors(destinationId, trip.destinations, true);
           
           return (
-            <div key={destinationId} className="space-y-6">
-              {/* Days */}
-              <div className="space-y-6">
+            <div key={destinationId}>
+              {/* Days Table */}
+              <div className="bg-white border-t border-b border-gray-200">
                 {days.map((day, dayIndex) => {
                   const isActiveDay = day.id === activeDay;
                   const dayIndexInTrip = trip.days.findIndex(d => d.id === day.id);
@@ -256,180 +256,23 @@ export default function TimelineView({
                       ref={(el) => {
                         if (el) destinationRefs.current[day.id] = el;
                       }}
-                      className={`bg-white ${isCollapsed ? 'rounded-xl' : 'rounded-xl'} border-2 transition-all duration-300 ${
+                      className={`border-b border-gray-100 last:border-b-0 transition-colors ${
                         isActiveDay 
-                          ? 'border-blue-500 shadow-xl ring-4 ring-blue-100' 
-                          : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+                          ? 'bg-blue-50' 
+                          : 'hover:bg-gray-50'
                       }`}
                     >
                       {/* Day Header */}
                       <div
-                        className={`w-full text-left transition-all duration-200 ${
-                          onDaySelect 
-                            ? 'hover:brightness-95 cursor-pointer' 
-                            : 'cursor-default'
-                        }`}
+                        className="w-full text-left cursor-pointer"
                         onClick={() => {
                           if (onDaySelect) onDaySelect(day.id);
                         }}
                       >
-                        <div 
-                          className={`border-b border-gray-100 p-4 ${isCollapsed ? 'rounded-xl' : 'rounded-t-xl'}`}
-                          style={(() => {
-                            // Check if this day should be treated as unassigned due to nights allocation
-                            if (destination && day.destinationId) {
-                              // Count how many days are assigned to this destination up to this point
-                              const daysAssignedToThisDestination = trip.days.slice(0, dayIndexInTrip + 1).filter(d => d.destinationId === day.destinationId).length;
-                              
-                              // If this day exceeds the allocated nights + 1 (for departure day), treat as unassigned
-                              // You get (nights + 1) days in a destination because you wake up there on the departure day
-                              if (destination.nights === 0 || daysAssignedToThisDestination > destination.nights + 1) {
-                                return { backgroundColor: '#f9fafb' }; // light gray for unassigned
-                              }
-                            }
-                            
-                            // Convert Tailwind colors to actual hex values for inline styles
-                            const getColorHex = (bgClass: string) => {
-                              const colorMap: { [key: string]: string } = {
-                                'bg-sky-500': '#0ea5e9',
-                                'bg-green-500': '#22c55e', 
-                                'bg-purple-500': '#a855f7',
-                                'bg-orange-500': '#f97316',
-                                'bg-pink-500': '#ec4899',
-                                'bg-indigo-500': '#6366f1',
-                                'bg-red-500': '#ef4444',
-                                'bg-teal-500': '#14b8a6',
-                                'bg-yellow-500': '#eab308',
-                                'bg-red-800': '#991b1b',
-                                'bg-yellow-600': '#ca8a04',
-                                'bg-slate-800': '#1e293b',
-                                'bg-emerald-500': '#10b981',
-                                'bg-orange-600': '#ff6b35',
-                                'bg-cyan-500': '#06b6d4',
-                                'bg-fuchsia-500': '#d946ef'
-                              };
-                              return colorMap[bgClass] || '#f97316';
-                            };
-                            
-                            if (isTransfer) {
-                              const prevDayIndex = dayIndexInTrip - 1;
-                              const prevDay = prevDayIndex >= 0 ? trip.days[prevDayIndex] : null;
-                              const prevDestination = prevDay?.destinationId 
-                                ? trip.destinations.find(d => d.id === prevDay.destinationId)
-                                : null;
-                              
-                              if (prevDestination && destination) {
-                                // Get calendar background colors (slightly darker for better contrast)
-                                const getCalendarBgHex = (destId: string) => {
-                                  const dest = trip.destinations.find(d => d.id === destId);
-                                  if (dest?.customColor) {
-                                    const colorMap: { [key: string]: string } = {
-                                      'ocean-blue': '#bae6fd',
-                                      'tropical-green': '#bbf7d0', 
-                                      'sunset-purple': '#e9d5ff',
-                                      'adventure-orange': '#fed7aa',
-                                      'cherry-pink': '#f9a8d4',
-                                      'deep-indigo': '#c7d2fe',
-                                      'ruby-red': '#fecaca',
-                                      'emerald-teal': '#99f6e4',
-                                      'golden-yellow': '#fde047',
-                                      'wine-burgundy': '#fca5a5',
-                                      'bronze-gold': '#facc15',
-                                      'navy-midnight': '#cbd5e1',
-                                      'mint-fresh': '#a7f3d0',
-                                      'sunset-coral': '#fdba74',
-                                      'arctic-cyan': '#a5f3fc',
-                                      'magenta-fuchsia': '#e879f9'
-                                    };
-                                    return colorMap[dest.customColor] || '#f9fafb';
-                                  }
-                                  // Fallback to hash-based selection for calendar colors
-                                  const generateHash = (str: string) => {
-                                    let hash = 0;
-                                    for (let i = 0; i < str.length; i++) {
-                                      const char = str.charCodeAt(i);
-                                      hash = ((hash << 5) - hash) + char;
-                                      hash = hash & hash;
-                                    }
-                                    return Math.abs(hash);
-                                  };
-                                  const calendarBgs = ['#bae6fd', '#bbf7d0', '#e9d5ff', '#fed7aa', '#f9a8d4', '#c7d2fe', '#fecaca', '#99f6e4', '#fde047', '#fca5a5', '#facc15', '#cbd5e1', '#a7f3d0', '#fdba74', '#a5f3fc', '#e879f9'];
-                                  const hash = generateHash(destId);
-                                  return calendarBgs[hash % calendarBgs.length];
-                                };
-                                
-                                const prevBg = getCalendarBgHex(prevDestination.id);
-                                const currentBg = getCalendarBgHex(destination.id);
-                                const gradient = `linear-gradient(to right, ${prevBg}, ${currentBg})`;
-                                return {
-                                  background: gradient
-                                };
-                              } else {
-                                return { backgroundColor: '#fed7aa' }; // orange-200
-                              }
-                            } else {
-                              // Regular days - use the darker calendar background colors for better contrast
-                              if (destination) {
-                                const getCalendarBgHex = (destId: string) => {
-                                  const dest = trip.destinations.find(d => d.id === destId);
-                                  if (dest?.customColor) {
-                                    const colorMap: { [key: string]: string } = {
-                                      'ocean-blue': '#bae6fd',
-                                      'tropical-green': '#bbf7d0', 
-                                      'sunset-purple': '#e9d5ff',
-                                      'adventure-orange': '#fed7aa',
-                                      'cherry-pink': '#f9a8d4',
-                                      'deep-indigo': '#c7d2fe',
-                                      'ruby-red': '#fecaca',
-                                      'emerald-teal': '#99f6e4',
-                                      'golden-yellow': '#fde047',
-                                      'wine-burgundy': '#fca5a5',
-                                      'bronze-gold': '#facc15',
-                                      'navy-midnight': '#cbd5e1',
-                                      'mint-fresh': '#a7f3d0',
-                                      'sunset-coral': '#fdba74',
-                                      'arctic-cyan': '#a5f3fc',
-                                      'magenta-fuchsia': '#e879f9'
-                                    };
-                                    return colorMap[dest.customColor] || '#f9fafb';
-                                  }
-                                  // Fallback to hash-based selection for calendar colors
-                                  const generateHash = (str: string) => {
-                                    let hash = 0;
-                                    for (let i = 0; i < str.length; i++) {
-                                      const char = str.charCodeAt(i);
-                                      hash = ((hash << 5) - hash) + char;
-                                      hash = hash & hash;
-                                    }
-                                    return Math.abs(hash);
-                                  };
-                                  const calendarBgs = ['#bae6fd', '#bbf7d0', '#e9d5ff', '#fed7aa', '#f9a8d4', '#c7d2fe', '#fecaca', '#99f6e4', '#fde047', '#fca5a5', '#facc15', '#cbd5e1', '#a7f3d0', '#fdba74', '#a5f3fc', '#e879f9'];
-                                  const hash = generateHash(destId);
-                                  return calendarBgs[hash % calendarBgs.length];
-                                };
-                                
-                                return {
-                                  backgroundColor: getCalendarBgHex(destination.id)
-                                };
-                              } else {
-                                return { backgroundColor: '#f9fafb' }; // light gray for unassigned days
-                              }
-                            }
-                          })()}
-                        >
+                        <div className="p-4">
                           <div className="grid grid-cols-3 items-center">
                             {/* Left: Day Info */}
                             <div className="flex items-center gap-3">
-                              <div className="flex items-center">
-                                <div className={`w-3 h-3 rounded-full ${colors.bg} ${isActiveDay ? 'animate-pulse' : ''}`} />
-                                {isTransfer && (
-                                  <div className="ml-1 w-3 h-3 bg-orange-500 rounded-full flex items-center justify-center">
-                                    <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                                    </svg>
-                                  </div>
-                                )}
-                              </div>
                               <div>
                                 <h3 className={`font-semibold ${isActiveDay ? 'text-blue-900' : 'text-gray-900'}`}>
                                   Day {dayIndexInTrip + 1} • {formatDate(day.date)}
