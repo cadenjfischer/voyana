@@ -14,7 +14,21 @@ export default function DayByDayTab({ days, onUpdateDays, onAddActivity }: DayBy
   const [selectedDayId, setSelectedDayId] = useState<string>(days[0]?.id || '');
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
   const [editingField, setEditingField] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'day' | 'timeline'>('day');
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Load view mode from localStorage on mount
+  useEffect(() => {
+    const savedViewMode = localStorage.getItem('dayByDayViewMode');
+    if (savedViewMode === 'day' || savedViewMode === 'timeline') {
+      setViewMode(savedViewMode);
+    }
+  }, []);
+
+  // Save view mode to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('dayByDayViewMode', viewMode);
+  }, [viewMode]);
 
   // Auto-select first day when days change
   useEffect(() => {
@@ -118,6 +132,9 @@ export default function DayByDayTab({ days, onUpdateDays, onAddActivity }: DayBy
     return days.reduce((sum, day) => sum + day.totalCost, 0);
   };
 
+  // Filter days with activities for Timeline view
+  const daysWithActivities = days.filter(day => day.activities.length > 0);
+
   return (
     <div className="space-y-6">
       {/* Header with day navigation */}
@@ -127,9 +144,37 @@ export default function DayByDayTab({ days, onUpdateDays, onAddActivity }: DayBy
             <h2 className="text-2xl font-bold text-gray-900">Day by Day</h2>
             <p className="text-gray-600 mt-1">Plan your daily activities and track expenses</p>
           </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-600">Total Trip Cost</p>
-            <p className="text-2xl font-bold text-green-600">{formatCurrency(getTotalTripCost())}</p>
+          <div className="flex items-center gap-6">
+            {/* View Mode Toggle */}
+            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('day')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                  viewMode === 'day'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <span>🗓️</span>
+                Day View
+              </button>
+              <button
+                onClick={() => setViewMode('timeline')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                  viewMode === 'timeline'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <span>📜</span>
+                Timeline
+              </button>
+            </div>
+            
+            <div className="text-right">
+              <p className="text-sm text-gray-600">Total Trip Cost</p>
+              <p className="text-2xl font-bold text-green-600">{formatCurrency(getTotalTripCost())}</p>
+            </div>
           </div>
         </div>
 
@@ -171,7 +216,8 @@ export default function DayByDayTab({ days, onUpdateDays, onAddActivity }: DayBy
         </div>
       </div>
 
-      {selectedDay && (
+      {/* Day View (Planning Mode) */}
+      {viewMode === 'day' && selectedDay && (
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main Activities Column */}
           <div className="lg:col-span-2">
@@ -405,7 +451,130 @@ export default function DayByDayTab({ days, onUpdateDays, onAddActivity }: DayBy
                 ))}
               </div>
             </div>
-          </div>
+                    </div>
+        </div>
+      )}
+
+      {/* Timeline View (Read-Only Summary) */}
+      {viewMode === 'timeline' && (
+        <div className="bg-white rounded-xl p-8 shadow-sm border">
+          {daysWithActivities.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">📜</span>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Activities Yet</h3>
+              <p className="text-gray-600 mb-6">Switch to Day View to start planning your trip</p>
+              <button
+                onClick={() => setViewMode('day')}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              >
+                Go to Day View
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {daysWithActivities.map((day, dayIndex) => (
+                <div key={day.id} className="relative">
+                  {/* Timeline Connector */}
+                  {dayIndex < daysWithActivities.length - 1 && (
+                    <div className="absolute left-[19px] top-12 bottom-0 w-0.5 bg-gradient-to-b from-blue-200 to-transparent" />
+                  )}
+                  
+                  {/* Day Header */}
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold shadow-md">
+                      {days.findIndex(d => d.id === day.id) + 1}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold text-gray-900">{formatDate(day.date)}</h3>
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                        <span>{day.activities.length} {day.activities.length === 1 ? 'activity' : 'activities'}</span>
+                        {day.totalCost > 0 && (
+                          <>
+                            <span>•</span>
+                            <span className="text-green-600 font-medium">{formatCurrency(day.totalCost)}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Activities */}
+                  <div className="ml-14 space-y-3">
+                    {day.activities
+                      .sort((a, b) => a.order - b.order)
+                      .map((activity) => (
+                        <div
+                          key={activity.id}
+                          className="flex gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100"
+                        >
+                          {/* Activity Icon */}
+                          <div className="flex-shrink-0">
+                            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-base shadow-sm border border-gray-200">
+                              {ACTIVITY_TYPES[activity.type].icon}
+                            </div>
+                          </div>
+
+                          {/* Activity Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-gray-900">{activity.title}</h4>
+                                
+                                {/* Time and Location */}
+                                <div className="flex items-center gap-3 mt-1 text-sm text-gray-600">
+                                  {activity.time && (
+                                    <span className="flex items-center gap-1">
+                                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                      </svg>
+                                      {activity.time}
+                                    </span>
+                                  )}
+                                  {activity.location && (
+                                    <span className="flex items-center gap-1">
+                                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                      </svg>
+                                      {activity.location}
+                                    </span>
+                                  )}
+                                  <span className="text-gray-400">•</span>
+                                  <span className="text-gray-500">{ACTIVITY_TYPES[activity.type].label}</span>
+                                </div>
+
+                                {/* Description */}
+                                {activity.description && (
+                                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">{activity.description}</p>
+                                )}
+                              </div>
+
+                              {/* Cost */}
+                              {activity.cost > 0 && (
+                                <span className="text-sm font-medium text-green-600 ml-4">
+                                  {formatCurrency(activity.cost)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+
+                  {/* Day Notes */}
+                  {day.notes && (
+                    <div className="ml-14 mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <span className="text-sm">📝</span>
+                        <p className="text-sm text-gray-700 flex-1">{day.notes}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
