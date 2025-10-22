@@ -6,7 +6,15 @@ export interface Lodging {
   nights: number; // How many nights this lodging covers
   checkIn?: string; // Optional check-in date
   checkOut?: string; // Optional check-out date
-  cost?: number;
+  checkInTime?: string; // Optional check-in time
+  checkOutTime?: string; // Optional check-out time
+  address?: string;
+  phone?: string;
+  website?: string;
+  email?: string;
+  confirmation?: string;
+  totalCost?: number;
+  cost?: number; // Legacy field
   notes?: string;
 }
 

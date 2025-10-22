@@ -8,6 +8,7 @@ import TabbedLayout from './TabbedLayout';
 import TripMap from '@/components/map/TripMap';
 import FloatingAddButton from './FloatingAddButton';
 import CalendarStrip from './CalendarStrip';
+import EditTripModal from './EditTripModal';
 
 interface SyncedSplitViewProps {
   trip: Trip;
@@ -19,6 +20,7 @@ interface SyncedSplitViewProps {
 
 export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestination, onActiveDay, onDestinationMapCenterRequest }: SyncedSplitViewProps) {
   const [expandedDestinationIds, setExpandedDestinationIds] = useState<Set<string>>(new Set());
+  const [editTripModalOpen, setEditTripModalOpen] = useState(false);
   const [activeDay, setActiveDay] = useState<string>('');
   const [isMobile, setIsMobile] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
@@ -200,9 +202,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
 
   // Handle destination expansion toggle (called from arrow button only)
   const handleDestinationToggle = (destinationId: string) => {
-    const destination = trip.destinations.find(d => d.id === destinationId);
-    
-    // Toggle the expansion state
+    // Toggle the expansion state only - don't trigger map zoom
     setExpandedDestinationIds(prev => {
       const newSet = new Set(prev);
       if (newSet.has(destinationId)) {
@@ -212,14 +212,6 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
       }
       return newSet;
     });
-    
-    // Also update selected destination for map zoom
-    setSelectedDestinationId(destinationId);
-    if (destination && destination.coordinates) {
-      onDestinationMapCenterRequest?.({ lat: destination.coordinates.lat, lng: destination.coordinates.lng });
-    } else {
-      onDestinationMapCenterRequest?.(null);
-    }
   };
 
   // Handle timeline scroll to update active destination
@@ -481,13 +473,24 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
       <div className="w-[40%] border-r border-gray-200 flex flex-col bg-white">
         {/* Trip Header */}
         <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{trip.title}</h1>
-            <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
-              <span>{trip.destinations?.map(d => d.name).join(', ')}</span>
-              <span>•</span>
-              <span>{new Date(trip.startDate).toLocaleDateString()} - {new Date(trip.endDate).toLocaleDateString()}</span>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-gray-900">{trip.title}</h1>
+              <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
+                <span>{trip.destinations?.map(d => d.name).join(', ')}</span>
+                <span>•</span>
+                <span>{new Date(trip.startDate).toLocaleDateString()} - {new Date(trip.endDate).toLocaleDateString()}</span>
+              </div>
             </div>
+            <button
+              onClick={() => setEditTripModalOpen(true)}
+              className="ml-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Edit trip details"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
           </div>
         </div>
         
@@ -545,6 +548,17 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
           onUpdateTrip={onUpdateTrip}
         />
       </div>
+
+      {/* Edit Trip Modal */}
+      <EditTripModal
+        isOpen={editTripModalOpen}
+        trip={trip}
+        onClose={() => setEditTripModalOpen(false)}
+        onUpdateTrip={(updatedTrip: Trip) => {
+          onUpdateTrip(updatedTrip);
+          setEditTripModalOpen(false);
+        }}
+      />
     </div>
   );
 }

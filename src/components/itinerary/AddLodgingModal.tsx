@@ -11,7 +11,12 @@ interface AddLodgingModalProps {
 }
 
 export default function AddLodgingModal({ destination, onClose, onSave }: AddLodgingModalProps) {
-  const [step, setStep] = useState<'nights' | 'details'>('nights');
+  // Calculate how many nights are already allocated
+  const allocatedNights = destination.lodgings?.reduce((sum, l) => sum + l.nights, 0) || 0;
+  const availableNights = destination.nights - allocatedNights;
+  
+  // If only 1 night available, skip directly to details
+  const [step, setStep] = useState<'nights' | 'details'>(availableNights === 1 ? 'details' : 'nights');
   const [entryMode, setEntryMode] = useState<'search' | 'custom'>('search');
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
@@ -31,10 +36,6 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
   const [notes, setNotes] = useState('');
   const [checkInTime, setCheckInTime] = useState('');
   const [checkOutTime, setCheckOutTime] = useState('');
-  
-  // Calculate how many nights are already allocated
-  const allocatedNights = destination.lodgings?.reduce((sum, l) => sum + l.nights, 0) || 0;
-  const availableNights = destination.nights - allocatedNights;
   
   // Generate all available dates
   const getAllDates = () => {
@@ -90,6 +91,11 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
   
   // Calculate selected dates count
   const getSelectedNights = () => {
+    // If only 1 night available, always return 1
+    if (availableNights === 1) {
+      return 1;
+    }
+    
     if (stayAllNights) {
       return getAvailableDates().length;
     }
@@ -108,7 +114,34 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
   };
 
   const handleSave = () => {
-    if (!hotelName.trim() || getSelectedNights() === 0) return;
+    if (!hotelName.trim()) return;
+    
+    // For 1 night destinations, use the full destination dates
+    if (availableNights === 1 && destination.startDate && destination.endDate) {
+      const checkIn = destination.startDate;
+      const checkOut = destination.endDate;
+      
+      onSave({
+        name: hotelName,
+        nights: 1,
+        checkIn,
+        checkOut,
+        checkInTime: checkInTime || undefined,
+        checkOutTime: checkOutTime || undefined,
+        address: address || undefined,
+        phone: phone || undefined,
+        website: website || undefined,
+        email: email || undefined,
+        confirmation: confirmation || undefined,
+        totalCost: totalCost ? parseFloat(totalCost) : undefined,
+        notes: notes || undefined,
+      });
+      onClose();
+      return;
+    }
+    
+    // Original logic for multi-night destinations
+    if (getSelectedNights() === 0) return;
     
     let checkIn: string | undefined;
     let checkOut: string | undefined;
@@ -252,6 +285,40 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
     return date.toLocaleDateString('en-US', { weekday: 'short' });
   };
 
+  // Get the check-in date for display
+  const getCheckInDate = () => {
+    if (availableNights === 1 && destination.startDate) {
+      return formatDate(destination.startDate);
+    }
+    if (stayAllNights) {
+      const availableDates = getAvailableDates();
+      return availableDates.length > 0 ? formatDate(availableDates[0]) : '';
+    }
+    return startDate ? formatDate(startDate) : '';
+  };
+
+  // Get the check-out date for display
+  const getCheckOutDate = () => {
+    if (availableNights === 1 && destination.endDate) {
+      return formatDate(destination.endDate);
+    }
+    if (stayAllNights) {
+      const availableDates = getAvailableDates();
+      if (availableDates.length > 0) {
+        const lastNight = new Date(availableDates[availableDates.length - 1]);
+        lastNight.setDate(lastNight.getDate() + 1);
+        return formatDate(lastNight.toISOString().split('T')[0]);
+      }
+      return '';
+    }
+    if (endDate) {
+      const checkout = new Date(endDate);
+      checkout.setDate(checkout.getDate() + 1);
+      return formatDate(checkout.toISOString().split('T')[0]);
+    }
+    return '';
+  };
+
   return (
     <>
       {/* Overlay backdrop for left 40% of screen */}
@@ -264,7 +331,7 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0 bg-white">
               <div className="flex items-center justify-between mb-1">
-                <h2 className="text-xl font-bold text-gray-900">Add Lodging</h2>
+                <h2 className="text-xl font-bold text-gray-900">Add Accommodation</h2>
                 <button
                   onClick={onClose}
                   className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
@@ -293,7 +360,7 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
                       </p>
                       <p className="text-xs text-blue-700">
                         {availableNights === destination.nights ? (
-                          `How many nights would you like to book lodging for?`
+                          `How many nights would you like to book accommodation for?`
                         ) : availableNights > 0 ? (
                           `${allocatedNights} ${allocatedNights === 1 ? 'night' : 'nights'} already booked. ${availableNights} ${availableNights === 1 ? 'night' : 'nights'} remaining.`
                         ) : (
@@ -328,9 +395,9 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
                           {availableNights === 0 ? (
                             'No available nights to book'
                           ) : availableNights === destination.nights ? (
-                            `Book lodging for all ${destination.nights} ${destination.nights === 1 ? 'night' : 'nights'}`
+                            `Book accommodation for all ${destination.nights} ${destination.nights === 1 ? 'night' : 'nights'}`
                           ) : (
-                            `Book lodging for the ${availableNights} remaining ${availableNights === 1 ? 'night' : 'nights'}`
+                            `Book accommodation for the ${availableNights} remaining ${availableNights === 1 ? 'night' : 'nights'}`
                           )}
                         </p>
                       </div>
@@ -430,7 +497,7 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
-                      All nights are allocated. Remove existing lodging to add new ones.
+                      All nights are allocated. Remove existing accommodation to add new ones.
                     </p>
                   )}
                 </div>
@@ -455,16 +522,19 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
             {/* Header - Details Step */}
             <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0 bg-white">
               <div className="flex items-center gap-3 mb-2">
-                <button
-                  onClick={() => setStep('nights')}
-                  className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
+                {/* Only show back button if more than 1 night (so they can go back to date selection) */}
+                {availableNights > 1 && (
+                  <button
+                    onClick={() => setStep('nights')}
+                    className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                )}
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900">Add Lodging Details</h2>
+                  <h2 className="text-xl font-bold text-gray-900">Add Accommodation Details</h2>
                   <p className="text-sm text-gray-600">{getSelectedNights()} {getSelectedNights() === 1 ? 'night' : 'nights'} in {destination.name}</p>
                 </div>
                 <button
@@ -580,17 +650,17 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
                 <>
                   {/* Custom Mode - Comprehensive Form */}
                   <div className="space-y-4">
-                    {/* Hotel Name * Required */}
+                    {/* Accommodation Name * Required */}
                     <div>
                       <label htmlFor="hotel-name" className="block text-sm font-medium text-gray-900 mb-1.5">
-                        Lodging Name <span className="text-red-500">*</span>
+                        Accommodation Name <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="hotel-name"
                         type="text"
                         value={hotelName}
                         onChange={(e) => setHotelName(e.target.value)}
-                        placeholder="Enter lodging name"
+                        placeholder="Enter accommodation name"
                         className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900 placeholder-gray-400"
                         required
                       />
@@ -599,27 +669,27 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
                     {/* Check-in/Check-out Times */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label htmlFor="checkin-time" className="block text-sm font-medium text-gray-900 mb-1.5">
-                          Check-in Time
+                        <label htmlFor="checkin-time" className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Check-in Time {getCheckInDate() && <span className="text-gray-500">({getCheckInDate()})</span>}
                         </label>
                         <input
                           id="checkin-time"
                           type="time"
                           value={checkInTime}
                           onChange={(e) => setCheckInTime(e.target.value)}
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900"
+                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white transition-all text-sm text-gray-900"
                         />
                       </div>
                       <div>
-                        <label htmlFor="checkout-time" className="block text-sm font-medium text-gray-900 mb-1.5">
-                          Check-out Time
+                        <label htmlFor="checkout-time" className="block text-sm font-medium text-gray-700 mb-1.5">
+                          Check-out Time {getCheckOutDate() && <span className="text-gray-500">({getCheckOutDate()})</span>}
                         </label>
                         <input
                           id="checkout-time"
                           type="time"
                           value={checkOutTime}
                           onChange={(e) => setCheckOutTime(e.target.value)}
-                          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm text-gray-900"
+                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white transition-all text-sm text-gray-900"
                         />
                       </div>
                     </div>
@@ -741,7 +811,7 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
                 disabled={!hotelName.trim()}
                 className="w-full px-6 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed rounded-xl transition-all shadow-lg hover:shadow-xl"
               >
-                Save Lodging
+                Save Accommodation
               </button>
             </div>
           </>
