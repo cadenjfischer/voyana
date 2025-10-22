@@ -89,7 +89,7 @@ export default function TabbedLayout({
             trip={trip}
           />
         ) : (
-          <div className="flex-1 overflow-y-auto">
+          <div className="h-full overflow-y-auto">
             <TimelineView
               trip={trip}
               activeDestinationId={selectedDestinationId || ''}
