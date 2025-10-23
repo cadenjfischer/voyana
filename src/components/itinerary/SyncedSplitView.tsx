@@ -26,6 +26,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
   const [isMobile, setIsMobile] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const [isSplitViewExpanded, setIsSplitViewExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<'destinations' | 'day-by-day'>('destinations');
   const { selectedDestinationId, setSelectedDestinationId, selectedDay, setSelectedDay } = useItineraryUI();
   
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -513,6 +514,12 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
           onDaysUpdate={handleDaysUpdate}
           onDaySelect={handleDaySelect}
           onUpdateTrip={onUpdateTrip}
+          onActiveTabChange={(tab) => {
+            setActiveTab(tab);
+            if (tab === 'day-by-day') {
+              setIsSplitViewExpanded(false);
+            }
+          }}
         />
         </div>
       </div>
@@ -541,33 +548,35 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
             />
           </div>
           
-          {/* Toggle Button - Stippl Style */}
-          <button
-            onClick={() => setIsSplitViewExpanded(!isSplitViewExpanded)}
-            className="absolute top-1/2 left-0 -translate-y-1/2 z-[1000] bg-white rounded-r-lg shadow-lg w-6 h-20 flex items-center justify-center hover:bg-blue-50 hover:w-7 transition-all group border-r border-t border-b border-gray-200"
-            title={isSplitViewExpanded ? "Hide Day by Day" : "Show Day by Day"}
-          >
-            <svg 
-              className={`w-4 h-4 text-gray-700 group-hover:text-blue-600 transition-transform ${
-                isSplitViewExpanded ? 'rotate-180' : ''
-              }`} 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-              strokeWidth={2.5}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-          
-          {/* Day by Day Overlay Panel */}
+          {/* Day by Day Overlay Panel - Full height to match left pane */}
           <div 
-            className={`absolute top-0 bottom-0 left-0 bg-white shadow-2xl transition-transform duration-300 ease-in-out z-[900] ${
+            className={`absolute top-0 bottom-0 left-0 bg-white shadow-2xl transition-transform duration-300 ease-in-out z-[900] border-r border-gray-200 ${
               isSplitViewExpanded ? 'translate-x-0' : '-translate-x-full'
             }`}
-            style={{ width: '450px' }}
+            style={{ width: 'calc(30vw)' }}
           >
-            <div className="h-full flex flex-col">
+            {/* Toggle Button - Attached to right edge of panel */}
+            {activeTab === 'destinations' && (
+              <button
+                onClick={() => setIsSplitViewExpanded(!isSplitViewExpanded)}
+                className="absolute top-1/2 -right-6 -translate-y-1/2 z-[1000] bg-white rounded-r-lg shadow-lg w-6 h-20 flex items-center justify-center hover:bg-blue-50 transition-colors group border-r border-t border-b border-gray-200"
+                title={isSplitViewExpanded ? "Hide Day by Day" : "Show Day by Day"}
+              >
+                <svg 
+                  className={`w-4 h-4 text-gray-700 group-hover:text-blue-600 transition-transform ${
+                    isSplitViewExpanded ? 'rotate-180' : ''
+                  }`} 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                  strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
+            
+            <div className="h-full flex flex-col scale-90 origin-top-left" style={{ width: '111.11%' }}>
               {/* Header */}
               <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
                 <h2 className="text-xl font-semibold text-gray-900">Day by Day</h2>

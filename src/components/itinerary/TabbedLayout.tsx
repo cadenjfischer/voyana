@@ -20,6 +20,7 @@ interface TabbedLayoutProps {
   onDaysUpdate: (days: any[]) => void;
   onDaySelect: (dayId: string) => void;
   onUpdateTrip: (trip: Trip) => void;
+  onActiveTabChange?: (tab: TabType) => void;
 }
 
 type TabType = 'destinations' | 'day-by-day';
@@ -39,15 +40,21 @@ export default function TabbedLayout({
   onDaysUpdate,
   onDaySelect,
   onUpdateTrip,
+  onActiveTabChange,
 }: TabbedLayoutProps) {
   const [activeTab, setActiveTab] = useState<TabType>('destinations');
+  
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    onActiveTabChange?.(tab);
+  };
 
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Tab Navigation */}
       <div className="flex border-b border-gray-200">
         <button
-          onClick={() => setActiveTab('destinations')}
+          onClick={() => handleTabChange('destinations')}
           className={`flex-1 px-6 py-3 text-sm font-medium transition-colors relative ${
             activeTab === 'destinations'
               ? 'text-blue-600 bg-blue-50'
@@ -60,7 +67,7 @@ export default function TabbedLayout({
           )}
         </button>
         <button
-          onClick={() => setActiveTab('day-by-day')}
+          onClick={() => handleTabChange('day-by-day')}
           className={`flex-1 px-6 py-3 text-sm font-medium transition-colors relative ${
             activeTab === 'day-by-day'
               ? 'text-blue-600 bg-blue-50'
