@@ -24,8 +24,8 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
   const [isScrollable, setIsScrollable] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const MIN_SCALE = 0.75; // don't scale below this - reduced for smaller size
-  const BASE_DAY_WIDTH = 88; // reduced from 112 for smaller cards
+  const MIN_SCALE = 0.65; // don't scale below this - reduced for smaller size
+  const BASE_DAY_WIDTH = 72; // reduced from 88 for smaller cards
   const GAP = 6; // reduced gap between items
   
   // Auto-scroll to active day
@@ -35,7 +35,7 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
     const activeIndex = days.findIndex(day => day.id === activeDay);
     if (activeIndex === -1) return;
     
-    const dayWidth = 94; // Approximate width of each day button - reduced
+    const dayWidth = 78; // Approximate width of each day button - reduced
     const containerWidth = stripRef.current.clientWidth;
     const targetScroll = (activeIndex * dayWidth) - (containerWidth / 2) + (dayWidth / 2);
     
@@ -220,6 +220,7 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
           const info = getDayInfo(day, index);
           const isActive = day.id === activeDay;
           const hasActivities = day.activities.length > 0;
+          const [isHovered, setIsHovered] = useState(false);
           
           // Get destination color with transfer day support
           const getDayColors = () => {
@@ -247,47 +248,67 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
           
           const dynamicColors = getDayColors();
           
+          // Convert hex to rgba with opacity for overlay effect
+          const hexToRgba = (hex: string, opacity: number) => {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+          };
+          
+          // Create layered background: white base with colored overlay
+          const getLayeredBackground = () => {
+            if (typeof dynamicColors.bg === 'string' && dynamicColors.bg.startsWith('#')) {
+              const colorOverlay = hexToRgba(dynamicColors.bg, isHovered ? 0.7 : 0.4);
+              return `linear-gradient(${colorOverlay}, ${colorOverlay}), white`;
+            }
+            // For gradients or special cases
+            return dynamicColors.bg;
+          };
+          
           return (
             <button
               key={day.id}
               onClick={() => onDaySelect(day.id)}
-              className={`flex-shrink-0 w-20 p-2 rounded-lg border-2 text-center transition-all duration-300 relative overflow-hidden transform hover:scale-105 active:scale-95 ${
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              className={`flex-shrink-0 w-16 p-1 rounded-lg border-2 text-center transition-all duration-300 relative overflow-hidden transform hover:scale-105 active:scale-95 ${
                 isActive ? 'border-gray-800 shadow-lg scale-105' : 'border-gray-300 hover:shadow-md hover:border-gray-400'
               } ${dynamicColors.isTransfer ? 'ring-2 ring-orange-400' : ''}`}
               style={{
-                background: dynamicColors.bg,
+                background: getLayeredBackground(),
                 color: dynamicColors.text
               }}
             >
               {/* Transfer day indicator */}
               {dynamicColors.isTransfer && (
                 <div className="absolute top-0.5 right-0.5">
-                  <div className="w-2.5 h-2.5 bg-orange-500 rounded-full border border-white flex items-center justify-center">
-                    <svg className="w-1.5 h-1.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full border border-white flex items-center justify-center">
+                    <svg className="w-1 h-1 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
                   </div>
                 </div>
               )}
               {/* Day number */}
-              <div className="text-[10px] font-medium opacity-75 mb-0.5">
+              <div className="text-[8px] font-medium opacity-75">
                 Day {info.dayNumber}
               </div>
               
 
               
               {/* Weekday */}
-              <div className="text-xs font-medium">
+              <div className="text-[9px] font-medium">
                 {info.weekday}
               </div>
               
               {/* Date */}
-              <div className="text-base font-bold">
+              <div className="text-xs font-bold">
                 {info.date}
               </div>
               
               {/* Month */}
-              <div className="text-[10px] opacity-75">
+              <div className="text-[8px] opacity-75">
                 {info.month}
               </div>
               
