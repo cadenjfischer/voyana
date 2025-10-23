@@ -550,7 +550,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
           
           {/* Day by Day Overlay Panel - Full height to match left pane */}
           <div 
-            className={`absolute top-0 bottom-0 left-0 bg-white shadow-2xl transition-transform duration-300 ease-in-out z-[900] border-r border-gray-200 ${
+            className={`absolute top-0 bottom-0 left-0 bg-white shadow-2xl transition-transform duration-300 ease-in-out z-[1100] border-r border-gray-200 ${
               isSplitViewExpanded ? 'translate-x-0' : '-translate-x-full'
             }`}
             style={{ width: 'calc(30vw)' }}
