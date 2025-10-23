@@ -5,6 +5,7 @@ import { useItineraryUI } from '@/contexts/ItineraryUIContext';
 import { Trip, Destination, Day, Activity, formatDate } from '@/types/itinerary';
 import { PREMIUM_COLOR_PALETTE } from '@/utils/colors';
 import TabbedLayout from './TabbedLayout';
+import TimelineView from './TimelineView';
 import TripMap from '@/components/map/TripMap';
 import FloatingAddButton from './FloatingAddButton';
 import CalendarStrip from './CalendarStrip';
@@ -24,6 +25,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
   const [activeDay, setActiveDay] = useState<string>('');
   const [isMobile, setIsMobile] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
+  const [isSplitViewExpanded, setIsSplitViewExpanded] = useState(false);
   const { selectedDestinationId, setSelectedDestinationId, selectedDay, setSelectedDay } = useItineraryUI();
   
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -537,6 +539,60 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
               transparent={true}
               centered={false}
             />
+          </div>
+          
+          {/* Toggle Button - Stippl Style */}
+          <button
+            onClick={() => setIsSplitViewExpanded(!isSplitViewExpanded)}
+            className="absolute top-1/2 left-0 -translate-y-1/2 z-[1000] bg-white rounded-r-lg shadow-lg w-6 h-20 flex items-center justify-center hover:bg-blue-50 hover:w-7 transition-all group border-r border-t border-b border-gray-200"
+            title={isSplitViewExpanded ? "Hide Day by Day" : "Show Day by Day"}
+          >
+            <svg 
+              className={`w-4 h-4 text-gray-700 group-hover:text-blue-600 transition-transform ${
+                isSplitViewExpanded ? 'rotate-180' : ''
+              }`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+              strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          
+          {/* Day by Day Overlay Panel */}
+          <div 
+            className={`absolute top-0 bottom-0 left-0 bg-white shadow-2xl transition-transform duration-300 ease-in-out z-[900] ${
+              isSplitViewExpanded ? 'translate-x-0' : '-translate-x-full'
+            }`}
+            style={{ width: '450px' }}
+          >
+            <div className="h-full flex flex-col">
+              {/* Header */}
+              <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
+                <h2 className="text-xl font-semibold text-gray-900">Day by Day</h2>
+                <button
+                  onClick={() => setIsSplitViewExpanded(false)}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              {/* Day by Day Content */}
+              <div className="flex-1 overflow-y-auto scrollbar-hide">
+                <TimelineView
+                  trip={trip}
+                  activeDestinationId={selectedDestinationId || ''}
+                  activeDay={activeDay}
+                  destinationRefs={destinationRefs}
+                  onDaysUpdate={handleDaysUpdate}
+                  onDaySelect={handleDaySelect}
+                />
+              </div>
+            </div>
           </div>
         </div>
         
