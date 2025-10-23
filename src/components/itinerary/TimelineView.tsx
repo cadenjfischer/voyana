@@ -4,6 +4,7 @@ import { useRef, useCallback, useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Trip, Destination, Day, Activity, ACTIVITY_TYPES, formatDate, formatCurrency } from '@/types/itinerary';
 import { getDestinationColors, isTransferDay } from '@/utils/colors';
+import AddActivityModal from './AddActivityModal';
 
 interface TimelineViewProps {
   trip: Trip;
@@ -46,6 +47,10 @@ export default function TimelineView({
   // Track hover state for days
   const [hoveredDay, setHoveredDay] = useState<string | null>(null);
 
+  // Modal state for adding activities
+  const [isAddActivityModalOpen, setIsAddActivityModalOpen] = useState(false);
+  const [selectedDayForActivity, setSelectedDayForActivity] = useState<string | null>(null);
+
   // Toggle a single day
   const toggleDay = (dayId: string) => {
     setCollapsedDays(prev => {
@@ -72,7 +77,34 @@ export default function TimelineView({
 
   const allCollapsed = collapsedDays.size === trip.days.length;
 
+  // Handle opening add activity modal
+  const handleOpenAddActivity = (dayId: string) => {
+    setSelectedDayForActivity(dayId);
+    setIsAddActivityModalOpen(true);
+  };
 
+  // Handle adding a new activity
+  const handleAddActivity = (activityData: Omit<Activity, 'id' | 'order' | 'dayId'>) => {
+    if (!selectedDayForActivity) return;
+
+    const updatedDays = trip.days.map(day => {
+      if (day.id === selectedDayForActivity) {
+        const newActivity: Activity = {
+          ...activityData,
+          id: `activity-${Date.now()}-${Math.random()}`,
+          dayId: day.id,
+          order: day.activities.length
+        };
+        return {
+          ...day,
+          activities: [...day.activities, newActivity]
+        };
+      }
+      return day;
+    });
+
+    onDaysUpdate(updatedDays);
+  };
 
   // Handle activity drag and drop
   const handleActivityDragEnd = useCallback((result: DropResult) => {
@@ -423,7 +455,7 @@ export default function TimelineView({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onDaySelect?.(day.id);
+                                handleOpenAddActivity(day.id);
                               }}
                               className={`px-3 py-1.5 text-sm font-medium ${colors.text} hover:bg-white rounded-lg transition-colors duration-200`}
                             >
@@ -542,7 +574,10 @@ export default function TimelineView({
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                 </svg>
                                 <p className="text-sm">No activities planned</p>
-                                <button className={`text-xs ${colors.text} hover:underline mt-1`}>
+                                <button 
+                                  onClick={() => handleOpenAddActivity(day.id)}
+                                  className={`text-xs ${colors.text} hover:underline mt-1`}
+                                >
                                   Add your first activity
                                 </button>
                               </div>
@@ -712,6 +747,20 @@ export default function TimelineView({
           </div>
         );
       })()}
+
+      {/* Add Activity Modal */}
+      {selectedDayForActivity && (
+        <AddActivityModal
+          isOpen={isAddActivityModalOpen}
+          onClose={() => {
+            setIsAddActivityModalOpen(false);
+            setSelectedDayForActivity(null);
+          }}
+          onAddActivity={handleAddActivity}
+          dayId={selectedDayForActivity}
+          selectedDate={trip.days.find(d => d.id === selectedDayForActivity)?.date}
+        />
+      )}
     </div>
   );
 }
