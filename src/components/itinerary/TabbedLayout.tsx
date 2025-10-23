@@ -89,7 +89,7 @@ export default function TabbedLayout({
             trip={trip}
           />
         ) : (
-          <div className="h-full overflow-y-auto">
+          <div className="h-full overflow-y-auto scrollbar-hide">
             <TimelineView
               trip={trip}
               activeDestinationId={selectedDestinationId || ''}

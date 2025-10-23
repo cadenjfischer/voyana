@@ -43,6 +43,9 @@ export default function TimelineView({
     new Set(trip.days.map(d => d.id))
   );
 
+  // Track hover state for days
+  const [hoveredDay, setHoveredDay] = useState<string | null>(null);
+
   // Toggle a single day
   const toggleDay = (dayId: string) => {
     setCollapsedDays(prev => {
@@ -250,27 +253,28 @@ export default function TimelineView({
                   const isTransfer = isTransferDay(dayIndexInTrip, trip.days, trip.destinations);
                   const isCollapsed = collapsedDays.has(day.id);
                   
-                  // Helper function to get calendar background color
-                  const getCalendarBgHex = (destId: string) => {
+                  // Helper function to get calendar background color with reduced opacity
+                  const getCalendarBgHex = (destId: string, hoverOpacity = false) => {
+                    const opacity = hoverOpacity ? 0.7 : 0.3;
                     const dest = trip.destinations.find(d => d.id === destId);
                     if (dest?.customColor) {
                       const colorMap: { [key: string]: string } = {
-                        'ocean-blue': '#bae6fd',
-                        'tropical-green': '#bbf7d0', 
-                        'sunset-purple': '#e9d5ff',
-                        'adventure-orange': '#fed7aa',
-                        'cherry-pink': '#f9a8d4',
-                        'deep-indigo': '#c7d2fe',
-                        'ruby-red': '#fecaca',
-                        'emerald-teal': '#99f6e4',
-                        'golden-yellow': '#fde047',
-                        'wine-burgundy': '#fca5a5',
-                        'bronze-gold': '#facc15',
-                        'navy-midnight': '#cbd5e1',
-                        'mint-fresh': '#a7f3d0',
-                        'sunset-coral': '#fdba74',
-                        'arctic-cyan': '#a5f3fc',
-                        'magenta-fuchsia': '#e879f9'
+                        'ocean-blue': `rgba(186, 230, 253, ${opacity})`,
+                        'tropical-green': `rgba(187, 247, 208, ${opacity})`, 
+                        'sunset-purple': `rgba(233, 213, 255, ${opacity})`,
+                        'adventure-orange': `rgba(254, 215, 170, ${opacity})`,
+                        'cherry-pink': `rgba(249, 168, 212, ${opacity})`,
+                        'deep-indigo': `rgba(199, 210, 254, ${opacity})`,
+                        'ruby-red': `rgba(254, 202, 202, ${opacity})`,
+                        'emerald-teal': `rgba(153, 246, 228, ${opacity})`,
+                        'golden-yellow': `rgba(253, 224, 71, ${opacity})`,
+                        'wine-burgundy': `rgba(252, 165, 165, ${opacity})`,
+                        'bronze-gold': `rgba(250, 204, 21, ${opacity})`,
+                        'navy-midnight': `rgba(203, 213, 225, ${opacity})`,
+                        'mint-fresh': `rgba(167, 243, 208, ${opacity})`,
+                        'sunset-coral': `rgba(253, 186, 116, ${opacity})`,
+                        'arctic-cyan': `rgba(165, 243, 252, ${opacity})`,
+                        'magenta-fuchsia': `rgba(232, 121, 249, ${opacity})`
                       };
                       return colorMap[dest.customColor] || '#f9fafb';
                     }
@@ -284,13 +288,32 @@ export default function TimelineView({
                       }
                       return Math.abs(hash);
                     };
-                    const calendarBgs = ['#bae6fd', '#bbf7d0', '#e9d5ff', '#fed7aa', '#f9a8d4', '#c7d2fe', '#fecaca', '#99f6e4', '#fde047', '#fca5a5', '#facc15', '#cbd5e1', '#a7f3d0', '#fdba74', '#a5f3fc', '#e879f9'];
+                    const calendarBgs = [
+                      `rgba(186, 230, 253, ${opacity})`, 
+                      `rgba(187, 247, 208, ${opacity})`, 
+                      `rgba(233, 213, 255, ${opacity})`, 
+                      `rgba(254, 215, 170, ${opacity})`, 
+                      `rgba(249, 168, 212, ${opacity})`, 
+                      `rgba(199, 210, 254, ${opacity})`, 
+                      `rgba(254, 202, 202, ${opacity})`, 
+                      `rgba(153, 246, 228, ${opacity})`, 
+                      `rgba(253, 224, 71, ${opacity})`, 
+                      `rgba(252, 165, 165, ${opacity})`, 
+                      `rgba(250, 204, 21, ${opacity})`, 
+                      `rgba(203, 213, 225, ${opacity})`, 
+                      `rgba(167, 243, 208, ${opacity})`, 
+                      `rgba(253, 186, 116, ${opacity})`, 
+                      `rgba(165, 243, 252, ${opacity})`, 
+                      `rgba(232, 121, 249, ${opacity})`
+                    ];
                     const hash = generateHash(destId);
                     return calendarBgs[hash % calendarBgs.length];
                   };
 
                   // Calculate the background style
                   const getBackgroundStyle = () => {
+                    const isHovered = hoveredDay === day.id;
+                    
                     // Check if this day should be treated as unassigned due to nights allocation
                     if (destination && day.destinationId) {
                       const daysAssignedToThisDestination = trip.days.slice(0, dayIndexInTrip + 1).filter(d => d.destinationId === day.destinationId).length;
@@ -307,8 +330,8 @@ export default function TimelineView({
                         : null;
                       
                       if (prevDestination && destination) {
-                        const prevBg = getCalendarBgHex(prevDestination.id);
-                        const currentBg = getCalendarBgHex(destination.id);
+                        const prevBg = getCalendarBgHex(prevDestination.id, isHovered);
+                        const currentBg = getCalendarBgHex(destination.id, isHovered);
                         return { background: `linear-gradient(to right, ${prevBg}, ${currentBg})` };
                       } else {
                         return { backgroundColor: '#fed7aa' }; // orange-200
@@ -316,7 +339,7 @@ export default function TimelineView({
                     } else {
                       // Regular days
                       if (destination) {
-                        return { backgroundColor: getCalendarBgHex(destination.id) };
+                        return { backgroundColor: getCalendarBgHex(destination.id, isHovered) };
                       } else {
                         return { backgroundColor: '#f9fafb' }; // light gray for unassigned days
                       }
@@ -330,7 +353,9 @@ export default function TimelineView({
                         if (el) destinationRefs.current[day.id] = el;
                       }}
                       style={getBackgroundStyle()}
-                      className="border-b border-gray-100 last:border-b-0 transition-colors hover:opacity-90"
+                      className="border-b border-gray-300 last:border-b-0 transition-all hover:shadow-sm"
+                      onMouseEnter={() => setHoveredDay(day.id)}
+                      onMouseLeave={() => setHoveredDay(null)}
                     >
                       {/* Day Header */}
                       <div
