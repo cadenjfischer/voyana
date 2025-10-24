@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Trip } from '@/types/itinerary';
+import { Trip, Activity } from '@/types/itinerary';
 import TabbedDestinationRail from './TabbedDestinationRail';
 import TimelineView from './TimelineView';
 
@@ -21,6 +21,7 @@ interface TabbedLayoutProps {
   onDaySelect: (dayId: string) => void;
   onUpdateTrip: (trip: Trip) => void;
   onActiveTabChange?: (tab: TabType) => void;
+  onOpenActivityModal?: (dayId: string, activityType: Activity['type']) => void;
 }
 
 type TabType = 'destinations' | 'day-by-day';
@@ -41,6 +42,7 @@ export default function TabbedLayout({
   onDaySelect,
   onUpdateTrip,
   onActiveTabChange,
+  onOpenActivityModal,
 }: TabbedLayoutProps) {
   const [activeTab, setActiveTab] = useState<TabType>('destinations');
   
@@ -104,6 +106,7 @@ export default function TabbedLayout({
               destinationRefs={destinationRefs}
               onDaysUpdate={onDaysUpdate}
               onDaySelect={onDaySelect}
+              onOpenActivityModal={onOpenActivityModal}
             />
           </div>
         )}

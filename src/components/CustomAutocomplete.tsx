@@ -37,12 +37,13 @@ export default function CustomAutocomplete({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  // Search Google Places with debouncing
+  // Search Google Places with debouncing - only if user has interacted
   useEffect(() => {
-    if (value && value.trim().length >= 2) {
+    if (hasInteracted && value && value.trim().length >= 2) {
       setIsLoading(true);
       debouncedSearch(value.trim())
         .then((results) => {
@@ -61,10 +62,11 @@ export default function CustomAutocomplete({
       setShowSuggestions(false);
       setIsLoading(false);
     }
-  }, [value]);
+  }, [value, hasInteracted]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
+    setHasInteracted(true); // Mark that user has interacted
     onChange(newValue);
     setSelectedIndex(-1);
   };

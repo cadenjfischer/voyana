@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useItineraryUI } from '@/contexts/ItineraryUIContext';
-import { Trip, Destination, Day, Activity, formatDate } from '@/types/itinerary';
+import { Trip, Destination, Day, Activity, formatDate, ACTIVITY_TYPES } from '@/types/itinerary';
 import { PREMIUM_COLOR_PALETTE } from '@/utils/colors';
 import TabbedLayout from './TabbedLayout';
 import TimelineView from './TimelineView';
@@ -10,6 +10,7 @@ import TripMap from '@/components/map/TripMap';
 import FloatingAddButton from './FloatingAddButton';
 import CalendarStrip from './CalendarStrip';
 import EditTripModal from './EditTripModal';
+import ActivityFormModal from './ActivityFormModal';
 
 interface SyncedSplitViewProps {
   trip: Trip;
@@ -28,6 +29,11 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
   const [isSplitViewExpanded, setIsSplitViewExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<'destinations' | 'day-by-day'>('destinations');
   const { selectedDestinationId, setSelectedDestinationId, selectedDay, setSelectedDay } = useItineraryUI();
+  
+  // Shared modal state for activity forms
+  const [activityModalOpen, setActivityModalOpen] = useState(false);
+  const [selectedActivityType, setSelectedActivityType] = useState<Activity['type'] | null>(null);
+  const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   
   const timelineRef = useRef<HTMLDivElement>(null);
   const destinationRefs = useRef<{ [key: string]: HTMLDivElement }>({});
@@ -348,6 +354,47 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
     });
   };
 
+  // Handle opening activity modal
+  const handleOpenActivityModal = (dayId: string, activityType: Activity['type']) => {
+    setSelectedDayId(dayId);
+    setSelectedActivityType(activityType);
+    setActivityModalOpen(true);
+  };
+
+  // Handle saving activity from modal
+  const handleSaveActivity = (activityData: Partial<Activity> & Record<string, any>) => {
+    if (!selectedDayId || !selectedActivityType) return;
+
+    const config = ACTIVITY_TYPES[selectedActivityType];
+    const newActivity: Activity = {
+      id: `activity-${Date.now()}-${Math.random()}`,
+      type: selectedActivityType,
+      title: activityData.title || config.defaultTitle,
+      description: activityData.notes || activityData.description || '',
+      time: activityData.time || activityData.startTime || '',
+      cost: parseFloat(activityData.totalCost || activityData.cost || '0') || 0,
+      location: activityData.location || activityData.address || activityData.venue || '',
+      order: trip.days.find(d => d.id === selectedDayId)?.activities.length || 0,
+      dayId: selectedDayId,
+      icon: config.icon
+    };
+
+    const updatedDays = trip.days.map(day => {
+      if (day.id === selectedDayId) {
+        return {
+          ...day,
+          activities: [...day.activities, newActivity]
+        };
+      }
+      return day;
+    });
+
+    handleDaysUpdate(updatedDays);
+    setActivityModalOpen(false);
+    setSelectedActivityType(null);
+    setSelectedDayId(null);
+  };
+
   // Handle destination updates (e.g., night count changes)
   const handleDestinationUpdate = useCallback((updatedDestination: Destination) => {
     // Update destinations immediately for fast UI feedback
@@ -514,6 +561,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
           onDaysUpdate={handleDaysUpdate}
           onDaySelect={handleDaySelect}
           onUpdateTrip={onUpdateTrip}
+          onOpenActivityModal={handleOpenActivityModal}
           onActiveTabChange={(tab) => {
             setActiveTab(tab);
             if (tab === 'day-by-day') {
@@ -599,6 +647,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
                   destinationRefs={destinationRefs}
                   onDaysUpdate={handleDaysUpdate}
                   onDaySelect={handleDaySelect}
+                  onOpenActivityModal={handleOpenActivityModal}
                 />
               </div>
             </div>
@@ -613,6 +662,21 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
           onUpdateTrip={onUpdateTrip}
         />
       </div>
+
+      {/* Activity Form Modal - Shared across all views */}
+      {selectedActivityType && selectedDayId && (
+        <ActivityFormModal
+          isOpen={activityModalOpen}
+          onClose={() => {
+            setActivityModalOpen(false);
+            setSelectedActivityType(null);
+            setSelectedDayId(null);
+          }}
+          onSave={handleSaveActivity}
+          activityType={selectedActivityType}
+          dayId={selectedDayId}
+        />
+      )}
 
       {/* Edit Trip Modal */}
       <EditTripModal
