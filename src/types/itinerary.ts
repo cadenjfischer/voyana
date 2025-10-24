@@ -39,7 +39,7 @@ export interface Destination {
 
 export interface Activity {
   id: string;
-  type: 'sleep' | 'do' | 'eat' | 'transport' | 'notes';
+  type: 'activity' | 'flight' | 'lodging' | 'car-rental' | 'note' | 'concert' | 'parking' | 'cruise' | 'rail' | 'directions' | 'restaurant' | 'ferry' | 'theater' | 'map' | 'tour' | 'meeting' | 'transportation';
   title: string;
   description: string;
   time?: string;
@@ -73,37 +73,109 @@ export interface Trip {
   updatedAt: string;
 }
 
-// Activity type configurations
+// Activity type configurations matching TripIt
 export const ACTIVITY_TYPES = {
-  sleep: {
-    label: 'Sleep',
-    icon: '🛏️',
+  activity: {
+    label: 'Activity',
+    icon: '🏃',
     color: 'blue',
-    defaultTitle: 'Accommodation'
-  },
-  do: {
-    label: 'Do',
-    icon: '🎟️',
-    color: 'green',
     defaultTitle: 'Activity'
   },
-  eat: {
-    label: 'Eat',
+  flight: {
+    label: 'Flight',
+    icon: '✈️',
+    color: 'sky',
+    defaultTitle: 'Flight'
+  },
+  lodging: {
+    label: 'Lodging',
+    icon: '🏨',
+    color: 'indigo',
+    defaultTitle: 'Lodging'
+  },
+  'car-rental': {
+    label: 'Car Rental',
+    icon: '🚗',
+    color: 'blue',
+    defaultTitle: 'Car Rental'
+  },
+  note: {
+    label: 'Note',
+    icon: '�',
+    color: 'blue',
+    defaultTitle: 'Note'
+  },
+  concert: {
+    label: 'Concert',
+    icon: '🎵',
+    color: 'blue',
+    defaultTitle: 'Concert'
+  },
+  parking: {
+    label: 'Parking',
+    icon: '�️',
+    color: 'blue',
+    defaultTitle: 'Parking'
+  },
+  cruise: {
+    label: 'Cruise',
+    icon: '🚢',
+    color: 'blue',
+    defaultTitle: 'Cruise'
+  },
+  rail: {
+    label: 'Rail',
+    icon: '🚆',
+    color: 'blue',
+    defaultTitle: 'Rail'
+  },
+  directions: {
+    label: 'Directions',
+    icon: '🗺️',
+    color: 'blue',
+    defaultTitle: 'Directions'
+  },
+  restaurant: {
+    label: 'Restaurant',
     icon: '🍽️',
     color: 'orange',
-    defaultTitle: 'Meal'
+    defaultTitle: 'Restaurant'
   },
-  transport: {
-    label: 'Transport',
-    icon: '🚆',
+  ferry: {
+    label: 'Ferry',
+    icon: '⛴️',
+    color: 'blue',
+    defaultTitle: 'Ferry'
+  },
+  theater: {
+    label: 'Theater',
+    icon: '🎭',
+    color: 'purple',
+    defaultTitle: 'Theater'
+  },
+  map: {
+    label: 'Map',
+    icon: '🗺️',
+    color: 'green',
+    defaultTitle: 'Map'
+  },
+  tour: {
+    label: 'Tour',
+    icon: '🎫',
+    color: 'blue',
+    defaultTitle: 'Tour'
+  },
+  meeting: {
+    label: 'Meeting',
+    icon: '👥',
+    color: 'gray',
+    defaultTitle: 'Meeting'
+  },
+  transportation: {
+    label: 'Transportation',
+    icon: '�',
     color: 'purple',
     defaultTitle: 'Transportation'
-  },
-  notes: {
-    label: 'Notes',
-    icon: '📝',
-    color: 'gray',
-    defaultTitle: 'Notes'
   }
 } as const;
 
