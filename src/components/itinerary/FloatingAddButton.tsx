@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Trip } from '@/types/itinerary';
+import { Trip, Activity } from '@/types/itinerary';
 
 interface FloatingAddButtonProps {
   trip: Trip;
@@ -52,7 +52,7 @@ export default function FloatingAddButton({
       }
       
       // Check if breakfast/lunch/dinner exist
-      const meals = activeDayData.activities.filter(a => a.type === 'eat');
+      const meals = activeDayData.activities.filter(a => a.type === 'restaurant');
       if (meals.length < 3) {
         const mealTimes = ['breakfast', 'lunch', 'dinner'];
         const existingMeals = meals.map(m => m.title.toLowerCase());
@@ -97,11 +97,11 @@ export default function FloatingAddButton({
         const meals = ['breakfast', 'lunch', 'dinner'];
         const activeDayData = trip.days.find(d => d.id === activeDay);
         if (activeDayData) {
-          const existingMeals = activeDayData.activities.filter(a => a.type === 'eat');
+          const existingMeals = activeDayData.activities.filter(a => a.type === 'restaurant');
           const nextMealIndex = existingMeals.length;
           if (nextMealIndex < 3) {
             const mealName = meals[nextMealIndex];
-            addQuickActivity('eat', mealName.charAt(0).toUpperCase() + mealName.slice(1), `${mealName.charAt(0).toUpperCase() + mealName.slice(1)} time`);
+            addQuickActivity('restaurant', mealName.charAt(0).toUpperCase() + mealName.slice(1), `${mealName.charAt(0).toUpperCase() + mealName.slice(1)} time`);
           }
         }
         break;
@@ -109,13 +109,22 @@ export default function FloatingAddButton({
   };
 
   // Quick add activity helper
-  const addQuickActivity = (type: 'sleep' | 'eat' | 'do' | 'transport' | 'notes', title: string, description: string) => {
+  const addQuickActivity = (type: 'sleep' | 'restaurant' | 'do' | 'transport' | 'notes', title: string, description: string) => {
     const activeDayData = trip.days.find(d => d.id === activeDay);
     if (!activeDayData) return;
 
-    const newActivity = {
+    // Map quick types to actual Activity types
+    const typeMap: Record<'sleep' | 'restaurant' | 'do' | 'transport' | 'notes', Activity['type']> = {
+      sleep: 'lodging',
+      restaurant: 'restaurant',
+      do: 'activity',
+      transport: 'transportation',
+      notes: 'note'
+    };
+
+    const newActivity: Activity = {
       id: Date.now().toString(),
-      type,
+      type: typeMap[type],
       title,
       description,
       time: '',
@@ -123,7 +132,7 @@ export default function FloatingAddButton({
       location: '',
       order: activeDayData.activities.length,
       dayId: activeDay,
-      icon: type === 'sleep' ? '🏨' : type === 'eat' ? '🍽️' : '🎯'
+      icon: type === 'sleep' ? '🏨' : type === 'restaurant' ? '🍽️' : '🎯'
     };
 
     const updatedDays = trip.days.map(day => {

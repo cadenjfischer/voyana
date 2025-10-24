@@ -220,7 +220,6 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
           const info = getDayInfo(day, index);
           const isActive = day.id === activeDay;
           const hasActivities = day.activities.length > 0;
-          const [isHovered, setIsHovered] = useState(false);
           
           // Get destination color with transfer day support
           const getDayColors = () => {
@@ -259,7 +258,7 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
           // Create layered background: white base with colored overlay
           const getLayeredBackground = () => {
             if (typeof dynamicColors.bg === 'string' && dynamicColors.bg.startsWith('#')) {
-              const colorOverlay = hexToRgba(dynamicColors.bg, isHovered ? 0.7 : 0.4);
+              const colorOverlay = hexToRgba(dynamicColors.bg, 0.4);
               return `linear-gradient(${colorOverlay}, ${colorOverlay}), white`;
             }
             // For gradients or special cases
@@ -270,15 +269,16 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
             <button
               key={day.id}
               onClick={() => onDaySelect(day.id)}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-              className={`flex-shrink-0 w-16 p-1 rounded-lg border-2 text-center transition-all duration-300 relative overflow-hidden transform hover:scale-105 active:scale-95 ${
+              className={`calendar-day-button flex-shrink-0 w-16 p-1 rounded-lg border-2 text-center transition-all duration-300 relative overflow-hidden transform hover:scale-105 active:scale-95 ${
                 isActive ? 'border-gray-800 shadow-lg scale-105' : 'border-gray-300 hover:shadow-md hover:border-gray-400'
               } ${dynamicColors.isTransfer ? 'ring-2 ring-orange-400' : ''}`}
               style={{
                 background: getLayeredBackground(),
-                color: dynamicColors.text
-              }}
+                color: dynamicColors.text,
+                '--hover-bg': typeof dynamicColors.bg === 'string' && dynamicColors.bg.startsWith('#') 
+                  ? `linear-gradient(${hexToRgba(dynamicColors.bg, 0.7)}, ${hexToRgba(dynamicColors.bg, 0.7)}), white`
+                  : dynamicColors.bg
+              } as React.CSSProperties & { '--hover-bg': string }}
             >
               {/* Transfer day indicator */}
               {dynamicColors.isTransfer && (

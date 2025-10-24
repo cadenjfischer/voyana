@@ -18,7 +18,7 @@ export default function ActivityFormModal({
   activityType,
   dayId
 }: ActivityFormModalProps) {
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<Record<string, string | number | boolean>>({});
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -73,7 +73,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Event Name"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.title || ''}
+          value={String(formData.title || '')}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
         />
       </div>
@@ -84,7 +84,7 @@ export default function ActivityFormModal({
           <input
             type="date"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.startDate || ''}
+            value={String(formData.startDate || '')}
             onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
           />
         </div>
@@ -93,7 +93,7 @@ export default function ActivityFormModal({
           <input
             type="time"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.startTime || ''}
+            value={String(formData.startTime || '')}
             onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
           />
         </div>
@@ -101,7 +101,7 @@ export default function ActivityFormModal({
           <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
           <select
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.timezone || 'Automatic Timezone'}
+            value={String(formData.timezone || 'Automatic Timezone')}
             onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
           >
             <option>Automatic Timezone</option>
@@ -115,7 +115,7 @@ export default function ActivityFormModal({
           <input
             type="date"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.endDate || ''}
+            value={String(formData.endDate || '')}
             onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
           />
         </div>
@@ -124,7 +124,7 @@ export default function ActivityFormModal({
           <input
             type="time"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.endTime || ''}
+            value={String(formData.endTime || '')}
             onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
           />
         </div>
@@ -136,7 +136,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Venue"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.venue || ''}
+          value={String(formData.venue || '')}
           onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
         />
       </div>
@@ -147,7 +147,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Address"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.address || ''}
+          value={String(formData.address || '')}
           onChange={(e) => setFormData({ ...formData, address: e.target.value })}
         />
       </div>
@@ -158,7 +158,7 @@ export default function ActivityFormModal({
           type="tel"
           placeholder="Enter Phone"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.phone || ''}
+          value={String(formData.phone || '')}
           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
         />
       </div>
@@ -169,7 +169,7 @@ export default function ActivityFormModal({
           type="url"
           placeholder="Enter Website"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.website || ''}
+          value={String(formData.website || '')}
           onChange={(e) => setFormData({ ...formData, website: e.target.value })}
         />
       </div>
@@ -180,7 +180,7 @@ export default function ActivityFormModal({
           type="email"
           placeholder="Enter Email"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.email || ''}
+          value={String(formData.email || '')}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
         />
       </div>
@@ -191,7 +191,7 @@ export default function ActivityFormModal({
             type="checkbox"
             id="booked"
             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            checked={formData.booked || false}
+            checked={Boolean(formData.booked) || false}
             onChange={(e) => setFormData({ ...formData, booked: e.target.checked })}
           />
           <label htmlFor="booked" className="ml-2 text-sm text-gray-700">
@@ -204,7 +204,7 @@ export default function ActivityFormModal({
             type="text"
             placeholder="Enter Confirmation"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.confirmation || ''}
+            value={String(formData.confirmation || '')}
             onChange={(e) => setFormData({ ...formData, confirmation: e.target.value })}
           />
         </div>
@@ -216,7 +216,7 @@ export default function ActivityFormModal({
           placeholder="Enter Note e.g. Don't forget your charger!"
           rows={3}
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.notes || ''}
+          value={String(formData.notes || '')}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
         />
       </div>
@@ -253,7 +253,7 @@ export default function ActivityFormModal({
             type="text"
             placeholder="Enter Confirmation"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.confirmation || ''}
+            value={String(formData.confirmation || '')}
             onChange={(e) => setFormData({ ...formData, confirmation: e.target.value })}
           />
         </div>
@@ -263,7 +263,7 @@ export default function ActivityFormModal({
             type="text"
             placeholder="Enter Total Cost"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.totalCost || ''}
+            value={String(formData.totalCost || '')}
             onChange={(e) => setFormData({ ...formData, totalCost: e.target.value })}
           />
         </div>
@@ -274,7 +274,7 @@ export default function ActivityFormModal({
           type="checkbox"
           id="booked-rail"
           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-          checked={formData.booked || false}
+          checked={Boolean(formData.booked) || false}
           onChange={(e) => setFormData({ ...formData, booked: e.target.checked })}
         />
         <label htmlFor="booked-rail" className="ml-2 text-sm text-gray-700">
@@ -292,7 +292,7 @@ export default function ActivityFormModal({
               type="text"
               placeholder="Enter Carrier Name"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.carrierName || ''}
+              value={String(formData.carrierName || '')}
               onChange={(e) => setFormData({ ...formData, carrierName: e.target.value })}
             />
           </div>
@@ -302,7 +302,7 @@ export default function ActivityFormModal({
               type="text"
               placeholder="Enter Train Number"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.trainNumber || ''}
+              value={String(formData.trainNumber || '')}
               onChange={(e) => setFormData({ ...formData, trainNumber: e.target.value })}
             />
           </div>
@@ -314,7 +314,7 @@ export default function ActivityFormModal({
             type="text"
             placeholder="Enter Departure Station"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.departureStation || ''}
+            value={String(formData.departureStation || '')}
             onChange={(e) => setFormData({ ...formData, departureStation: e.target.value })}
           />
         </div>
@@ -325,7 +325,7 @@ export default function ActivityFormModal({
             <input
               type="date"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.departureDate || ''}
+              value={String(formData.departureDate || '')}
               onChange={(e) => setFormData({ ...formData, departureDate: e.target.value })}
             />
           </div>
@@ -334,7 +334,7 @@ export default function ActivityFormModal({
             <input
               type="time"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.departureTime || ''}
+              value={String(formData.departureTime || '')}
               onChange={(e) => setFormData({ ...formData, departureTime: e.target.value })}
             />
           </div>
@@ -342,7 +342,7 @@ export default function ActivityFormModal({
             <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
             <select
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.timezone || 'Automatic Timezone'}
+              value={String(formData.timezone || 'Automatic Timezone')}
               onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
             >
               <option>Automatic Timezone</option>
@@ -356,7 +356,7 @@ export default function ActivityFormModal({
             type="text"
             placeholder="Enter Address"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.departureAddress || ''}
+            value={String(formData.departureAddress || '')}
             onChange={(e) => setFormData({ ...formData, departureAddress: e.target.value })}
           />
         </div>
@@ -370,7 +370,7 @@ export default function ActivityFormModal({
               type="text"
               placeholder="Enter Arrival Station"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.arrivalStation || ''}
+              value={String(formData.arrivalStation || '')}
               onChange={(e) => setFormData({ ...formData, arrivalStation: e.target.value })}
             />
           </div>
@@ -381,7 +381,7 @@ export default function ActivityFormModal({
               <input
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.arrivalDate || ''}
+                value={String(formData.arrivalDate || '')}
                 onChange={(e) => setFormData({ ...formData, arrivalDate: e.target.value })}
               />
             </div>
@@ -390,7 +390,7 @@ export default function ActivityFormModal({
               <input
                 type="time"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.arrivalTime || ''}
+                value={String(formData.arrivalTime || '')}
                 onChange={(e) => setFormData({ ...formData, arrivalTime: e.target.value })}
               />
             </div>
@@ -398,7 +398,7 @@ export default function ActivityFormModal({
               <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
               <select
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.arrivalTimezone || 'Automatic Timezone'}
+                value={String(formData.arrivalTimezone || 'Automatic Timezone')}
                 onChange={(e) => setFormData({ ...formData, arrivalTimezone: e.target.value })}
               >
                 <option>Automatic Timezone</option>
@@ -412,7 +412,7 @@ export default function ActivityFormModal({
               type="text"
               placeholder="Enter Address"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.arrivalAddress || ''}
+              value={String(formData.arrivalAddress || '')}
               onChange={(e) => setFormData({ ...formData, arrivalAddress: e.target.value })}
             />
           </div>
@@ -427,7 +427,7 @@ export default function ActivityFormModal({
               type="text"
               placeholder="Enter Train Type"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.trainType || ''}
+              value={String(formData.trainType || '')}
               onChange={(e) => setFormData({ ...formData, trainType: e.target.value })}
             />
           </div>
@@ -439,7 +439,7 @@ export default function ActivityFormModal({
                 type="text"
                 placeholder="Enter Coach Number(s)"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.coachNumber || ''}
+                value={String(formData.coachNumber || '')}
                 onChange={(e) => setFormData({ ...formData, coachNumber: e.target.value })}
               />
             </div>
@@ -449,7 +449,7 @@ export default function ActivityFormModal({
                 type="text"
                 placeholder="Enter Class"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.class || ''}
+                value={String(formData.class || '')}
                 onChange={(e) => setFormData({ ...formData, class: e.target.value })}
               />
             </div>
@@ -459,7 +459,7 @@ export default function ActivityFormModal({
                 type="text"
                 placeholder="Enter Seat(s)"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.seats || ''}
+                value={String(formData.seats || '')}
                 onChange={(e) => setFormData({ ...formData, seats: e.target.value })}
               />
             </div>
@@ -480,7 +480,7 @@ export default function ActivityFormModal({
           placeholder="Enter Note e.g. Don't forget your charger!"
           rows={3}
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.notes || ''}
+          value={String(formData.notes || '')}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
         />
       </div>
@@ -526,7 +526,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Company Name"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.companyName || ''}
+          value={String(formData.companyName || '')}
           onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
         />
       </div>
@@ -538,7 +538,7 @@ export default function ActivityFormModal({
             type="text"
             placeholder="Enter Confirmation"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.confirmation || ''}
+            value={String(formData.confirmation || '')}
             onChange={(e) => setFormData({ ...formData, confirmation: e.target.value })}
           />
         </div>
@@ -548,7 +548,7 @@ export default function ActivityFormModal({
             type="text"
             placeholder="Enter Total Cost"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.totalCost || ''}
+            value={String(formData.totalCost || '')}
             onChange={(e) => setFormData({ ...formData, totalCost: e.target.value })}
           />
         </div>
@@ -560,7 +560,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Vehicle Type"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.vehicleType || ''}
+          value={String(formData.vehicleType || '')}
           onChange={(e) => setFormData({ ...formData, vehicleType: e.target.value })}
         />
       </div>
@@ -574,7 +574,7 @@ export default function ActivityFormModal({
             type="text"
             placeholder="Enter Pick-up Location"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.pickupLocation || ''}
+            value={String(formData.pickupLocation || '')}
             onChange={(e) => setFormData({ ...formData, pickupLocation: e.target.value })}
           />
         </div>
@@ -585,7 +585,7 @@ export default function ActivityFormModal({
             <input
               type="date"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.pickupDate || ''}
+              value={String(formData.pickupDate || '')}
               onChange={(e) => setFormData({ ...formData, pickupDate: e.target.value })}
             />
           </div>
@@ -594,7 +594,7 @@ export default function ActivityFormModal({
             <input
               type="time"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.pickupTime || ''}
+              value={String(formData.pickupTime || '')}
               onChange={(e) => setFormData({ ...formData, pickupTime: e.target.value })}
             />
           </div>
@@ -610,7 +610,7 @@ export default function ActivityFormModal({
             type="text"
             placeholder="Enter Drop-off Location"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.dropoffLocation || ''}
+            value={String(formData.dropoffLocation || '')}
             onChange={(e) => setFormData({ ...formData, dropoffLocation: e.target.value })}
           />
         </div>
@@ -621,7 +621,7 @@ export default function ActivityFormModal({
             <input
               type="date"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.dropoffDate || ''}
+              value={String(formData.dropoffDate || '')}
               onChange={(e) => setFormData({ ...formData, dropoffDate: e.target.value })}
             />
           </div>
@@ -630,7 +630,7 @@ export default function ActivityFormModal({
             <input
               type="time"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.dropoffTime || ''}
+              value={String(formData.dropoffTime || '')}
               onChange={(e) => setFormData({ ...formData, dropoffTime: e.target.value })}
             />
           </div>
@@ -643,7 +643,7 @@ export default function ActivityFormModal({
           placeholder="Enter Note e.g. Don't forget your driver's license!"
           rows={3}
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.notes || ''}
+          value={String(formData.notes || '')}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
         />
       </div>
@@ -658,7 +658,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Restaurant Name"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.title || ''}
+          value={String(formData.title || '')}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
         />
       </div>
@@ -669,7 +669,7 @@ export default function ActivityFormModal({
           <input
             type="date"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.date || ''}
+            value={String(formData.date || '')}
             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
           />
         </div>
@@ -678,7 +678,7 @@ export default function ActivityFormModal({
           <input
             type="time"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.time || ''}
+            value={String(formData.time || '')}
             onChange={(e) => setFormData({ ...formData, time: e.target.value })}
           />
         </div>
@@ -690,7 +690,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Address"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.address || ''}
+          value={String(formData.address || '')}
           onChange={(e) => setFormData({ ...formData, address: e.target.value })}
         />
       </div>
@@ -701,7 +701,7 @@ export default function ActivityFormModal({
           type="tel"
           placeholder="Enter Phone"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.phone || ''}
+          value={String(formData.phone || '')}
           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
         />
       </div>
@@ -712,7 +712,7 @@ export default function ActivityFormModal({
           type="number"
           placeholder="Enter Party Size"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.partySize || ''}
+          value={String(formData.partySize || '')}
           onChange={(e) => setFormData({ ...formData, partySize: e.target.value })}
         />
       </div>
@@ -723,7 +723,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Confirmation Number"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.confirmation || ''}
+          value={String(formData.confirmation || '')}
           onChange={(e) => setFormData({ ...formData, confirmation: e.target.value })}
         />
       </div>
@@ -734,7 +734,7 @@ export default function ActivityFormModal({
           placeholder="Enter dietary restrictions or preferences"
           rows={3}
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.notes || ''}
+          value={String(formData.notes || '')}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
         />
       </div>
@@ -749,7 +749,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Event Name"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.title || ''}
+          value={String(formData.title || '')}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
         />
       </div>
@@ -760,7 +760,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Artist Name"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.artist || ''}
+          value={String(formData.artist || '')}
           onChange={(e) => setFormData({ ...formData, artist: e.target.value })}
         />
       </div>
@@ -771,7 +771,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Venue"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.venue || ''}
+          value={String(formData.venue || '')}
           onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
         />
       </div>
@@ -782,7 +782,7 @@ export default function ActivityFormModal({
           <input
             type="date"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.date || ''}
+            value={String(formData.date || '')}
             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
           />
         </div>
@@ -791,7 +791,7 @@ export default function ActivityFormModal({
           <input
             type="time"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.time || ''}
+            value={String(formData.time || '')}
             onChange={(e) => setFormData({ ...formData, time: e.target.value })}
           />
         </div>
@@ -803,7 +803,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Address"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.address || ''}
+          value={String(formData.address || '')}
           onChange={(e) => setFormData({ ...formData, address: e.target.value })}
         />
       </div>
@@ -814,7 +814,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Ticket Type"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.ticketType || ''}
+          value={String(formData.ticketType || '')}
           onChange={(e) => setFormData({ ...formData, ticketType: e.target.value })}
         />
       </div>
@@ -826,7 +826,7 @@ export default function ActivityFormModal({
             type="text"
             placeholder="Enter Seat Numbers"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.seatNumbers || ''}
+            value={String(formData.seatNumbers || '')}
             onChange={(e) => setFormData({ ...formData, seatNumbers: e.target.value })}
           />
         </div>
@@ -836,7 +836,7 @@ export default function ActivityFormModal({
             type="text"
             placeholder="Enter Confirmation"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.confirmation || ''}
+            value={String(formData.confirmation || '')}
             onChange={(e) => setFormData({ ...formData, confirmation: e.target.value })}
           />
         </div>
@@ -848,7 +848,7 @@ export default function ActivityFormModal({
           placeholder="Enter any special notes"
           rows={3}
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.notes || ''}
+          value={String(formData.notes || '')}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
         />
       </div>
@@ -863,7 +863,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Note Title"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.title || ''}
+          value={String(formData.title || '')}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
         />
       </div>
@@ -874,7 +874,7 @@ export default function ActivityFormModal({
           placeholder="Enter your note here..."
           rows={8}
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.notes || ''}
+          value={String(formData.notes || '')}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
         />
       </div>
@@ -889,7 +889,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Title"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.title || ''}
+          value={String(formData.title || '')}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
         />
       </div>
@@ -900,7 +900,7 @@ export default function ActivityFormModal({
           <input
             type="date"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.date || ''}
+            value={String(formData.date || '')}
             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
           />
         </div>
@@ -909,7 +909,7 @@ export default function ActivityFormModal({
           <input
             type="time"
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.time || ''}
+            value={String(formData.time || '')}
             onChange={(e) => setFormData({ ...formData, time: e.target.value })}
           />
         </div>
@@ -921,7 +921,7 @@ export default function ActivityFormModal({
           type="text"
           placeholder="Enter Location"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.location || ''}
+          value={String(formData.location || '')}
           onChange={(e) => setFormData({ ...formData, location: e.target.value })}
         />
       </div>
@@ -932,7 +932,7 @@ export default function ActivityFormModal({
           placeholder="Enter any notes"
           rows={4}
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={formData.notes || ''}
+          value={String(formData.notes || '')}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
         />
       </div>

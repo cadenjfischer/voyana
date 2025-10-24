@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Trip, Activity } from '@/types/itinerary';
+import { Trip, Activity, Destination, Day } from '@/types/itinerary';
 import TabbedDestinationRail from './TabbedDestinationRail';
 import TimelineView from './TimelineView';
 
@@ -13,11 +13,11 @@ interface TabbedLayoutProps {
   destinationRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement }>;
   onDestinationSelect: (id: string) => void;
   onDestinationToggle?: (id: string) => void;
-  onDestinationsReorder: (destinations: any[]) => void;
-  onUpdateDestination: (destination: any) => void;
+  onDestinationsReorder: (destinations: Destination[]) => void;
+  onUpdateDestination: (destination: Destination) => void;
   onRemoveDestination?: (destinationId: string) => void;
-  onAddDestination: (destination: any) => void;
-  onDaysUpdate: (days: any[]) => void;
+  onAddDestination: (destination: Omit<Destination, 'id' | 'order'>) => void;
+  onDaysUpdate: (days: Day[]) => void;
   onDaySelect: (dayId: string) => void;
   onUpdateTrip: (trip: Trip) => void;
   onActiveTabChange?: (tab: TabType) => void;

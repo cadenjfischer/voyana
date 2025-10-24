@@ -356,7 +356,7 @@ export default function AddLodgingModal({ destination, onClose, onSave }: AddLod
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-blue-900 mb-1">
-                        You're staying in {destination.name} for {destination.nights} {destination.nights === 1 ? 'night' : 'nights'}
+                        You&apos;re staying in {destination.name} for {destination.nights} {destination.nights === 1 ? 'night' : 'nights'}
                       </p>
                       <p className="text-xs text-blue-700">
                         {availableNights === destination.nights ? (

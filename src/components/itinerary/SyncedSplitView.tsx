@@ -362,18 +362,18 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
   };
 
   // Handle saving activity from modal
-  const handleSaveActivity = (activityData: Partial<Activity> & Record<string, any>) => {
+  const handleSaveActivity = (activityData: Partial<Activity> & Record<string, string | number | boolean | undefined>) => {
     if (!selectedDayId || !selectedActivityType) return;
 
     const config = ACTIVITY_TYPES[selectedActivityType];
     const newActivity: Activity = {
       id: `activity-${Date.now()}-${Math.random()}`,
       type: selectedActivityType,
-      title: activityData.title || config.defaultTitle,
-      description: activityData.notes || activityData.description || '',
-      time: activityData.time || activityData.startTime || '',
-      cost: parseFloat(activityData.totalCost || activityData.cost || '0') || 0,
-      location: activityData.location || activityData.address || activityData.venue || '',
+      title: String(activityData.title || config.defaultTitle),
+      description: String(activityData.notes || activityData.description || ''),
+      time: String(activityData.time || activityData.startTime || ''),
+      cost: parseFloat(String(activityData.totalCost || activityData.cost || '0')) || 0,
+      location: String(activityData.location || activityData.address || activityData.venue || ''),
       order: trip.days.find(d => d.id === selectedDayId)?.activities.length || 0,
       dayId: selectedDayId,
       icon: config.icon
