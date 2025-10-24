@@ -347,7 +347,7 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
               {/* Reuse rail for parity with main UI */}
                 <TabbedDestinationRail
                 destinations={trip.destinations}
-                activeDestinationId={selectedDestinationId || trip.destinations[0]?.id || ''}
+                expandedDestinationIds={new Set([selectedDestinationId || ''])}
                 onDestinationSelect={(id) => {
                   setSelectedDestinationId(id);
                   // Recenter map on selected destination
