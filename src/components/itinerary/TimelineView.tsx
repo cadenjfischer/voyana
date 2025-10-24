@@ -493,16 +493,8 @@ export default function TimelineView({
                                         <span className="text-sm text-gray-700 font-normal">Activity</span>
                                       </button>
 
-                                      {/* Flight */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'flight'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-700 font-normal">Flight</span>
-                                      </button>
-
                                       {/* Car Rental */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'car-rental'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-r border-gray-100">
+                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'car-rental'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-gray-100">
                                         <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
                                           <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
                                         </div>
@@ -581,16 +573,8 @@ export default function TimelineView({
                                         <span className="text-sm text-gray-700 font-normal">Theater</span>
                                       </button>
 
-                                      {/* Map */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'map'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-700 font-normal">Map</span>
-                                      </button>
-
                                       {/* Tour */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'tour'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-r border-gray-100">
+                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'tour'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-gray-100">
                                         <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
                                           <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>
                                         </div>
