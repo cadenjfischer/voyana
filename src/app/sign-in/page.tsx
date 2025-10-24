@@ -33,8 +33,8 @@ export default function SignInPage() {
       // Redirect to dashboard on success
       router.push('/dashboard');
       router.refresh();
-    } catch (error: any) {
-      setError(error.message || 'Failed to sign in');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to sign in');
     } finally {
       setLoading(false);
     }

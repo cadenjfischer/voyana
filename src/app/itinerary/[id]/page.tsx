@@ -12,12 +12,13 @@ import { Trip, Destination, Activity, generateDays } from '@/types/itinerary';
 import { PREMIUM_COLOR_PALETTE } from '@/utils/colors';
 import { ItineraryUIProvider } from '@/contexts/ItineraryUIContext';
 import Link from 'next/link';
+import type { User } from '@supabase/supabase-js';
 
 // Mark this route as dynamic since it uses client-side data (localStorage)
 export const dynamic = 'force-dynamic';
 
 export default function TripDetailPage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const params = useParams();
   const tripId = params.id as string;
   

@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
+import type { User } from '@supabase/supabase-js';
 
 export default function UserProfilePage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [updating, setUpdating] = useState(false);
@@ -38,8 +39,8 @@ export default function UserProfilePage() {
       const { error } = await supabase.auth.updateUser({ email });
       if (error) throw error;
       setMessage('Check your new email to confirm the change.');
-    } catch (error: any) {
-      setMessage(error.message || 'Failed to update email');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Failed to update email');
     } finally {
       setUpdating(false);
     }

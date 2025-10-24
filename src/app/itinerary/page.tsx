@@ -8,6 +8,7 @@ import EditTripModal from '@/components/itinerary/EditTripModal';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Trip } from '@/types/itinerary';
+import type { User } from '@supabase/supabase-js';
 
 // Mark this route as dynamic since it uses client-side data (localStorage)
 export const dynamic = 'force-dynamic';
@@ -35,7 +36,7 @@ interface LocalTrip {
 }
 
 export default function ItineraryPage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [trips, setTrips] = useState<LocalTrip[]>([]);
   const [isAddTripOpen, setIsAddTripOpen] = useState(false);
   const [isEditTripOpen, setIsEditTripOpen] = useState(false);

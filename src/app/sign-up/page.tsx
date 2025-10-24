@@ -63,8 +63,8 @@ export default function SignUpPage() {
           setSuccess(true);
         }
       }
-    } catch (error: any) {
-      setError(error.message || 'Failed to sign up');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to sign up');
     } finally {
       setLoading(false);
     }
