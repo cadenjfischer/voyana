@@ -4,6 +4,7 @@ import { useRef, useCallback, useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Trip, Destination, Day, Activity, ACTIVITY_TYPES, formatDate, formatCurrency } from '@/types/itinerary';
 import { getDestinationColors, isTransferDay } from '@/utils/colors';
+import ActivityFormModal from './ActivityFormModal';
 
 interface TimelineViewProps {
   trip: Trip;
@@ -48,6 +49,11 @@ export default function TimelineView({
 
   // Dropdown state for adding activities
   const [openDropdownDayId, setOpenDropdownDayId] = useState<string | null>(null);
+  
+  // Modal state for activity form
+  const [activityModalOpen, setActivityModalOpen] = useState(false);
+  const [selectedActivityType, setSelectedActivityType] = useState<Activity['type'] | null>(null);
+  const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
 
   // Toggle a single day
   const toggleDay = (dayId: string) => {
@@ -82,22 +88,32 @@ export default function TimelineView({
 
   // Handle adding a new activity from dropdown
   const handleAddActivityType = (dayId: string, type: Activity['type']) => {
-    const config = ACTIVITY_TYPES[type];
+    setSelectedDayId(dayId);
+    setSelectedActivityType(type);
+    setOpenDropdownDayId(null);
+    setActivityModalOpen(true);
+  };
+
+  // Handle saving activity from modal
+  const handleSaveActivity = (activityData: Partial<Activity>) => {
+    if (!selectedDayId || !selectedActivityType) return;
+
+    const config = ACTIVITY_TYPES[selectedActivityType];
     const newActivity: Activity = {
       id: `activity-${Date.now()}-${Math.random()}`,
-      type,
-      title: config.defaultTitle,
-      description: '',
-      time: '',
-      cost: 0,
-      location: '',
-      order: trip.days.find(d => d.id === dayId)?.activities.length || 0,
-      dayId,
+      type: selectedActivityType,
+      title: activityData.title || config.defaultTitle,
+      description: activityData.notes || '',
+      time: activityData.time || activityData.startTime || '',
+      cost: parseFloat(activityData.totalCost || '0') || 0,
+      location: activityData.location || activityData.address || activityData.venue || '',
+      order: trip.days.find(d => d.id === selectedDayId)?.activities.length || 0,
+      dayId: selectedDayId,
       icon: config.icon
     };
 
     const updatedDays = trip.days.map(day => {
-      if (day.id === dayId) {
+      if (day.id === selectedDayId) {
         return {
           ...day,
           activities: [...day.activities, newActivity]
@@ -107,7 +123,9 @@ export default function TimelineView({
     });
 
     onDaysUpdate(updatedDays);
-    setOpenDropdownDayId(null);
+    setActivityModalOpen(false);
+    setSelectedActivityType(null);
+    setSelectedDayId(null);
   };
 
   // Handle activity drag and drop
@@ -887,6 +905,21 @@ export default function TimelineView({
           </div>
         );
       })()}
+
+      {/* Activity Form Modal */}
+      {selectedActivityType && selectedDayId && (
+        <ActivityFormModal
+          isOpen={activityModalOpen}
+          onClose={() => {
+            setActivityModalOpen(false);
+            setSelectedActivityType(null);
+            setSelectedDayId(null);
+          }}
+          onSave={handleSaveActivity}
+          activityType={selectedActivityType}
+          dayId={selectedDayId}
+        />
+      )}
     </div>
   );
 }
