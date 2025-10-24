@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@/lib/supabase/server'
+import { getUser } from '@/lib/supabase/auth'
 
 // GET /api/trips - Fetch all trips for the authenticated user
 export async function GET() {
   try {
-    const { userId } = await auth()
+    const user = await getUser()
     
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -16,7 +16,7 @@ export async function GET() {
     const { data: trips, error } = await supabase
       .from('trips')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -37,9 +37,9 @@ export async function GET() {
 // POST /api/trips - Create a new trip
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth()
+    const user = await getUser()
     
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       .from('trips')
       .insert({
         id,
-        user_id: userId,
+        user_id: user.id,
         name,
         destination,
         destination_photo: destination_photo || null,

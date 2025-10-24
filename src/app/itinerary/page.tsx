@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 import Header from '@/components/Header';
 import AddTripModal from '@/components/AddTripModal';
 import EditTripModal from '@/components/itinerary/EditTripModal';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Trip } from '@/types/itinerary';
+
+// Mark this route as dynamic since it uses client-side data (localStorage)
+export const dynamic = 'force-dynamic';
 
 interface LocalActivity {
   id: string;
@@ -32,12 +35,27 @@ interface LocalTrip {
 }
 
 export default function ItineraryPage() {
-  const { user } = useUser();
+  const [user, setUser] = useState<any>(null);
   const [trips, setTrips] = useState<LocalTrip[]>([]);
   const [isAddTripOpen, setIsAddTripOpen] = useState(false);
   const [isEditTripOpen, setIsEditTripOpen] = useState(false);
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Get user on mount
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    getUser();
+  }, []);
 
   // Load trips from localStorage on component mount
   useEffect(() => {

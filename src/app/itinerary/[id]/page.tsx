@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import ItineraryLayout from '@/components/itinerary/ItineraryLayout';
@@ -13,8 +13,11 @@ import { PREMIUM_COLOR_PALETTE } from '@/utils/colors';
 import { ItineraryUIProvider } from '@/contexts/ItineraryUIContext';
 import Link from 'next/link';
 
+// Mark this route as dynamic since it uses client-side data (localStorage)
+export const dynamic = 'force-dynamic';
+
 export default function TripDetailPage() {
-  const { user } = useUser();
+  const [user, setUser] = useState<any>(null);
   const params = useParams();
   const tripId = params.id as string;
   
@@ -27,6 +30,21 @@ export default function TripDetailPage() {
   const [isMapExpanded, setIsMapExpanded] = useState(false);
 
   console.log('🚀 PAGE COMPONENT RENDER - trip exists?', !!trip, 'loading?', loading);
+
+  // Get user on mount
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const getUserData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    getUserData();
+  }, []);
 
   const handleUpdateTrip = (updatedTrip: Trip) => {
     if (user) {

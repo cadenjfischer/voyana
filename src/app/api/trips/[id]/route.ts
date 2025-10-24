@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
 import { createClient } from '@/lib/supabase/server'
+import { getUser } from '@/lib/supabase/auth'
 
 // GET /api/trips/[id] - Fetch a single trip
 export async function GET(
@@ -8,9 +8,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth()
+    const user = await getUser()
     
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -21,7 +21,7 @@ export async function GET(
       .from('trips')
       .select('*')
       .eq('id', id)
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .single()
 
     if (error) {
@@ -48,9 +48,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth()
+    const user = await getUser()
     
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -66,7 +66,7 @@ export async function PATCH(
       .from('trips')
       .update(updates)
       .eq('id', id)
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .select()
       .single()
 
@@ -94,9 +94,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth()
+    const user = await getUser()
     
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -107,7 +107,7 @@ export async function DELETE(
       .from('trips')
       .delete()
       .eq('id', id)
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
 
     if (error) {
       console.error('Supabase error:', error)

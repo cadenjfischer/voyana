@@ -1,9 +1,9 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { getUser } from "@/lib/supabase/auth";
 import Header from "@/components/Header";
 import Link from "next/link";
 
 export default async function DashboardPage() {
-  const user = await currentUser();
+  const user = await getUser();
 
   return (
     <div className="min-h-screen bg-white">
@@ -13,7 +13,7 @@ export default async function DashboardPage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
           <div className="text-center mb-12">
             <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-              Welcome to Your Dashboard, {user?.firstName || 'User'}!
+              Welcome to Your Dashboard, {user?.email?.split('@')[0] || 'User'}!
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Your premium Voyana experience starts here. Manage your projects, 

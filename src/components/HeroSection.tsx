@@ -1,11 +1,32 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from "next/image";
 import Link from "next/link";
-import { useUser, SignUpButton } from "@clerk/nextjs";
+import { createBrowserClient } from '@supabase/ssr';
 
 export default function HeroSection() {
-  const { isSignedIn } = useUser();
+  const [isSignedIn, setIsSignedIn] = useState(false);
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsSignedIn(!!user);
+    };
+
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsSignedIn(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-50 via-white to-blue-50">
       {/* Background Pattern */}
@@ -60,21 +81,22 @@ export default function HeroSection() {
                   </span>
                 </Link>
               ) : (
-                <SignUpButton mode="modal">
-                  <button className="group bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-semibold text-lg tracking-wide transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/25">
-                    <span className="flex items-center">
-                      Start Your Journey
-                      <svg 
-                        className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                      </svg>
-                    </span>
-                  </button>
-                </SignUpButton>
+                <Link 
+                  href="/sign-up"
+                  className="group bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-semibold text-lg tracking-wide transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/25 text-center"
+                >
+                  <span className="flex items-center justify-center">
+                    Start Your Journey
+                    <svg 
+                      className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </span>
+                </Link>
               )}
               
               <button className="group bg-transparent border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-8 py-4 rounded-full font-semibold text-lg tracking-wide transition-all duration-300 transform hover:scale-105">

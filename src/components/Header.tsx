@@ -2,12 +2,47 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { useUser, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { createBrowserClient } from '@supabase/ssr';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isSignedIn } = useUser();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setIsUserMenuOpen(false);
+    router.push('/');
+    router.refresh();
+  };
+
+  const isSignedIn = !!user;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[10000] bg-white/95 backdrop-blur-md border-b border-gray-200/50 transition-all duration-300">
@@ -73,36 +108,49 @@ export default function Header() {
                 >
                   Dashboard
                 </Link>
-                <UserButton 
-                  appearance={{
-                    elements: {
-                      avatarBox: "w-10 h-10",
-                      userButtonPopoverCard: "shadow-2xl border border-gray-200",
-                      userButtonPopoverActionButton: "hover:bg-blue-50",
-                    }
-                  }}
-                  userProfileProps={{
-                    appearance: {
-                      elements: {
-                        formButtonPrimary: "bg-blue-600 hover:bg-blue-700",
-                        card: "shadow-none"
-                      }
-                    }
-                  }}
-                />
+                <div className="relative">
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors duration-300"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                      {user?.email?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                  </button>
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50">
+                      <div className="px-4 py-2 border-b border-gray-200">
+                        <p className="text-sm font-medium text-gray-900 truncate">{user?.email}</p>
+                      </div>
+                      <Link
+                        href="/user-profile"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        Profile Settings
+                      </Link>
+                      <button
+                        onClick={handleSignOut}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="flex items-center space-x-3">
-                <SignInButton mode="modal">
+                <Link href="/sign-in">
                   <button className="text-gray-700 hover:text-blue-600 font-medium tracking-wide transition-colors duration-300">
                     Sign In
                   </button>
-                </SignInButton>
-                <SignUpButton mode="modal">
+                </Link>
+                <Link href="/sign-up">
                   <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-full font-semibold tracking-wide transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
                     Get Started
                   </button>
-                </SignUpButton>
+                </Link>
               </div>
             )}
           </div>
@@ -183,34 +231,41 @@ export default function Header() {
                     >
                       Dashboard
                     </Link>
-                    <div className="px-4">
-                      <UserButton 
-                        appearance={{
-                          elements: {
-                            avatarBox: "w-10 h-10",
-                          }
-                        }}
-                      />
-                    </div>
+                    <Link
+                      href="/user-profile"
+                      className="text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Profile Settings
+                    </Link>
+                    <button
+                      onClick={() => {
+                        handleSignOut();
+                        setIsMenuOpen(false);
+                      }}
+                      className="text-left text-red-600 hover:text-red-700 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+                    >
+                      Sign Out
+                    </button>
                   </div>
                 ) : (
                   <div className="flex flex-col space-y-3">
-                    <SignInButton mode="modal">
+                    <Link href="/sign-in">
                       <button 
                         className="w-full text-center text-gray-700 hover:text-blue-600 font-medium tracking-wide py-2 transition-colors duration-300"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Sign In
                       </button>
-                    </SignInButton>
-                    <SignUpButton mode="modal">
+                    </Link>
+                    <Link href="/sign-up">
                       <button 
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-semibold tracking-wide transition-all duration-300 shadow-lg"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Get Started
                       </button>
-                    </SignUpButton>
+                    </Link>
                   </div>
                 )}
               </div>

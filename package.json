@@ -9,9 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@clerk/clerk-react": "^5.53.2",
-    "@clerk/nextjs": "^6.33.7",
-    "@clerk/shared": "^3.28.2",
     "@googlemaps/google-maps-services-js": "^3.4.2",
     "@hello-pangea/dnd": "^18.0.1",
     "@supabase/ssr": "^0.7.0",
