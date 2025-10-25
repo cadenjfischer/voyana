@@ -59,7 +59,9 @@ export async function searchFlights(params: SearchParams): Promise<NormalizedFli
         ),
       ],
       cabin_class: params.cabinClass || 'economy',
-    });
+      return_offers: params.returnDate ? true : false,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
 
     // Get offers from the offer request
     const offers = await duffel.offers.list({

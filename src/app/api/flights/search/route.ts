@@ -3,6 +3,10 @@ import * as duffelClient from '@/lib/api/duffelClient';
 import * as amadeusClient from '@/lib/api/amadeusClient';
 import { mergeFlights } from '@/lib/utils/mergeFlights';
 
+// Mark this route as dynamic to prevent static optimization
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
