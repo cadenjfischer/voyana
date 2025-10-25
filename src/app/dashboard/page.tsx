@@ -15,9 +15,12 @@ export default async function DashboardPage() {
             <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
               Welcome to Your Dashboard, {user?.email?.split('@')[0] || 'User'}!
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-4">
               Your premium Voyana experience starts here. Manage your projects, 
               track progress, and access exclusive features.
+            </p>
+            <p className="text-sm text-gray-500">
+              Signed in as: <span className="font-semibold">{user?.email}</span>
             </p>
           </div>
 

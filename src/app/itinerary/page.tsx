@@ -51,8 +51,14 @@ export default function ItineraryPage() {
     );
 
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error getting user:', error);
+        setLoading(false);
+      }
     };
 
     getUser();
@@ -61,11 +67,14 @@ export default function ItineraryPage() {
   // Load trips from localStorage on component mount
   useEffect(() => {
     if (user) {
-      const savedTrips = localStorage.getItem(`voyana_trips_${user.id}`);
-      if (savedTrips) {
-        setTrips(JSON.parse(savedTrips));
+      try {
+        const savedTrips = localStorage.getItem(`voyana_trips_${user.id}`);
+        if (savedTrips) {
+          setTrips(JSON.parse(savedTrips));
+        }
+      } catch (error) {
+        console.error('Error loading trips:', error);
       }
-      setLoading(false);
     }
   }, [user]);
 
