@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
 import ItineraryLayout from '@/components/itinerary/ItineraryLayout';
 import AddDestinationModal from '@/components/itinerary/AddDestinationModal';
@@ -28,7 +28,6 @@ export default function TripDetailPage() {
   const [showAddActivityModal, setShowAddActivityModal] = useState(false);
   const [showEditTripModal, setShowEditTripModal] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string>('');
-  const [isMapExpanded, setIsMapExpanded] = useState(false);
 
   console.log('🚀 PAGE COMPONENT RENDER - trip exists?', !!trip, 'loading?', loading);
 
