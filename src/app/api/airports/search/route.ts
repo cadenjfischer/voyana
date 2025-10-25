@@ -6,11 +6,11 @@ const duffel = new Duffel({
 });
 
 interface DuffelPlace {
-  iata_code: string;
-  name: string;
-  city_name: string;
-  country_name: string;
-  type: string;
+  iata_code?: string;
+  name?: string;
+  city_name?: string | null;
+  country_name?: string | null;
+  type?: string;
 }
 
 export async function GET(request: NextRequest) {
@@ -29,13 +29,13 @@ export async function GET(request: NextRequest) {
 
     // Filter to only show airports (not cities)
     const airports = places.data
-      .filter((place: DuffelPlace) => place.type === 'airport')
-      .map((place: DuffelPlace) => ({
-        iataCode: place.iata_code,
-        name: place.name,
-        city: place.city_name,
-        country: place.country_name,
-        type: place.type,
+      .filter((place: any) => place.type === 'airport')
+      .map((place: any) => ({
+        iataCode: place.iata_code || '',
+        name: place.name || '',
+        city: place.city_name || '',
+        country: place.country_name || '',
+        type: place.type || '',
       }))
       .slice(0, 10); // Limit to top 10 results
 
