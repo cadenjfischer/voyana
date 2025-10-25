@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFlightBookings } from '@/lib/services/itineraryService';
 
+// Mark this route as dynamic to prevent static optimization
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;

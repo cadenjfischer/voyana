@@ -3,6 +3,10 @@ import * as duffelClient from '@/lib/api/duffelClient';
 import * as amadeusClient from '@/lib/api/amadeusClient';
 import { saveFlightBooking } from '@/lib/services/itineraryService';
 
+// Mark this route as dynamic to prevent static optimization
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
