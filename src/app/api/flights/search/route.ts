@@ -6,6 +6,7 @@ import { mergeFlights } from '@/lib/utils/mergeFlights';
 // Mark this route as dynamic to prevent static optimization
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+// All environment variables configured
 
 export async function GET(request: NextRequest) {
   try {
