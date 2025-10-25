@@ -77,106 +77,106 @@ export interface Trip {
 export const ACTIVITY_TYPES = {
   activity: {
     label: 'Activity',
-    icon: '🏃',
+    icon: 'User',
     color: 'blue',
     defaultTitle: 'Activity'
   },
   flight: {
     label: 'Flight',
-    icon: '✈️',
+    icon: 'Plane',
     color: 'sky',
     defaultTitle: 'Flight'
   },
   lodging: {
     label: 'Lodging',
-    icon: '🏨',
+    icon: 'Hotel',
     color: 'indigo',
     defaultTitle: 'Lodging'
   },
   'car-rental': {
     label: 'Car Rental',
-    icon: '🚗',
+    icon: 'Car',
     color: 'blue',
     defaultTitle: 'Car Rental'
   },
   note: {
     label: 'Note',
-    icon: '�',
+    icon: 'StickyNote',
     color: 'blue',
     defaultTitle: 'Note'
   },
   concert: {
     label: 'Concert',
-    icon: '🎵',
+    icon: 'Music',
     color: 'blue',
     defaultTitle: 'Concert'
   },
   parking: {
     label: 'Parking',
-    icon: '�️',
+    icon: 'ParkingCircle',
     color: 'blue',
     defaultTitle: 'Parking'
   },
   cruise: {
     label: 'Cruise',
-    icon: '🚢',
+    icon: 'Ship',
     color: 'blue',
     defaultTitle: 'Cruise'
   },
   rail: {
     label: 'Rail',
-    icon: '🚆',
+    icon: 'Train',
     color: 'blue',
     defaultTitle: 'Rail'
   },
   directions: {
     label: 'Directions',
-    icon: '🗺️',
+    icon: 'Navigation',
     color: 'blue',
     defaultTitle: 'Directions'
   },
   restaurant: {
     label: 'Restaurant',
-    icon: '🍽️',
+    icon: 'UtensilsCrossed',
     color: 'orange',
     defaultTitle: 'Restaurant'
   },
   ferry: {
     label: 'Ferry',
-    icon: '⛴️',
+    icon: 'Ship',
     color: 'blue',
     defaultTitle: 'Ferry'
   },
   theater: {
     label: 'Theater',
-    icon: '🎭',
+    icon: 'Theater',
     color: 'purple',
     defaultTitle: 'Theater'
   },
   map: {
     label: 'Map',
-    icon: '🗺️',
+    icon: 'Map',
     color: 'green',
     defaultTitle: 'Map'
   },
   tour: {
     label: 'Tour',
-    icon: '🎫',
+    icon: 'Ticket',
     color: 'blue',
     defaultTitle: 'Tour'
   },
   meeting: {
     label: 'Meeting',
-    icon: '👥',
+    icon: 'Users',
     color: 'gray',
     defaultTitle: 'Meeting'
   },
   transportation: {
     label: 'Transportation',
-    icon: '�',
-    color: 'purple',
+    icon: 'Bus',
+    color: 'blue',
     defaultTitle: 'Transportation'
-  }
+  },
 } as const;
 
 // Utility functions

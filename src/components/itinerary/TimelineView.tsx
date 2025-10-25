@@ -4,6 +4,8 @@ import { useRef, useCallback, useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Trip, Destination, Day, Activity, ACTIVITY_TYPES, formatDate, formatCurrency } from '@/types/itinerary';
 import { getDestinationColors, isTransferDay } from '@/utils/colors';
+import { ActivityIcon } from '@/components/ActivityIcon';
+import * as LucideIcons from 'lucide-react';
 
 interface TimelineViewProps {
   trip: Trip;
@@ -173,11 +175,10 @@ export default function TimelineView({
     }
   }, [trip.days, onDaysUpdate]);
 
-  // Get activity icon
+  // Get activity icon name
   const getActivityIcon = (activity: Activity) => {
     const config = ACTIVITY_TYPES[activity.type];
-    if (!config) return '📝';
-    return activity.icon || config.icon;
+    return config?.icon || 'StickyNote';
   };
 
   // Group days by destination and handle unassigned days
@@ -465,117 +466,29 @@ export default function TimelineView({
                                   {/* Dropdown */}
                                   <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-80">
                                     <div className="grid grid-cols-2">
-                                      {/* Activity */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'activity'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-r border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-700 font-normal">Activity</span>
-                                      </button>
-
-                                      {/* Car Rental */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'car-rental'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-700 font-normal">Car Rental</span>
-                                      </button>
-
-                                      {/* Note */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'note'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-700 font-normal">Note</span>
-                                      </button>
-
-                                      {/* Concert */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'concert'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-r border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-700 font-normal">Concert</span>
-                                      </button>
-
-                                      {/* Parking */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'parking'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M13 3H6v18h4v-6h3c3.31 0 6-2.69 6-6s-2.69-6-6-6zm.2 8H10V7h3.2c1.1 0 2 .9 2 2s-.9 2-2 2z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-700 font-normal">Parking</span>
-                                      </button>
-
-                                      {/* Cruise */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'cruise'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-r border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M20 21c-1.39 0-2.78-.47-4-1.32-2.44 1.71-5.56 1.71-8 0C6.78 20.53 5.39 21 4 21H2v2h2c1.38 0 2.74-.35 4-.99 2.52 1.29 5.48 1.29 8 0 1.26.65 2.62.99 4 .99h2v-2h-2zM3.95 19H4c1.6 0 3.02-.88 4-2 .98 1.12 2.4 2 4 2s3.02-.88 4-2c.98 1.12 2.4 2 4 2h.05l1.89-6.68c.08-.26.06-.54-.06-.78s-.34-.42-.6-.5L20 10.62V6c0-1.1-.9-2-2-2h-3V1H9v3H6c-1.1 0-2 .9-2 2v4.62l-1.29.42c-.26.08-.48.26-.6.5s-.15.52-.06.78L3.95 19zM6 6h12v3.97L12 8 6 9.97V6z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-700 font-normal">Cruise</span>
-                                      </button>
-
-                                      {/* Rail */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'rail'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M4 15.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h12v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V5c0-3.5-3.58-4-8-4s-8 .5-8 4v10.5zm8 1.5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm6-7H6V5h12v5z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-700 font-normal">Rail</span>
-                                      </button>
-
-                                      {/* Directions */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'directions'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-r border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M21.71 11.29l-9-9c-.39-.39-1.02-.39-1.41 0l-9 9c-.39.39-.39 1.02 0 1.41l9 9c.39.39 1.02.39 1.41 0l9-9c.39-.38.39-1.01 0-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-700 font-normal">Directions</span>
-                                      </button>
-
-                                      {/* Restaurant */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'restaurant'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-700 font-normal">Restaurant</span>
-                                      </button>
-
-                                      {/* Ferry */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'ferry'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-r border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M20 21c-1.39 0-2.78-.47-4-1.32-2.44 1.71-5.56 1.71-8 0C6.78 20.53 5.39 21 4 21H2v2h2c1.38 0 2.74-.35 4-.99 2.52 1.29 5.48 1.29 8 0 1.26.65 2.62.99 4 .99h2v-2h-2zM3.95 19H4c1.6 0 3.02-.88 4-2 .98 1.12 2.4 2 4 2s3.02-.88 4-2c.98 1.12 2.4 2 4 2h.05l1.89-6.68c.08-.26.06-.54-.06-.78s-.34-.42-.6-.5L20 10.62V6c0-1.1-.9-2-2-2h-3V1H9v3H6c-1.1 0-2 .9-2 2v4.62l-1.29.42c-.26.08-.48.26-.6.5s-.15.52-.06.78L3.95 19zM6 6h12v3.97L12 8 6 9.97V6z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-700 font-normal">Ferry</span>
-                                      </button>
-
-                                      {/* Theater */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'theater'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-r border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-700 font-normal">Theater</span>
-                                      </button>
-
-                                      {/* Tour */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'tour'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-900">Tour</span>
-                                      </button>
-
-                                      {/* Meeting */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'meeting'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left border-r border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-700 font-normal">Meeting</span>
-                                      </button>
-
-                                      {/* Transportation */}
-                                      <button onClick={(e) => { e.stopPropagation(); handleAddActivityType(day.id, 'transportation'); }} className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2.23l2-2H14l2 2h2v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-4-4-8-4zM7.5 17c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm3.5-7H6V6h5v4zm2 0V6h5v4h-5zm3.5 7c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
-                                        </div>
-                                        <span className="text-sm text-gray-700 font-normal">Transportation</span>
-                                      </button>
+                                      {Object.entries(ACTIVITY_TYPES)
+                                        .filter(([type]) => !['flight', 'lodging', 'map', 'directions'].includes(type))
+                                        .map(([type, config], index, array) => {
+                                          const isLastRow = index >= array.length - 2;
+                                          const isRightColumn = index % 2 === 1;
+                                          return (
+                                            <button
+                                              key={type}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleAddActivityType(day.id, type as Activity['type']);
+                                              }}
+                                              className={`flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left ${
+                                                !isLastRow ? 'border-b' : ''
+                                              } ${!isRightColumn ? 'border-r' : ''} border-gray-100`}
+                                            >
+                                              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                                                <ActivityIcon iconName={config.icon} className="text-white" size={16} />
+                                              </div>
+                                              <span className="text-sm text-gray-700 font-normal">{config.label}</span>
+                                            </button>
+                                          );
+                                        })}
                                     </div>
                                   </div>
                                 </>
@@ -640,8 +553,12 @@ export default function TimelineView({
                                       >
                                         <div className="flex items-start gap-3">
                                           {/* Activity Icon */}
-                                          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm flex-shrink-0">
-                                            {getActivityIcon(activity)}
+                                          <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <ActivityIcon 
+                                              iconName={getActivityIcon(activity)} 
+                                              className="text-blue-600" 
+                                              size={16}
+                                            />
                                           </div>
                                           
                                           {/* Activity Content */}
