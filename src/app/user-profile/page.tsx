@@ -109,7 +109,7 @@ export default function UserProfilePage() {
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Created</dt>
                     <dd className="text-sm text-gray-900">
-                      {new Date(user?.created_at).toLocaleDateString()}
+                      {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                     </dd>
                   </div>
                 </dl>
