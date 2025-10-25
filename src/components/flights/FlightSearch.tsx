@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { NormalizedFlight } from '@/lib/api/duffelClient';
-import { ArrowLeftRight, MapPin, Calendar, Users } from 'lucide-react';
+import { ArrowLeftRight, Calendar, Users } from 'lucide-react';
+import AirportAutocomplete from './AirportAutocomplete';
 
 interface FlightSearchProps {
   onSearch: (results: NormalizedFlight[], passengers: number) => void;
@@ -114,24 +115,13 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
 
         {/* Origin and Destination with Swap Button - Compact */}
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-2 items-end">
-          <div>
-            <label htmlFor="origin" className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
-              From
-            </label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
-              <input
-                type="text"
-                id="origin"
-                value={origin}
-                onChange={(e) => setOrigin(e.target.value.toUpperCase())}
-                placeholder="City or airport"
-                maxLength={3}
-                required
-                className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase text-gray-900 font-semibold text-base placeholder:text-gray-400 placeholder:font-normal placeholder:normal-case transition-all"
-              />
-            </div>
-          </div>
+          <AirportAutocomplete
+            id="origin"
+            label="From"
+            value={origin}
+            onChange={setOrigin}
+            placeholder="City or airport"
+          />
 
           <button
             type="button"
@@ -142,24 +132,13 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
             <ArrowLeftRight className="h-4 w-4 group-hover:rotate-180 transition-transform duration-300" />
           </button>
 
-          <div>
-            <label htmlFor="destination" className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
-              To
-            </label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
-              <input
-                type="text"
-                id="destination"
-                value={destination}
-                onChange={(e) => setDestination(e.target.value.toUpperCase())}
-                placeholder="City or airport"
-                maxLength={3}
-                required
-                className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase text-gray-900 font-semibold text-base placeholder:text-gray-400 placeholder:font-normal placeholder:normal-case transition-all"
-              />
-            </div>
-          </div>
+          <AirportAutocomplete
+            id="destination"
+            label="To"
+            value={destination}
+            onChange={setDestination}
+            placeholder="City or airport"
+          />
         </div>
 
         {/* Date Fields, Passengers, and Cabin Class - Compact */}
