@@ -12,6 +12,7 @@ export const ActivityIcon: React.FC<ActivityIconProps> = ({
   className = '', 
   size = 16 
 }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Icon = (LucideIcons as any)[iconName];
   
   if (!Icon) {

@@ -72,12 +72,20 @@ export default function Header() {
               Home
             </Link>
             {isSignedIn && (
-              <Link 
-                href="/itinerary" 
-                className="text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium tracking-wide"
-              >
-                My Trips
-              </Link>
+              <>
+                <Link 
+                  href="/itinerary" 
+                  className="text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium tracking-wide"
+                >
+                  My Trips
+                </Link>
+                <Link 
+                  href="/flights" 
+                  className="text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium tracking-wide"
+                >
+                  Flights
+                </Link>
+              </>
             )}
             <a 
               href="#services" 
@@ -193,13 +201,22 @@ export default function Header() {
                 Home
               </Link>
               {isSignedIn && (
-                <Link 
-                  href="/itinerary" 
-                  className="text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  My Trips
-                </Link>
+                <>
+                  <Link 
+                    href="/itinerary" 
+                    className="text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    My Trips
+                  </Link>
+                  <Link 
+                    href="/flights" 
+                    className="text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Flights
+                  </Link>
+                </>
               )}
               <a 
                 href="#services" 
