@@ -167,16 +167,16 @@ export default function FlightResults({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Sort and Filter Bar - Trip.com Style */}
-      <div className="bg-white rounded-xl shadow-md p-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="space-y-4">
+      {/* Sort and Filter Bar - Compact */}
+      <div className="bg-white rounded-lg shadow-sm p-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
           {/* Sort Tabs */}
           <button
             onClick={() => setSortBy('best')}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-md font-semibold text-sm transition-all ${
               sortBy === 'best'
-                ? 'bg-blue-600 text-white shadow-md'
+                ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
@@ -184,9 +184,9 @@ export default function FlightResults({
           </button>
           <button
             onClick={() => setSortBy('cheapest')}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-md font-semibold text-sm transition-all ${
               sortBy === 'cheapest'
-                ? 'bg-blue-600 text-white shadow-md'
+                ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
@@ -194,9 +194,9 @@ export default function FlightResults({
           </button>
           <button
             onClick={() => setSortBy('fastest')}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-md font-semibold text-sm transition-all ${
               sortBy === 'fastest'
-                ? 'bg-blue-600 text-white shadow-md'
+                ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
@@ -207,59 +207,59 @@ export default function FlightResults({
         {/* Filter Button */}
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-colors font-medium text-gray-700"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-gray-300 hover:border-blue-500 transition-colors font-medium text-sm text-gray-700"
         >
-          <Filter className="h-4 w-4" />
+          <Filter className="h-3.5 w-3.5" />
           Filters
           {(filters.nonstopOnly || filters.airlines.length > 0) && (
-            <span className="ml-1 px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
+            <span className="ml-1 px-1.5 py-0.5 bg-blue-600 text-white text-xs rounded-full">
               {filters.nonstopOnly ? 1 : 0 + filters.airlines.length}
             </span>
           )}
         </button>
       </div>
 
-      {/* Filters Panel */}
+      {/* Filters Panel - Compact */}
       {showFilters && (
-        <div className="bg-white rounded-xl shadow-md p-6 space-y-6">
+        <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-gray-900">Filters</h3>
+            <h3 className="text-base font-bold text-gray-900">Filters</h3>
             <button
               onClick={() => setShowFilters(false)}
-              className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
             >
-              <X className="h-5 w-5 text-gray-500" />
+              <X className="h-4 w-4 text-gray-500" />
             </button>
           </div>
 
           {/* Stops Filter */}
           <div>
-            <h4 className="font-semibold text-gray-900 mb-3">Stops</h4>
-            <label className="flex items-center gap-3 cursor-pointer">
+            <h4 className="font-semibold text-sm text-gray-900 mb-2">Stops</h4>
+            <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={filters.nonstopOnly}
                 onChange={(e) => setFilters(prev => ({ ...prev, nonstopOnly: e.target.checked }))}
                 className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
               />
-              <span className="text-gray-700">Nonstop only</span>
+              <span className="text-sm text-gray-700">Nonstop only</span>
             </label>
           </div>
 
           {/* Airlines Filter */}
           {availableAirlines.length > 0 && (
             <div>
-              <h4 className="font-semibold text-gray-900 mb-3">Airlines</h4>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
+              <h4 className="font-semibold text-sm text-gray-900 mb-2">Airlines</h4>
+              <div className="space-y-1.5 max-h-32 overflow-y-auto">
                 {availableAirlines.map(airline => (
-                  <label key={airline} className="flex items-center gap-3 cursor-pointer">
+                  <label key={airline} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={filters.airlines.includes(airline)}
                       onChange={() => toggleAirlineFilter(airline)}
                       className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                     />
-                    <span className="text-gray-700">{airline}</span>
+                    <span className="text-sm text-gray-700">{airline}</span>
                   </label>
                 ))}
               </div>
@@ -269,7 +269,7 @@ export default function FlightResults({
           {/* Clear Filters */}
           <button
             onClick={() => setFilters({ nonstopOnly: false, maxPrice: Infinity, airlines: [] })}
-            className="w-full py-2 text-blue-600 hover:bg-blue-50 rounded-lg font-medium transition-colors"
+            className="w-full py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded font-medium transition-colors"
           >
             Clear all filters
           </button>
@@ -277,64 +277,63 @@ export default function FlightResults({
       )}
 
       {/* Results Count */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-600">
+      <div className="flex items-center justify-between px-1">
+        <p className="text-xs text-gray-600">
           Showing <span className="font-semibold text-gray-900">{processedFlights.length}</span> of{' '}
           <span className="font-semibold text-gray-900">{flights.length}</span> flights
         </p>
       </div>
 
-      {/* Flight Cards - Trip.com Style */}
+      {/* Flight Cards - Ultra Compact */}
       {processedFlights.map((flight) => (
         <div
           key={flight.id}
-          className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-xl transition-all"
+          className="bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all"
         >
           <div className="flex items-center justify-between">
             {/* Left: Flight Info */}
             <div className="flex-1">
-              {/* Airline Header */}
-              <div className="flex items-center gap-3 mb-4">
+              {/* Airline Header - Compact */}
+              <div className="flex items-center gap-2 mb-3">
                 {flight.carrierLogo ? (
                   <img
                     src={flight.carrierLogo}
                     alt={flight.carrier}
-                    className="h-10 w-auto object-contain"
+                    className="h-6 w-auto object-contain"
                   />
                 ) : (
-                  <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <Plane className="h-6 w-6 text-blue-600" />
+                  <div className="h-6 w-6 rounded bg-blue-100 flex items-center justify-center">
+                    <Plane className="h-4 w-4 text-blue-600" />
                   </div>
                 )}
                 <div>
-                  <p className="font-bold text-gray-900 text-base">{flight.carrier}</p>
+                  <p className="font-semibold text-gray-900 text-sm">{flight.carrier}</p>
                   <p className="text-xs text-gray-500">{flight.flightNumber}</p>
                 </div>
               </div>
 
-              {/* Route Timeline */}
-              <div className="flex items-center gap-6">
+              {/* Route Timeline - Compact */}
+              <div className="flex items-center gap-4">
                 {/* Departure */}
                 <div>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-gray-900">
                     {format(new Date(flight.departure), 'HH:mm')}
                   </p>
-                  <p className="text-sm font-semibold text-gray-700 mt-1">{flight.origin}</p>
-                  <p className="text-xs text-gray-500">{flight.originName?.split(',')[0]}</p>
+                  <p className="text-xs font-semibold text-gray-700 mt-0.5">{flight.origin}</p>
                 </div>
 
-                {/* Duration Line */}
-                <div className="flex-1 flex flex-col items-center px-4">
-                  <p className="text-xs text-gray-600 font-medium mb-2">
+                {/* Duration Line - Compact */}
+                <div className="flex-1 flex flex-col items-center px-2">
+                  <p className="text-xs text-gray-600 font-medium mb-1">
                     {formatDuration(flight.duration)}
                   </p>
                   <div className="w-full relative">
                     <div className="h-0.5 bg-gray-300 w-full"></div>
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-2">
-                      <Plane className="h-4 w-4 text-gray-400 transform rotate-90" />
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-1">
+                      <Plane className="h-3 w-3 text-gray-400 transform rotate-90" />
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 font-medium mt-2">
+                  <p className="text-xs text-gray-500 font-medium mt-1">
                     {flight.stops === 0 ? (
                       <span className="text-green-600 font-semibold">Nonstop</span>
                     ) : (
@@ -345,20 +344,19 @@ export default function FlightResults({
 
                 {/* Arrival */}
                 <div>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-gray-900">
                     {format(new Date(flight.arrival), 'HH:mm')}
                   </p>
-                  <p className="text-sm font-semibold text-gray-700 mt-1">{flight.destination}</p>
-                  <p className="text-xs text-gray-500">{flight.destinationName?.split(',')[0]}</p>
+                  <p className="text-xs font-semibold text-gray-700 mt-0.5">{flight.destination}</p>
                 </div>
               </div>
 
-              {/* Badges */}
-              <div className="flex items-center gap-2 mt-4">
-                <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full">
+              {/* Badges - Compact */}
+              <div className="flex items-center gap-1.5 mt-3">
+                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded">
                   {flight.cabinClass}
                 </span>
-                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
                   flight.apiSource === 'duffel'
                     ? 'bg-purple-50 text-purple-700'
                     : 'bg-orange-50 text-orange-700'
@@ -368,24 +366,24 @@ export default function FlightResults({
               </div>
             </div>
 
-            {/* Right: Price and Book */}
-            <div className="ml-8 flex flex-col items-end">
-              <div className="text-right mb-4">
-                <p className="text-4xl font-bold text-blue-600">
+            {/* Right: Price and Book - Compact */}
+            <div className="ml-6 flex flex-col items-end">
+              <div className="text-right mb-2">
+                <p className="text-2xl font-bold text-blue-600">
                   {flight.currency === 'USD' ? '$' : flight.currency}
                   {flight.price.toFixed(0)}
                 </p>
-                <p className="text-sm text-gray-500 font-medium mt-1">per person</p>
+                <p className="text-xs text-gray-500 font-medium">per person</p>
               </div>
 
               <button
                 onClick={() => handleBookClick(flight)}
                 disabled={bookingFlight === flight.id}
-                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-xl hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0 text-base"
+                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg text-sm"
               >
                 {bookingFlight === flight.id ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <span className="flex items-center gap-1.5">
+                    <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
@@ -398,37 +396,37 @@ export default function FlightResults({
 
               <button
                 onClick={() => setExpandedFlight(expandedFlight === flight.id ? null : flight.id)}
-                className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1"
+                className="mt-2 text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-0.5"
               >
-                {expandedFlight === flight.id ? 'Hide Details' : 'View Details'}
-                <ArrowRight className={`h-4 w-4 transition-transform ${expandedFlight === flight.id ? 'rotate-90' : ''}`} />
+                {expandedFlight === flight.id ? 'Hide' : 'Details'}
+                <ArrowRight className={`h-3 w-3 transition-transform ${expandedFlight === flight.id ? 'rotate-90' : ''}`} />
               </button>
             </div>
           </div>
 
-          {/* Expanded Details */}
+          {/* Expanded Details - Compact */}
           {expandedFlight === flight.id && (
-            <div className="mt-6 pt-6 border-t-2 border-gray-100">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Departure Date</p>
-                  <p className="font-bold text-gray-900">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Departure Date</p>
+                  <p className="font-semibold text-sm text-gray-900">
                     {format(new Date(flight.departure), 'MMM dd, yyyy')}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Arrival Date</p>
-                  <p className="font-bold text-gray-900">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Arrival Date</p>
+                  <p className="font-semibold text-sm text-gray-900">
                     {format(new Date(flight.arrival), 'MMM dd, yyyy')}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Flight Duration</p>
-                  <p className="font-bold text-gray-900">{formatDuration(flight.duration)}</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Duration</p>
+                  <p className="font-semibold text-sm text-gray-900">{formatDuration(flight.duration)}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Cabin Class</p>
-                  <p className="font-bold text-gray-900 capitalize">{flight.cabinClass}</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Class</p>
+                  <p className="font-semibold text-sm text-gray-900 capitalize">{flight.cabinClass}</p>
                 </div>
               </div>
             </div>
@@ -437,10 +435,10 @@ export default function FlightResults({
       ))}
 
       {processedFlights.length === 0 && (
-        <div className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-12 text-center">
-          <Plane className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No flights found</h3>
-          <p className="text-gray-600">Try adjusting your filters to see more results</p>
+        <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+          <Plane className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+          <h3 className="text-lg font-bold text-gray-900 mb-1">No flights found</h3>
+          <p className="text-sm text-gray-600">Try adjusting your filters to see more results</p>
         </div>
       )}
 
