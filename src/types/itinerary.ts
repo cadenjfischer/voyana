@@ -208,12 +208,14 @@ export const formatDate = (dateStr: string): string => {
 };
 
 export const generateDays = (startDate: string, endDate: string): string[] => {
-  const dates = [];
+  const dates: string[] = [];
   const start = new Date(startDate);
   const end = new Date(endDate);
   
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    dates.push(new Date(d).toISOString().split('T')[0]);
+  const current = new Date(start);
+  while (current <= end) {
+    dates.push(new Date(current).toISOString().split('T')[0]);
+    current.setDate(current.getDate() + 1);
   }
   return dates;
 };

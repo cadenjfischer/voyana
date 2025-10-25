@@ -28,6 +28,7 @@ export default function UserProfilePage() {
       setEmail(user.email || '');
       setLoading(false);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleUpdateEmail = async (e: React.FormEvent) => {
