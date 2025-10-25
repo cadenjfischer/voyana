@@ -176,7 +176,7 @@ export default function AirportAutocomplete({
       {/* No results */}
       {isOpen && !isLoading && suggestions.length === 0 && value.length >= 2 && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl p-4 text-center">
-          <p className="text-sm text-gray-600">No airports found for "{value}"</p>
+          <p className="text-sm text-gray-600">No airports found for &quot;{value}&quot;</p>
           <p className="text-xs text-gray-500 mt-1">Try a city name or airport code</p>
         </div>
       )}

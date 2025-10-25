@@ -78,7 +78,7 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
               name="tripType"
               value="round-trip"
               checked={tripType === 'round-trip'}
-              onChange={(e) => setTripType(e.target.value as any)}
+              onChange={(e) => setTripType(e.target.value as 'round-trip' | 'one-way' | 'multi-city')}
               className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
             />
             <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
@@ -91,7 +91,7 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
               name="tripType"
               value="one-way"
               checked={tripType === 'one-way'}
-              onChange={(e) => setTripType(e.target.value as any)}
+              onChange={(e) => setTripType(e.target.value as 'round-trip' | 'one-way' | 'multi-city')}
               className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
             />
             <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
@@ -104,7 +104,7 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
               name="tripType"
               value="multi-city"
               checked={tripType === 'multi-city'}
-              onChange={(e) => setTripType(e.target.value as any)}
+              onChange={(e) => setTripType(e.target.value as 'round-trip' | 'one-way' | 'multi-city')}
               className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
             />
             <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
