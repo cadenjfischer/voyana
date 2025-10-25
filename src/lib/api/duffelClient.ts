@@ -38,17 +38,17 @@ export async function searchFlights(params: SearchParams): Promise<NormalizedFli
   try {
     const offerRequest = await duffel.offerRequests.create({
       slices: [
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         {
           origin: params.origin,
           destination: params.destination,
           departure_date: params.departureDate,
-        } as any,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any,
         ...(params.returnDate ? [{
           origin: params.destination,
           destination: params.origin,
           departure_date: params.returnDate,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any] : []),
       ],
       passengers: [
@@ -100,10 +100,13 @@ export function normalizeFlightData(offer: any): NormalizedFlight {
   };
 }
 
+export async function bookFlight(
+  offerId: string, 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  passengers: any[]
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function bookFlight(offerId: string, passengers: any[]): Promise<any> {
+): Promise<any> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const order = await duffel.orders.create({
       type: 'instant' as const,
       selected_offers: [offerId],
@@ -115,6 +118,7 @@ export async function bookFlight(offerId: string, passengers: any[]): Promise<an
           currency: 'USD',
         },
       ],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     return {

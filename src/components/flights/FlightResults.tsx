@@ -1,60 +1,102 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { NormalizedFlight } from '@/lib/api/duffelClient';
 import { Plane } from 'lucide-react';
+import { createBrowserClient } from '@supabase/ssr';
+import type { User } from '@supabase/supabase-js';
+import PassengerInfoModal, { PassengerInfo } from './PassengerInfoModal';
 
 interface FlightResultsProps {
   flights: NormalizedFlight[];
+  onFlightBooked?: () => void;
+  passengerCount?: number;
 }
 
-export default function FlightResults({ flights }: FlightResultsProps) {
+export default function FlightResults({ 
+  flights, 
+  onFlightBooked,
+  passengerCount = 1 
+}: FlightResultsProps) {
+  const [user, setUser] = useState<User | null>(null);
+  const [expandedFlight, setExpandedFlight] = useState<string | null>(null);
+  const [bookingFlight, setBookingFlight] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<NormalizedFlight | null>(null);
-  const [isBooking, setIsBooking] = useState(false);
-  const [bookingSuccess, setBookingSuccess] = useState(false);
 
-  const handleBook = async (flight: NormalizedFlight) => {
-    setIsBooking(true);
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleBookClick = (flight: NormalizedFlight) => {
+    if (!user) {
+      alert('Please sign in to book flights');
+      return;
+    }
+    setSelectedFlight(flight);
+    setModalOpen(true);
+  };
+
+  const handleConfirmBooking = async (passengers: PassengerInfo[]) => {
+    if (!selectedFlight || !user) return;
+
+    setModalOpen(false);
+    setBookingFlight(selectedFlight.id);
+
     try {
-      // Get user ID from local storage or auth context
-      const userId = localStorage.getItem('userId') || 'demo-user';
+      // Transform passengers to the format expected by the APIs
+      const formattedPassengers = passengers.map(p => ({
+        type: 'adult',
+        title: p.title,
+        given_name: p.givenName,
+        family_name: p.familyName,
+        born_on: p.dateOfBirth,
+        email: p.email,
+        phone_number: p.phoneNumber,
+        gender: p.gender,
+      }));
 
       const response = await fetch('/api/flights/book', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          flight,
-          userId,
-          passengers: [
-            {
-              type: 'adult',
-              given_name: 'John',
-              family_name: 'Doe',
-              email: 'john.doe@example.com',
-            },
-          ],
+          flight: selectedFlight,
+          userId: user.id,
+          passengers: formattedPassengers,
         }),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Booking failed');
+      if (data.success) {
+        alert(`Flight booked successfully! Reference: ${data.bookingReference}`);
+        onFlightBooked?.();
+      } else {
+        alert(`Booking failed: ${data.message || data.error}`);
       }
-
-      setBookingSuccess(true);
-      setSelectedFlight(null);
-      
-      // Show success message for 3 seconds
-      setTimeout(() => setBookingSuccess(false), 3000);
     } catch (error) {
       console.error('Booking error:', error);
-      alert(error instanceof Error ? error.message : 'Failed to book flight');
+      alert('Failed to book flight. Please try again.');
     } finally {
-      setIsBooking(false);
+      setBookingFlight(null);
+      setSelectedFlight(null);
     }
   };
 
@@ -68,13 +110,6 @@ export default function FlightResults({ flights }: FlightResultsProps) {
 
   return (
     <div className="space-y-4">
-      {/* Success Message */}
-      {bookingSuccess && (
-        <div className="fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-in">
-          <p className="font-medium">Flight booked successfully!</p>
-        </div>
-      )}
-
       {/* Flight Cards */}
       {flights.map((flight) => (
         <div
@@ -160,11 +195,11 @@ export default function FlightResults({ flights }: FlightResultsProps) {
               </div>
 
               <button
-                onClick={() => handleBook(flight)}
-                disabled={isBooking}
+                onClick={() => handleBookClick(flight)}
+                disabled={bookingFlight === flight.id}
                 className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isBooking ? 'Booking...' : 'Book Now'}
+                {bookingFlight === flight.id ? 'Booking...' : 'Book Now'}
               </button>
 
               <button
@@ -205,6 +240,20 @@ export default function FlightResults({ flights }: FlightResultsProps) {
           )}
         </div>
       ))}
+
+      {/* Passenger Information Modal */}
+      {selectedFlight && (
+        <PassengerInfoModal
+          isOpen={modalOpen}
+          onClose={() => {
+            setModalOpen(false);
+            setSelectedFlight(null);
+          }}
+          flight={selectedFlight}
+          passengerCount={passengerCount}
+          onConfirm={handleConfirmBooking}
+        />
+      )}
     </div>
   );
 }

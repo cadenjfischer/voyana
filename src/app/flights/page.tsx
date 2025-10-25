@@ -10,9 +10,11 @@ export default function FlightsPage() {
   const [searchResults, setSearchResults] = useState<NormalizedFlight[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<'search' | 'bookings'>('search');
+  const [passengerCount, setPassengerCount] = useState(1);
 
-  const handleSearch = async (results: NormalizedFlight[]) => {
+  const handleSearch = async (results: NormalizedFlight[], passengers: number) => {
     setSearchResults(results);
+    setPassengerCount(passengers);
   };
 
   return (
@@ -68,7 +70,11 @@ export default function FlightsPage() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">
                   {searchResults.length} Flights Found
                 </h2>
-                <FlightResults flights={searchResults} />
+                <FlightResults 
+                  flights={searchResults} 
+                  passengerCount={passengerCount}
+                  onFlightBooked={() => setActiveTab('bookings')}
+                />
               </div>
             )}
 

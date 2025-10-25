@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { NormalizedFlight } from '@/lib/api/duffelClient';
 
 interface FlightSearchProps {
-  onSearch: (results: NormalizedFlight[]) => void;
+  onSearch: (results: NormalizedFlight[], passengers: number) => void;
   onSearching: (isSearching: boolean) => void;
 }
 
@@ -46,7 +46,7 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
         throw new Error(data.error || 'Failed to search flights');
       }
 
-      onSearch(data.flights);
+      onSearch(data.flights, passengers);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       console.error('Search error:', err);
