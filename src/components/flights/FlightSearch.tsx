@@ -101,7 +101,7 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
             placeholder="e.g., JFK"
             maxLength={3}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase text-gray-900 font-medium placeholder:text-gray-400 placeholder:font-normal"
           />
         </div>
 
@@ -117,7 +117,7 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
             placeholder="e.g., LAX"
             maxLength={3}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase text-gray-900 font-medium placeholder:text-gray-400 placeholder:font-normal"
           />
         </div>
       </div>
@@ -135,7 +135,7 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
             onChange={(e) => setDepartureDate(e.target.value)}
             min={today}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 font-medium"
           />
         </div>
 
@@ -151,7 +151,7 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
               onChange={(e) => setReturnDate(e.target.value)}
               min={departureDate || today}
               required={tripType === 'round-trip'}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 font-medium"
             />
           </div>
         )}
@@ -167,7 +167,7 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
             id="passengers"
             value={passengers}
             onChange={(e) => setPassengers(parseInt(e.target.value))}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 font-medium"
           >
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
               <option key={num} value={num}>
@@ -185,7 +185,7 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
             id="cabinClass"
             value={cabinClass}
             onChange={(e) => setCabinClass(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 font-medium"
           >
             <option value="economy">Economy</option>
             <option value="premium_economy">Premium Economy</option>

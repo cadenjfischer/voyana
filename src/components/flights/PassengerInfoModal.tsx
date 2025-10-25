@@ -132,7 +132,7 @@ export default function PassengerInfoModal({
                   <select
                     value={passenger.title}
                     onChange={(e) => handlePassengerChange(index, 'title', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
                   >
                     <option value="mr">Mr.</option>
                     <option value="ms">Ms.</option>
@@ -150,7 +150,7 @@ export default function PassengerInfoModal({
                   <select
                     value={passenger.gender}
                     onChange={(e) => handlePassengerChange(index, 'gender', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
                   >
                     <option value="m">Male</option>
                     <option value="f">Female</option>
@@ -166,7 +166,7 @@ export default function PassengerInfoModal({
                     type="text"
                     value={passenger.givenName}
                     onChange={(e) => handlePassengerChange(index, 'givenName', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium placeholder:text-gray-400 placeholder:font-normal ${
                       errors[`${index}-givenName`] ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="John"
@@ -185,7 +185,7 @@ export default function PassengerInfoModal({
                     type="text"
                     value={passenger.familyName}
                     onChange={(e) => handlePassengerChange(index, 'familyName', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium placeholder:text-gray-400 placeholder:font-normal ${
                       errors[`${index}-familyName`] ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="Smith"
@@ -205,7 +205,7 @@ export default function PassengerInfoModal({
                     value={passenger.dateOfBirth}
                     onChange={(e) => handlePassengerChange(index, 'dateOfBirth', e.target.value)}
                     max={new Date().toISOString().split('T')[0]}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium ${
                       errors[`${index}-dateOfBirth`] ? 'border-red-500' : 'border-gray-300'
                     }`}
                   />
@@ -223,7 +223,7 @@ export default function PassengerInfoModal({
                     type="email"
                     value={passenger.email}
                     onChange={(e) => handlePassengerChange(index, 'email', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium placeholder:text-gray-400 placeholder:font-normal ${
                       errors[`${index}-email`] ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="john.smith@example.com"
@@ -242,7 +242,7 @@ export default function PassengerInfoModal({
                     type="tel"
                     value={passenger.phoneNumber}
                     onChange={(e) => handlePassengerChange(index, 'phoneNumber', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium placeholder:text-gray-400 placeholder:font-normal ${
                       errors[`${index}-phoneNumber`] ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="+1 234 567 8900"
