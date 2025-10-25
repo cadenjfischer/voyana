@@ -2,6 +2,9 @@ import { getUser } from "@/lib/supabase/auth";
 import Header from "@/components/Header";
 import Link from "next/link";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const user = await getUser();
 
