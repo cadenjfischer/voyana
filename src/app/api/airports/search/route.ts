@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     
     // Type guard to safely access error properties
     const isErrorObject = error && typeof error === 'object';
-    const errorObj = isErrorObject ? error as Record<string, any> : {};
+    const errorObj = isErrorObject ? error as Record<string, unknown> : {};
     
     console.error('Error constructor:', errorObj.constructor?.name);
     
