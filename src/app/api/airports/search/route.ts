@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Duffel } from '@duffel/api';
 
-const duffel = new Duffel({
-  token: process.env.DUFFEL_API_KEY!,
-});
-
-// Log to verify env var is loaded (will show in Vercel logs)
-console.log('Duffel API Key exists:', !!process.env.DUFFEL_API_KEY);
-// Deployment timestamp: 2025-10-26 17:45 UTC - Force rebuild
+// Deployment timestamp: 2025-10-26 18:00 UTC - Fix Duffel client initialization
 
 interface DuffelPlace {
   iata_code?: string;
@@ -24,11 +18,26 @@ export async function GET(request: NextRequest) {
 
     console.log('Airport search request:', { query });
     console.log('Duffel API Key exists:', !!process.env.DUFFEL_API_KEY);
-    console.log('Duffel API Key prefix:', process.env.DUFFEL_API_KEY?.substring(0, 15));
+    console.log('Duffel API Key length:', process.env.DUFFEL_API_KEY?.length);
+
+    // Validate API key exists
+    if (!process.env.DUFFEL_API_KEY) {
+      console.error('DUFFEL_API_KEY environment variable is not set');
+      return NextResponse.json(
+        { error: 'Server configuration error: Missing API key' },
+        { status: 500 }
+      );
+    }
 
     if (!query || query.length < 2) {
       return NextResponse.json({ places: [] });
     }
+
+    // Initialize Duffel client with the API key
+    console.log('Initializing Duffel client...');
+    const duffel = new Duffel({
+      token: process.env.DUFFEL_API_KEY,
+    });
 
     // Search for airports using Duffel Places API
     console.log('Calling Duffel API for query:', query);
@@ -55,23 +64,30 @@ export async function GET(request: NextRequest) {
 
     console.log('Filtered airports:', airports.length);
     return NextResponse.json({ places: airports });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Airport search error:', error);
-    console.error('Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown',
-      stack: error instanceof Error ? error.stack : undefined,
-      name: error instanceof Error ? error.name : undefined,
-      env: {
-        hasDuffelKey: !!process.env.DUFFEL_API_KEY,
-        keyPrefix: process.env.DUFFEL_API_KEY?.substring(0, 10)
-      }
-    });
+    console.error('Error type:', typeof error);
+    console.error('Error constructor:', error?.constructor?.name);
+    
+    // Log all error properties
+    if (error) {
+      console.error('Error keys:', Object.keys(error));
+      console.error('Error details:', {
+        message: error.message || 'No message',
+        stack: error.stack || 'No stack',
+        name: error.name || 'No name',
+        code: error.code || 'No code',
+        statusCode: error.statusCode || 'No statusCode',
+        errors: error.errors || 'No errors',
+      });
+    }
     
     // Return more detailed error for debugging
     return NextResponse.json(
       { 
         error: 'Failed to search airports',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: error?.message || error?.toString() || 'Unknown error',
+        errorType: error?.constructor?.name || typeof error,
         timestamp: new Date().toISOString()
       },
       { status: 500 }
