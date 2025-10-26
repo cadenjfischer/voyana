@@ -161,42 +161,45 @@ export default function FareClassModal({
         <div className="relative inline-block w-full max-w-5xl px-4 pt-5 pb-4 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Select fare to {flight.destinationName}
-              </h2>
-              <p className="mt-1 text-sm text-gray-600">
-                This flight is operated by {flight.carrier}
-              </p>
-            </div>
-            
-            {/* Small Flight Timeline - Centered */}
-            <div className="flex items-center gap-4 px-6">
-              <div className="text-center">
-                <p className="text-lg font-bold text-gray-900">{departureTime}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{flight.origin}</p>
-              </div>
-              <div className="flex items-center">
-                <div className="w-16 h-px bg-gray-300"></div>
-                {flight.carrierLogo ? (
-                  <img 
-                    src={flight.carrierLogo} 
-                    alt={flight.carrier}
-                    className="w-8 h-8 rounded-full mx-2 object-contain bg-white border border-gray-200"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center mx-2 font-bold shadow-sm">
-                    {flight.carrier.substring(0, 2)}
+            <div className="flex items-center gap-6">
+              <div>
+                <div className="flex items-center gap-4">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Select fare to {flight.destinationName}
+                  </h2>
+                  {/* Inline Flight Timeline */}
+                  <div className="flex items-center gap-2 text-sm border-l border-gray-300 pl-4">
+                    <span className="font-semibold text-gray-900">{departureTime}</span>
+                    <span className="text-gray-500">{flight.origin}</span>
+                    <div className="flex flex-col items-center mx-1">
+                      <div className="flex items-center">
+                        <div className="w-8 h-px bg-gray-300"></div>
+                        {flight.carrierLogo ? (
+                          <img 
+                            src={flight.carrierLogo} 
+                            alt={flight.carrier}
+                            className="w-5 h-5 rounded-full mx-1 object-contain"
+                          />
+                        ) : (
+                          <div className="w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center mx-1 font-bold">
+                            {flight.carrier.substring(0, 2)}
+                          </div>
+                        )}
+                        <div className="w-8 h-px bg-gray-300"></div>
+                      </div>
+                      <p className="text-[10px] text-green-600 font-semibold mt-0.5">
+                        {flight.stops === 0 ? 'Nonstop' : `${flight.stops} stop${flight.stops > 1 ? 's' : ''}`}
+                      </p>
+                    </div>
+                    <span className="font-semibold text-gray-900">{arrivalTime}</span>
+                    <span className="text-gray-500">{flight.destination}</span>
                   </div>
-                )}
-                <div className="w-16 h-px bg-gray-300"></div>
-              </div>
-              <div className="text-center">
-                <p className="text-lg font-bold text-gray-900">{arrivalTime}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{flight.destination}</p>
+                </div>
+                <p className="mt-1 text-sm text-gray-600">
+                  This flight is operated by {flight.carrier}
+                </p>
               </div>
             </div>
-
             <button
               onClick={onClose}
               className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
@@ -218,12 +221,12 @@ export default function FareClassModal({
                   }}
                   className={`flex-1 py-4 px-6 text-center border-b-2 transition-colors ${
                     selectedCabin === cabinClass.cabin
-                      ? 'border-blue-600 text-blue-600 font-semibold'
-                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                      ? 'border-blue-600 text-blue-600 bg-blue-50'
+                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  <div className="text-sm font-medium">{cabinClass.cabin}</div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-base font-bold">{cabinClass.cabin}</div>
+                  <div className="text-sm text-gray-500 mt-1 font-semibold">
                     {lowestInClass.currency === 'USD' ? '$' : lowestInClass.currency}
                     {Math.round(lowestInClass.price)}
                   </div>
