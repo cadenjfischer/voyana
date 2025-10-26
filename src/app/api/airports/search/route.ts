@@ -64,30 +64,41 @@ export async function GET(request: NextRequest) {
 
     console.log('Filtered airports:', airports.length);
     return NextResponse.json({ places: airports });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Airport search error:', error);
     console.error('Error type:', typeof error);
-    console.error('Error constructor:', error?.constructor?.name);
+    
+    // Type guard to safely access error properties
+    const isErrorObject = error && typeof error === 'object';
+    const errorObj = isErrorObject ? error as Record<string, any> : {};
+    
+    console.error('Error constructor:', errorObj.constructor?.name);
     
     // Log all error properties
-    if (error) {
+    if (isErrorObject) {
       console.error('Error keys:', Object.keys(error));
       console.error('Error details:', {
-        message: error.message || 'No message',
-        stack: error.stack || 'No stack',
-        name: error.name || 'No name',
-        code: error.code || 'No code',
-        statusCode: error.statusCode || 'No statusCode',
-        errors: error.errors || 'No errors',
+        message: errorObj.message || 'No message',
+        stack: errorObj.stack || 'No stack',
+        name: errorObj.name || 'No name',
+        code: errorObj.code || 'No code',
+        statusCode: errorObj.statusCode || 'No statusCode',
+        errors: errorObj.errors || 'No errors',
       });
     }
     
     // Return more detailed error for debugging
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : isErrorObject && errorObj.message
+      ? String(errorObj.message)
+      : 'Unknown error';
+      
     return NextResponse.json(
       { 
         error: 'Failed to search airports',
-        details: error?.message || error?.toString() || 'Unknown error',
-        errorType: error?.constructor?.name || typeof error,
+        details: errorMessage,
+        errorType: errorObj.constructor?.name || typeof error,
         timestamp: new Date().toISOString()
       },
       { status: 500 }
