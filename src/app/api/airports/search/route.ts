@@ -91,12 +91,14 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     console.error('Airport search error:', error);
     console.error('Error type:', typeof error);
+    console.error('Error stringified:', JSON.stringify(error, null, 2));
     
     // Type guard to safely access error properties
     const isErrorObject = error && typeof error === 'object';
     const errorObj = isErrorObject ? error as Record<string, unknown> : {};
     
     console.error('Error constructor:', errorObj.constructor?.name);
+    console.error('Error as string:', String(error));
     
     // Log all error properties
     if (isErrorObject) {
@@ -108,6 +110,8 @@ export async function GET(request: NextRequest) {
         code: errorObj.code || 'No code',
         statusCode: errorObj.statusCode || 'No statusCode',
         errors: errorObj.errors || 'No errors',
+        response: errorObj.response || 'No response',
+        data: errorObj.data || 'No data',
       });
     }
     
@@ -116,13 +120,14 @@ export async function GET(request: NextRequest) {
       ? error.message 
       : isErrorObject && errorObj.message
       ? String(errorObj.message)
-      : 'Unknown error';
+      : String(error);
       
     return NextResponse.json(
       { 
         error: 'Failed to search airports',
         details: errorMessage,
         errorType: errorObj.constructor?.name || typeof error,
+        errorString: String(error),
         timestamp: new Date().toISOString()
       },
       { status: 500 }
