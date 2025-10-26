@@ -7,7 +7,7 @@ const duffel = new Duffel({
 
 // Log to verify env var is loaded (will show in Vercel logs)
 console.log('Duffel API Key exists:', !!process.env.DUFFEL_API_KEY);
-// Deployment timestamp: 2025-10-26
+// Deployment timestamp: 2025-10-26 17:45 UTC - Force rebuild
 
 interface DuffelPlace {
   iata_code?: string;
@@ -59,13 +59,20 @@ export async function GET(request: NextRequest) {
     console.error('Airport search error:', error);
     console.error('Error details:', {
       message: error instanceof Error ? error.message : 'Unknown',
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+      env: {
+        hasDuffelKey: !!process.env.DUFFEL_API_KEY,
+        keyPrefix: process.env.DUFFEL_API_KEY?.substring(0, 10)
+      }
     });
+    
+    // Return more detailed error for debugging
     return NextResponse.json(
       { 
         error: 'Failed to search airports',
         details: error instanceof Error ? error.message : 'Unknown error',
-        fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
+        timestamp: new Date().toISOString()
       },
       { status: 500 }
     );

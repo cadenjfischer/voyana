@@ -1,6 +1,11 @@
 NEXT_PUBLIC_UNSPLASH_ACCESS_KEY=FrIfshnSd2c2P7ro31-7XyI0W3MT9cqvAZCOQFvGoc0
 NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=AIzaSyA4gFNZMmIn0n3yTS45MMvh9vs_IgX6YQM
 NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=pk.eyJ1IjoiY2FkZW5qZmlzY2hlciIsImEiOiJjbWdxaTc0MnUybTVwMmxxMmxqcjBvNmpyIn0.77uaemMoydO3fRLDtt4bCg
+
+# Note: Add these API keys directly in Vercel dashboard:
+# DUFFEL_API_KEY - Flight search API (already added in Vercel)
+# AMADEUS_CLIENT_ID - Alternative flight API
+# AMADEUS_CLIENT_SECRET - Alternative flight API
  
 NEXT_PUBLIC_SUPABASE_URL=https://wuzchhdrgejmtcqdexkp.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1emNoaGRyZ2VqbXRjcWRleGtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5MDExNDksImV4cCI6MjA3NTQ3NzE0OX0.o5XDr8nZ-jikfrLcvF64XYpU7i_sD6PUecET-rJFWJo
