@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Duffel } from '@duffel/api';
 
-// Deployment timestamp: 2025-10-26 18:15 UTC - Added @duffel/api to package.json
+// Deployment timestamp: 2025-10-26 18:20 UTC - Enhanced error logging
 
 interface DuffelPlace {
   iata_code?: string;
