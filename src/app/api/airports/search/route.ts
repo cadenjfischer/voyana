@@ -7,6 +7,7 @@ const duffel = new Duffel({
 
 // Log to verify env var is loaded (will show in Vercel logs)
 console.log('Duffel API Key exists:', !!process.env.DUFFEL_API_KEY);
+// Deployment timestamp: 2025-10-26
 
 interface DuffelPlace {
   iata_code?: string;
