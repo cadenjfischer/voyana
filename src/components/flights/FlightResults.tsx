@@ -7,6 +7,7 @@ import { Plane, ArrowRight, Filter, X, Wifi, Zap, Monitor, Utensils, Luggage } f
 import { createBrowserClient } from '@supabase/ssr';
 import type { User } from '@supabase/supabase-js';
 import PassengerInfoModal, { PassengerInfo } from './PassengerInfoModal';
+import FareClassModal from './FareClassModal';
 
 interface FlightResultsProps {
   flights: NormalizedFlight[];
@@ -24,8 +25,10 @@ export default function FlightResults({
   const [user, setUser] = useState<User | null>(null);
   const [expandedFlight, setExpandedFlight] = useState<string | null>(null);
   const [bookingFlight, setBookingFlight] = useState<string | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [fareModalOpen, setFareModalOpen] = useState(false);
+  const [passengerModalOpen, setPassengerModalOpen] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState<NormalizedFlight | null>(null);
+  const [selectedFareClass, setSelectedFareClass] = useState<any>(null);
   const [sortBy, setSortBy] = useState<SortOption>('best');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -60,13 +63,19 @@ export default function FlightResults({
       return;
     }
     setSelectedFlight(flight);
-    setModalOpen(true);
+    setFareModalOpen(true);
+  };
+
+  const handleFareSelect = (fareClass: any) => {
+    setSelectedFareClass(fareClass);
+    setFareModalOpen(false);
+    setPassengerModalOpen(true);
   };
 
   const handleConfirmBooking = async (passengers: PassengerInfo[]) => {
-    if (!selectedFlight || !user) return;
+    if (!selectedFlight || !user || !selectedFareClass) return;
 
-    setModalOpen(false);
+    setPassengerModalOpen(false);
     setBookingFlight(selectedFlight.id);
 
     try {
@@ -558,13 +567,27 @@ export default function FlightResults({
         </div>
       )}
 
+      {/* Fare Class Selection Modal */}
+      {selectedFlight && (
+        <FareClassModal
+          isOpen={fareModalOpen}
+          onClose={() => {
+            setFareModalOpen(false);
+            setSelectedFlight(null);
+          }}
+          flight={selectedFlight}
+          onSelectFare={handleFareSelect}
+        />
+      )}
+
       {/* Passenger Information Modal */}
       {selectedFlight && (
         <PassengerInfoModal
-          isOpen={modalOpen}
+          isOpen={passengerModalOpen}
           onClose={() => {
-            setModalOpen(false);
+            setPassengerModalOpen(false);
             setSelectedFlight(null);
+            setSelectedFareClass(null);
           }}
           flight={selectedFlight}
           passengerCount={passengerCount}
