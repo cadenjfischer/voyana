@@ -5,6 +5,9 @@ const duffel = new Duffel({
   token: process.env.DUFFEL_API_KEY!,
 });
 
+// Log to verify env var is loaded (will show in Vercel logs)
+console.log('Duffel API Key exists:', !!process.env.DUFFEL_API_KEY);
+
 interface DuffelPlace {
   iata_code?: string;
   name?: string;
