@@ -46,8 +46,11 @@ export default function AirportAutocomplete({
     setIsLoading(true);
     const timer = setTimeout(async () => {
       try {
+        console.log('Fetching airports for:', value);
         const response = await fetch(`/api/airports/search?query=${encodeURIComponent(value)}`);
+        console.log('Response status:', response.status);
         const data = await response.json();
+        console.log('Response data:', data);
         setSuggestions(data.places || []);
         setIsOpen(true);
       } catch (error) {

@@ -62,7 +62,12 @@ export async function GET(request: NextRequest) {
       stack: error instanceof Error ? error.stack : undefined
     });
     return NextResponse.json(
-      { error: 'Failed to search airports' },
+      { 
+        error: 'Failed to search airports',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        // @ts-ignore - debugging
+        fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
+      },
       { status: 500 }
     );
   }
