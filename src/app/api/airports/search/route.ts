@@ -35,15 +35,39 @@ export async function GET(request: NextRequest) {
 
     // Initialize Duffel client with the API key
     console.log('Initializing Duffel client...');
-    const duffel = new Duffel({
-      token: process.env.DUFFEL_API_KEY,
-    });
+    let duffel;
+    try {
+      duffel = new Duffel({
+        token: process.env.DUFFEL_API_KEY,
+      });
+      console.log('Duffel client initialized successfully');
+    } catch (initError) {
+      console.error('Failed to initialize Duffel client:', initError);
+      return NextResponse.json(
+        { error: 'Failed to initialize flight search client' },
+        { status: 500 }
+      );
+    }
 
     // Search for airports using Duffel Places API
     console.log('Calling Duffel API for query:', query);
-    const places = await duffel.suggestions.list({
-      query: query,
-    });
+    let places;
+    try {
+      places = await duffel.suggestions.list({
+        query: query,
+      });
+      console.log('Duffel API call successful, got response');
+    } catch (apiError) {
+      console.error('Duffel API call failed:', apiError);
+      const apiErrorObj = apiError && typeof apiError === 'object' ? apiError as Record<string, unknown> : {};
+      console.error('API Error details:', {
+        message: apiErrorObj.message || 'No message',
+        statusCode: apiErrorObj.statusCode || apiErrorObj.status,
+        code: apiErrorObj.code,
+        type: apiErrorObj.type,
+      });
+      throw apiError; // Re-throw to be caught by outer catch
+    }
 
     console.log('Duffel API response:', {
       count: places.data.length,
