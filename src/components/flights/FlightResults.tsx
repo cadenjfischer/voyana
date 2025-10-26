@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { NormalizedFlight } from '@/lib/api/duffelClient';
-import { Plane, Clock, ArrowRight, Filter, X } from 'lucide-react';
+import { Plane, ArrowRight, Filter, X, Wifi, Zap, Monitor, Utensils } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import type { User } from '@supabase/supabase-js';
 import PassengerInfoModal, { PassengerInfo } from './PassengerInfoModal';
@@ -352,7 +352,7 @@ export default function FlightResults({
               </div>
 
               {/* Badges - Compact */}
-              <div className="flex items-center gap-1.5 mt-3">
+              <div className="flex items-center gap-1.5 mt-3 flex-wrap">
                 <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded">
                   {flight.cabinClass}
                 </span>
@@ -363,6 +363,32 @@ export default function FlightResults({
                 }`}>
                   {flight.apiSource === 'duffel' ? 'Duffel' : 'Amadeus'}
                 </span>
+                
+                {/* Amenities Icons */}
+                {flight.amenities && (
+                  <div className="flex items-center gap-1.5 ml-1">
+                    {flight.amenities.wifi && (
+                      <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-green-50 text-green-700 rounded" title="Wi-Fi available">
+                        <Wifi className="h-3 w-3" />
+                      </div>
+                    )}
+                    {flight.amenities.power && (
+                      <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-yellow-50 text-yellow-700 rounded" title="Power outlet">
+                        <Zap className="h-3 w-3" />
+                      </div>
+                    )}
+                    {flight.amenities.entertainment && (
+                      <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded" title="Entertainment system">
+                        <Monitor className="h-3 w-3" />
+                      </div>
+                    )}
+                    {flight.amenities.meals && (
+                      <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-orange-50 text-orange-700 rounded" title="Meals included">
+                        <Utensils className="h-3 w-3" />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -406,7 +432,8 @@ export default function FlightResults({
 
           {/* Expanded Details - Compact */}
           {expandedFlight === flight.id && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
+              {/* Flight Details Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Departure Date</p>
@@ -429,6 +456,39 @@ export default function FlightResults({
                   <p className="font-semibold text-sm text-gray-900 capitalize">{flight.cabinClass}</p>
                 </div>
               </div>
+
+              {/* Amenities Section */}
+              {flight.amenities && (Object.values(flight.amenities).some(v => v)) && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Amenities</p>
+                  <div className="flex flex-wrap gap-2">
+                    {flight.amenities.wifi && (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
+                        <Wifi className="h-4 w-4" />
+                        <span className="font-medium">Wi-Fi</span>
+                      </div>
+                    )}
+                    {flight.amenities.power && (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg text-sm">
+                        <Zap className="h-4 w-4" />
+                        <span className="font-medium">Power outlet</span>
+                      </div>
+                    )}
+                    {flight.amenities.entertainment && (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 border border-purple-200 text-purple-700 rounded-lg text-sm">
+                        <Monitor className="h-4 w-4" />
+                        <span className="font-medium">Entertainment</span>
+                      </div>
+                    )}
+                    {flight.amenities.meals && (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 border border-orange-200 text-orange-700 rounded-lg text-sm">
+                        <Utensils className="h-4 w-4" />
+                        <span className="font-medium">Meals included</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

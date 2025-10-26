@@ -42,6 +42,9 @@ export function normalizeFlightData(offer: any): NormalizedFlight {
   const itinerary = offer.itineraries[0];
   const segment = itinerary.segments[0];
   
+  // Extract amenities from segment
+  const amenities = segment.amenities || [];
+  
   // Calculate total duration in ISO 8601 format
   const duration = itinerary.duration;
   
@@ -62,6 +65,12 @@ export function normalizeFlightData(offer: any): NormalizedFlight {
     cabinClass: segment.cabin || 'Economy',
     stops: itinerary.segments.length - 1,
     apiSource: 'amadeus',
+    amenities: {
+      wifi: amenities.some((a: any) => a.amenityType === 'WIFI' || a.isChargeable === false && a.description?.toLowerCase().includes('wifi')),
+      power: amenities.some((a: any) => a.amenityType === 'POWER' || a.description?.toLowerCase().includes('usb') || a.description?.toLowerCase().includes('power')),
+      entertainment: amenities.some((a: any) => a.amenityType === 'ENTERTAINMENT' || a.description?.toLowerCase().includes('entertainment') || a.description?.toLowerCase().includes('video')),
+      meals: amenities.some((a: any) => a.amenityType === 'FOOD' || a.amenityType === 'BEVERAGE' || a.description?.toLowerCase().includes('meal')),
+    },
     rawData: offer,
   };
 }

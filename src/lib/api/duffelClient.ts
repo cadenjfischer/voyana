@@ -21,6 +21,12 @@ export interface NormalizedFlight {
   cabinClass: string;
   stops: number;
   apiSource: 'duffel' | 'amadeus';
+  amenities?: {
+    wifi?: boolean;
+    power?: boolean;
+    entertainment?: boolean;
+    meals?: boolean;
+  };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rawData: any;
 }
@@ -81,6 +87,10 @@ export function normalizeFlightData(offer: any): NormalizedFlight {
   const slice = offer.slices[0];
   const segment = slice.segments[0];
   
+  // Extract amenities from the first passenger's cabin (if available)
+  const cabin = segment.passengers?.[0]?.cabin;
+  const amenities = cabin?.amenities || [];
+  
   return {
     id: offer.id,
     carrier: segment.marketing_carrier.name,
@@ -98,6 +108,12 @@ export function normalizeFlightData(offer: any): NormalizedFlight {
     cabinClass: segment.passengers[0]?.cabin_class_marketing_name || 'Economy',
     stops: slice.segments.length - 1,
     apiSource: 'duffel',
+    amenities: {
+      wifi: amenities.some((a: any) => a.type === 'wifi'),
+      power: amenities.some((a: any) => a.type === 'power' || a.type === 'usb_power'),
+      entertainment: amenities.some((a: any) => a.type === 'video' || a.type === 'audio'),
+      meals: amenities.some((a: any) => a.type === 'food' || a.type === 'beverage'),
+    },
     rawData: offer,
   };
 }
