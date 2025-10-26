@@ -11,7 +11,7 @@ interface FareOption {
     carryOn: number;
     checked: number;
     changes: 'included' | 'fee' | 'not-allowed';
-    refund: boolean;
+    refund: 'included' | 'fee' | 'not-allowed';
     meals?: boolean;
     wifi?: boolean;
     priority?: boolean;
@@ -58,7 +58,7 @@ export default function FareClassModal({
             carryOn: 1,
             checked: 0,
             changes: 'not-allowed',
-            refund: false,
+            refund: 'not-allowed',
           },
         },
         {
@@ -70,7 +70,7 @@ export default function FareClassModal({
             carryOn: 1,
             checked: 1,
             changes: 'fee',
-            refund: false,
+            refund: 'not-allowed',
             meals: true,
           },
         },
@@ -83,7 +83,7 @@ export default function FareClassModal({
             carryOn: 1,
             checked: 1,
             changes: 'included',
-            refund: false,
+            refund: 'fee',
             meals: true,
             wifi: true,
             priority: true,
@@ -103,7 +103,7 @@ export default function FareClassModal({
             carryOn: 2,
             checked: 2,
             changes: 'included',
-            refund: true,
+            refund: 'included',
             meals: true,
             wifi: true,
             priority: true,
@@ -123,7 +123,7 @@ export default function FareClassModal({
             carryOn: 2,
             checked: 3,
             changes: 'included',
-            refund: true,
+            refund: 'included',
             meals: true,
             wifi: true,
             priority: true,
@@ -135,6 +135,18 @@ export default function FareClassModal({
 
   const currentCabinClass = cabinClasses.find((c) => c.cabin === selectedCabin)!;
   const lowestPrice = currentCabinClass.options[0];
+
+  // Extract time from ISO datetime (e.g., "2025-10-30T21:25:00" -> "21:25")
+  const departureTime = new Date(flight.departure).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const arrivalTime = new Date(flight.arrival).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -148,7 +160,7 @@ export default function FareClassModal({
         {/* Modal panel */}
         <div className="relative inline-block w-full max-w-5xl px-4 pt-5 pb-4 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:p-6">
           {/* Header */}
-          <div className="flex items-start justify-between mb-6">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
                 Select fare to {flight.destinationName}
@@ -157,34 +169,40 @@ export default function FareClassModal({
                 This flight is operated by {flight.carrier}
               </p>
             </div>
+            
+            {/* Small Flight Timeline - Centered */}
+            <div className="flex items-center gap-4 px-6">
+              <div className="text-center">
+                <p className="text-lg font-bold text-gray-900">{departureTime}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{flight.origin}</p>
+              </div>
+              <div className="flex items-center">
+                <div className="w-16 h-px bg-gray-300"></div>
+                {flight.carrierLogo ? (
+                  <img 
+                    src={flight.carrierLogo} 
+                    alt={flight.carrier}
+                    className="w-8 h-8 rounded-full mx-2 object-contain bg-white border border-gray-200"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center mx-2 font-bold shadow-sm">
+                    {flight.carrier.substring(0, 2)}
+                  </div>
+                )}
+                <div className="w-16 h-px bg-gray-300"></div>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold text-gray-900">{arrivalTime}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{flight.destination}</p>
+              </div>
+            </div>
+
             <button
               onClick={onClose}
               className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
-          </div>
-
-          {/* Flight Info */}
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Departure</p>
-                <p className="text-lg font-semibold text-gray-900">{flight.origin}</p>
-              </div>
-              <div className="text-center flex-1">
-                <p className="text-sm text-gray-600">{flight.duration}</p>
-                <p className="text-xs text-green-600 font-semibold">
-                  {flight.stops === 0
-                    ? 'Nonstop'
-                    : `${flight.stops} stop${flight.stops > 1 ? 's' : ''}`}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600">Arrival</p>
-                <p className="text-lg font-semibold text-gray-900">{flight.destination}</p>
-              </div>
-            </div>
           </div>
 
           {/* Cabin Tabs */}
@@ -215,7 +233,7 @@ export default function FareClassModal({
           </div>
 
           {/* Fare Options in Selected Cabin */}
-          <div className="space-y-4">
+          <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
                 Choose your {selectedCabin} fare
@@ -226,176 +244,169 @@ export default function FareClassModal({
               </p>
             </div>
 
-            {currentCabinClass.options.map((fareOption, index) => (
+            {/* Horizontal Grid of Fare Options */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {currentCabinClass.options.map((fareOption, index) => (
               <div
                 key={index}
-                className={`border-2 rounded-lg p-6 transition-all cursor-pointer ${
+                className={`border-2 rounded-lg p-4 transition-all cursor-pointer flex flex-col ${
                   selectedFare?.name === fareOption.name
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-200 hover:border-blue-300'
                 }`}
                 onClick={() => setSelectedFare(fareOption)}
               >
-                <div className="flex items-start justify-between">
-                  {/* Fare Details */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div>
-                        <h4 className="text-xl font-bold text-gray-900">
-                          {fareOption.currency === 'USD' ? '$' : fareOption.currency}
-                          {Math.round(fareOption.price)}
-                        </h4>
-                        <p className="text-xs text-gray-500">per person</p>
-                      </div>
-                      <div className="border-l border-gray-300 pl-3">
-                        <p className="font-semibold text-gray-900">{fareOption.name}</p>
-                        <p className="text-sm text-gray-600">{selectedCabin}</p>
-                      </div>
-                    </div>
-
-                    {/* Features Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {/* Seat Selection */}
-                      <div>
-                        <p className="text-xs font-semibold text-gray-700 mb-2">Seat</p>
-                        <div className="flex items-start gap-2 text-sm">
-                          {fareOption.features.seatSelection === 'included' ? (
-                            <>
-                              <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                              <span className="text-gray-700">Seat choice included</span>
-                            </>
-                          ) : fareOption.features.seatSelection === 'free' ? (
-                            <>
-                              <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                              <span className="text-gray-700">Seat choice for a fee</span>
-                            </>
-                          ) : (
-                            <>
-                              <Ban className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                              <span className="text-gray-500">Seat choice for a fee</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Baggage */}
-                      <div>
-                        <p className="text-xs font-semibold text-gray-700 mb-2">Bags</p>
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                            <span className="text-gray-700">Personal item</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                            <span className="text-gray-700">Carry-on bag</span>
-                          </div>
-                          {fareOption.features.checked > 0 ? (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                              <span className="text-gray-700">
-                                {fareOption.features.checked} checked bag
-                                {fareOption.features.checked > 1 ? 's' : ''}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Ban className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                              <span className="text-gray-500">No checked bags</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Flexibility */}
-                      <div>
-                        <p className="text-xs font-semibold text-gray-700 mb-2">Flexibility</p>
-                        <div className="space-y-1">
-                          <div className="flex items-start gap-2 text-sm">
-                            {fareOption.features.changes === 'included' ? (
-                              <>
-                                <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">Changes included</span>
-                              </>
-                            ) : fareOption.features.changes === 'fee' ? (
-                              <>
-                                <span className="text-yellow-600 mt-0.5 flex-shrink-0 text-xs font-bold">
-                                  $
-                                </span>
-                                <span className="text-gray-700">Change fee</span>
-                              </>
-                            ) : (
-                              <>
-                                <X className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-500">Changes not allowed</span>
-                              </>
-                            )}
-                          </div>
-                          <div className="flex items-start gap-2 text-sm">
-                            {fareOption.features.refund ? (
-                              <>
-                                <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">Refundable</span>
-                              </>
-                            ) : (
-                              <>
-                                <X className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-500">Non-refundable</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Amenities */}
-                      <div>
-                        <p className="text-xs font-semibold text-gray-700 mb-2">Amenities</p>
-                        <div className="space-y-1">
-                          {fareOption.features.wifi ? (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Wifi className="w-4 h-4 text-green-600 flex-shrink-0" />
-                              <span className="text-gray-700">Wi-Fi</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Ban className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                              <span className="text-gray-500">No Wi-Fi</span>
-                            </div>
-                          )}
-                          {fareOption.features.meals ? (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Utensils className="w-4 h-4 text-green-600 flex-shrink-0" />
-                              <span className="text-gray-700">Meals</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Ban className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                              <span className="text-gray-500">No meals</span>
-                            </div>
-                          )}
-                          {fareOption.features.priority && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                              <span className="text-gray-700">Priority boarding</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                {/* Price & Name - Horizontal Layout like Air Canada */}
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase mb-1">{selectedCabin}</p>
+                    <p className="font-bold text-gray-900">{fareOption.name}</p>
                   </div>
-
-                  {/* Select Button */}
-                  <div className="ml-6">
-                    <button
-                      onClick={() => onSelectFare(fareOption, selectedCabin)}
-                      className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
-                    >
-                      Select
-                    </button>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500 uppercase">
+                      {fareOption.currency === 'USD' ? 'US' : fareOption.currency}
+                    </p>
+                    <h4 className="text-2xl font-bold text-gray-900">
+                      ${Math.round(fareOption.price)}
+                    </h4>
                   </div>
                 </div>
+
+                {/* Features List */}
+                <div className="space-y-3 flex-1">
+                  {/* Seat Selection */}
+                  <div className="flex items-start gap-2 text-sm">
+                    {fareOption.features.seatSelection === 'included' ? (
+                      <>
+                        <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700">Seat choice included</span>
+                      </>
+                    ) : fareOption.features.seatSelection === 'free' ? (
+                      <>
+                        <Ban className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-500">Seat choice for a fee</span>
+                      </>
+                    ) : (
+                      <>
+                        <Ban className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-500">Seat choice for a fee</span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Baggage */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700">Personal item</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700">Carry-on bag</span>
+                    </div>
+                    {fareOption.features.checked > 0 ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span className="text-gray-700">
+                          {fareOption.features.checked} checked bag
+                          {fareOption.features.checked > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Ban className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-500">No checked bags</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Flexibility */}
+                  <div className="space-y-1">
+                    <div className="flex items-start gap-2 text-sm">
+                      {fareOption.features.changes === 'included' ? (
+                        <>
+                          <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-700">Changes included</span>
+                        </>
+                      ) : fareOption.features.changes === 'fee' ? (
+                        <>
+                          <span className="text-yellow-600 mt-0.5 flex-shrink-0 text-xs font-bold">
+                            $
+                          </span>
+                          <span className="text-gray-700">Change fee</span>
+                        </>
+                      ) : (
+                        <>
+                          <X className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-500">Changes not allowed</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex items-start gap-2 text-sm">
+                      {fareOption.features.refund === 'included' ? (
+                        <>
+                          <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-700">Refundable</span>
+                        </>
+                      ) : fareOption.features.refund === 'fee' ? (
+                        <>
+                          <span className="text-yellow-600 mt-0.5 flex-shrink-0 text-xs font-bold">
+                            $
+                          </span>
+                          <span className="text-gray-700">Refund fee</span>
+                        </>
+                      ) : (
+                        <>
+                          <X className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-500">Non-refundable</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Amenities */}
+                  <div className="space-y-1">
+                    {fareOption.features.wifi ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Wifi className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span className="text-gray-700">Wi-Fi</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Ban className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-500">No Wi-Fi</span>
+                      </div>
+                    )}
+                    {fareOption.features.meals ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Utensils className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span className="text-gray-700">Meals</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Ban className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-500">No meals</span>
+                      </div>
+                    )}
+                    {fareOption.features.priority && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span className="text-gray-700">Priority boarding</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Select Button */}
+                <button
+                  onClick={() => onSelectFare(fareOption, selectedCabin)}
+                  className="w-full mt-4 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Select
+                </button>
               </div>
             ))}
+          </div>
           </div>
         </div>
       </div>
