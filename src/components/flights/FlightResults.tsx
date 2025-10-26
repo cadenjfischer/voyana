@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { NormalizedFlight } from '@/lib/api/duffelClient';
-import { Plane, ArrowRight, Filter, X, Wifi, Zap, Monitor, Utensils } from 'lucide-react';
+import { Plane, ArrowRight, Filter, X, Wifi, Zap, Monitor, Utensils, Luggage } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import type { User } from '@supabase/supabase-js';
 import PassengerInfoModal, { PassengerInfo } from './PassengerInfoModal';
@@ -389,6 +389,19 @@ export default function FlightResults({
                     )}
                   </div>
                 )}
+                
+                {/* Baggage Info */}
+                {flight.baggage && (
+                  <div className="flex items-center gap-1 text-xs text-gray-600">
+                    <Luggage className="h-3 w-3" />
+                    <span>
+                      {flight.baggage.carryOn?.quantity || 0} carry-on
+                      {flight.baggage.checked && flight.baggage.checked.quantity > 0 && (
+                        <>, {flight.baggage.checked.quantity} checked</>
+                      )}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -484,6 +497,49 @@ export default function FlightResults({
                       <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 border border-orange-200 text-orange-700 rounded-lg text-sm">
                         <Utensils className="h-4 w-4" />
                         <span className="font-medium">Meals included</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Baggage Section */}
+              {flight.baggage && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Baggage Allowance</p>
+                  <div className="flex flex-wrap gap-3">
+                    {flight.baggage.carryOn && flight.baggage.carryOn.quantity > 0 && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                        <Luggage className="h-4 w-4 text-blue-600" />
+                        <div>
+                          <p className="text-sm font-semibold text-blue-900">
+                            {flight.baggage.carryOn.quantity}x Carry-on
+                          </p>
+                          {flight.baggage.carryOn.weight && (
+                            <p className="text-xs text-blue-700">Up to {flight.baggage.carryOn.weight}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {flight.baggage.checked && flight.baggage.checked.quantity > 0 ? (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+                        <Luggage className="h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="text-sm font-semibold text-green-900">
+                            {flight.baggage.checked.quantity}x Checked bag{flight.baggage.checked.quantity > 1 ? 's' : ''}
+                          </p>
+                          {flight.baggage.checked.weight && (
+                            <p className="text-xs text-green-700">Up to {flight.baggage.checked.weight} each</p>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                        <Luggage className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700">No checked bags included</p>
+                          <p className="text-xs text-gray-500">May be available for purchase</p>
+                        </div>
                       </div>
                     )}
                   </div>

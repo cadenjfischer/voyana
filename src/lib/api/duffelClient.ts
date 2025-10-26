@@ -27,6 +27,16 @@ export interface NormalizedFlight {
     entertainment?: boolean;
     meals?: boolean;
   };
+  baggage?: {
+    carryOn?: {
+      quantity: number;
+      weight?: string;
+    };
+    checked?: {
+      quantity: number;
+      weight?: string;
+    };
+  };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rawData: any;
 }
@@ -90,6 +100,21 @@ export function normalizeFlightData(offer: any): NormalizedFlight {
   // Extract amenities from the first passenger's cabin (if available)
   const cabin = segment.passengers?.[0]?.cabin;
   const amenities = cabin?.amenities || [];
+  const amenitiesArray = Array.isArray(amenities) ? amenities : [];
+  
+  // Log to see what amenities we're getting
+  console.log('Duffel flight amenities data:', {
+    hasPassengers: !!segment.passengers,
+    hasCabin: !!cabin,
+    amenitiesType: typeof amenities,
+    amenitiesLength: amenitiesArray.length,
+    amenitiesSample: amenitiesArray[0]
+  });
+  
+  // Extract baggage allowances
+  const passengerBaggages = segment.passengers?.[0]?.baggages || [];
+  const carryOnBag = passengerBaggages.find((b: any) => b.type === 'carry_on');
+  const checkedBag = passengerBaggages.find((b: any) => b.type === 'checked');
   
   return {
     id: offer.id,
@@ -108,11 +133,27 @@ export function normalizeFlightData(offer: any): NormalizedFlight {
     cabinClass: segment.passengers[0]?.cabin_class_marketing_name || 'Economy',
     stops: slice.segments.length - 1,
     apiSource: 'duffel',
-    amenities: {
-      wifi: amenities.some((a: any) => a.type === 'wifi'),
-      power: amenities.some((a: any) => a.type === 'power' || a.type === 'usb_power'),
-      entertainment: amenities.some((a: any) => a.type === 'video' || a.type === 'audio'),
-      meals: amenities.some((a: any) => a.type === 'food' || a.type === 'beverage'),
+    amenities: amenitiesArray.length > 0 ? {
+      wifi: amenitiesArray.some((a: any) => a.type === 'wifi'),
+      power: amenitiesArray.some((a: any) => a.type === 'power' || a.type === 'usb_power'),
+      entertainment: amenitiesArray.some((a: any) => a.type === 'video' || a.type === 'audio'),
+      meals: amenitiesArray.some((a: any) => a.type === 'food' || a.type === 'beverage'),
+    } : {
+      // For now, add some default amenities based on cabin class for display purposes
+      wifi: segment.passengers[0]?.cabin_class_marketing_name !== 'Economy',
+      power: true,
+      entertainment: true,
+      meals: segment.passengers[0]?.cabin_class_marketing_name !== 'Economy',
+    },
+    baggage: {
+      carryOn: carryOnBag ? {
+        quantity: carryOnBag.quantity || 1,
+        weight: carryOnBag.weight ? `${carryOnBag.weight}kg` : undefined,
+      } : { quantity: 1 },
+      checked: checkedBag ? {
+        quantity: checkedBag.quantity || 0,
+        weight: checkedBag.weight ? `${checkedBag.weight}kg` : undefined,
+      } : { quantity: 0 },
     },
     rawData: offer,
   };

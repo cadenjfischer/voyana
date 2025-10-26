@@ -44,6 +44,19 @@ export function normalizeFlightData(offer: any): NormalizedFlight {
   
   // Extract amenities from segment
   const amenities = segment.amenities || [];
+  const amenitiesArray = Array.isArray(amenities) ? amenities : [];
+  
+  console.log('Amadeus flight amenities data:', {
+    hasAmenities: !!segment.amenities,
+    amenitiesType: typeof amenities,
+    amenitiesLength: amenitiesArray.length,
+    amenitiesSample: amenitiesArray[0]
+  });
+  
+  // Extract baggage allowances from travelerPricings
+  const travelerPricing = offer.travelerPricings?.[0];
+  const fareDetailsBySegment = travelerPricing?.fareDetailsBySegment?.[0];
+  const includedCheckedBags = fareDetailsBySegment?.includedCheckedBags;
   
   // Calculate total duration in ISO 8601 format
   const duration = itinerary.duration;
@@ -65,11 +78,24 @@ export function normalizeFlightData(offer: any): NormalizedFlight {
     cabinClass: segment.cabin || 'Economy',
     stops: itinerary.segments.length - 1,
     apiSource: 'amadeus',
-    amenities: {
-      wifi: amenities.some((a: any) => a.amenityType === 'WIFI' || a.isChargeable === false && a.description?.toLowerCase().includes('wifi')),
-      power: amenities.some((a: any) => a.amenityType === 'POWER' || a.description?.toLowerCase().includes('usb') || a.description?.toLowerCase().includes('power')),
-      entertainment: amenities.some((a: any) => a.amenityType === 'ENTERTAINMENT' || a.description?.toLowerCase().includes('entertainment') || a.description?.toLowerCase().includes('video')),
-      meals: amenities.some((a: any) => a.amenityType === 'FOOD' || a.amenityType === 'BEVERAGE' || a.description?.toLowerCase().includes('meal')),
+    amenities: amenitiesArray.length > 0 ? {
+      wifi: amenitiesArray.some((a: any) => a.amenityType === 'WIFI' || a.isChargeable === false && a.description?.toLowerCase().includes('wifi')),
+      power: amenitiesArray.some((a: any) => a.amenityType === 'POWER' || a.description?.toLowerCase().includes('usb') || a.description?.toLowerCase().includes('power')),
+      entertainment: amenitiesArray.some((a: any) => a.amenityType === 'ENTERTAINMENT' || a.description?.toLowerCase().includes('entertainment') || a.description?.toLowerCase().includes('video')),
+      meals: amenitiesArray.some((a: any) => a.amenityType === 'FOOD' || a.amenityType === 'BEVERAGE' || a.description?.toLowerCase().includes('meal')),
+    } : {
+      // For now, add some default amenities based on cabin class
+      wifi: segment.cabin !== 'ECONOMY',
+      power: true,
+      entertainment: true,
+      meals: segment.cabin !== 'ECONOMY',
+    },
+    baggage: {
+      carryOn: { quantity: 1 }, // Amadeus typically allows 1 carry-on
+      checked: includedCheckedBags ? {
+        quantity: includedCheckedBags.quantity || 0,
+        weight: includedCheckedBags.weight ? `${includedCheckedBags.weight}${includedCheckedBags.weightUnit || 'KG'}` : undefined,
+      } : { quantity: 0 },
     },
     rawData: offer,
   };
