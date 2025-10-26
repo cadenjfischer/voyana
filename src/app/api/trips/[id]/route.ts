@@ -62,7 +62,8 @@ export async function PATCH(
     const body = await request.json()
     
     // Remove id and user_id from update payload if present
-    const { id: _, user_id: __, ...updates } = body
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _id, user_id: _user_id, ...updates } = body
 
     const supabase = await createClient()
     
