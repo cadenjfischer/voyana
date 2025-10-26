@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
       { 
         error: 'Failed to search airports',
         details: error instanceof Error ? error.message : 'Unknown error',
-        // @ts-ignore - debugging
+        // @ts-expect-error - debugging
         fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
       },
       { status: 500 }
