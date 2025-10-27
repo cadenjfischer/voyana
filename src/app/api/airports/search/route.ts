@@ -71,12 +71,53 @@ export async function GET(request: NextRequest) {
 
     console.log('Duffel API response:', {
       count: places.data.length,
-      first: places.data[0]
+      first: places.data[0],
+      types: [...new Set(places.data.map((p: DuffelPlace) => p.type))]
     });
 
-    // Include both airports and cities for better search results
-    const airports = places.data
-      .filter((place: DuffelPlace) => place.type === 'airport' || place.type === 'city')
+    // Filter for commercial airports only - exclude military bases, small regional airports
+    // Duffel's suggestions.list already returns primarily commercial airports
+    // Prioritize cities (they aggregate major airports), then commercial airports
+    const filteredPlaces = places.data
+      .filter((place: DuffelPlace) => {
+        // Always include cities (they aggregate major airports)
+        if (place.type === 'city') return true;
+        
+        // For airports, filter out non-commercial ones
+        if (place.type === 'airport') {
+          const name = (place.name || '').toLowerCase();
+          // Exclude military bases, air force bases, and other non-commercial facilities
+          const nonCommercialKeywords = [
+            'air force base',
+            'air base',
+            'afb',
+            'military',
+            'naval',
+            'army',
+            'marine corps',
+            'heliport',
+            'seaplane',
+            'private',
+          ];
+          
+          const isNonCommercial = nonCommercialKeywords.some(keyword => 
+            name.includes(keyword)
+          );
+          
+          return !isNonCommercial;
+        }
+        
+        return false;
+      });
+    
+    // Sort to prioritize cities first (better UX for major metros)
+    const sortedPlaces = filteredPlaces.sort((a: DuffelPlace, b: DuffelPlace) => {
+      if (a.type === 'city' && b.type !== 'city') return -1;
+      if (a.type !== 'city' && b.type === 'city') return 1;
+      return 0;
+    });
+    
+    const airports = sortedPlaces
       .map((place: DuffelPlace) => ({
         iataCode: place.iata_code || '',
         name: place.name || '',
@@ -84,7 +125,7 @@ export async function GET(request: NextRequest) {
         country: place.country_name || '',
         type: place.type || '',
       }))
-      .slice(0, 10); // Limit to top 10 results
+      .slice(0, 15); // Increased limit since we're filtering out more
 
     console.log('Filtered airports:', airports.length);
     return NextResponse.json({ places: airports });

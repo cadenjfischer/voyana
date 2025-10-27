@@ -95,7 +95,18 @@ export default function AirportAutocomplete({
           cityMap.get(cityKey)!.airports.push(place);
         });
         
-        setGroupedSuggestions(Array.from(cityMap.values()));
+        const grouped = Array.from(cityMap.values());
+        setGroupedSuggestions(grouped);
+        
+        // Auto-expand cities with multiple airports on first search
+        const citiesToExpand = new Set<string>();
+        grouped.forEach(group => {
+          if (group.airports.length > 1) {
+            citiesToExpand.add(`${group.city}-${group.country}`);
+          }
+        });
+        setExpandedCities(citiesToExpand);
+        
         setIsOpen(true);
       } catch (error) {
         console.error('Airport search error:', error);
