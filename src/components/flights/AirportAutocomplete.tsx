@@ -232,7 +232,9 @@ export default function AirportAutocomplete({
                   <span className="text-xs text-gray-500">•</span>
                   <span className="font-semibold text-gray-700 text-sm truncate">{airport.city}</span>
                 </div>
-                <p className="text-xs text-gray-600 truncate">{airport.name}</p>
+                <p className="text-xs text-gray-600 truncate">
+                  {airport.type === 'city' ? `All airports in ${airport.city}` : airport.name}
+                </p>
                 <p className="text-xs text-gray-500 mt-0.5">{airport.country}</p>
               </div>
             </button>
@@ -261,7 +263,9 @@ export default function AirportAutocomplete({
                   <span className="text-xs text-gray-500">•</span>
                   <span className="font-semibold text-gray-700 text-sm truncate">{airport.city}</span>
                 </div>
-                <p className="text-xs text-gray-600 truncate">{airport.name}</p>
+                <p className="text-xs text-gray-600 truncate">
+                  {airport.type === 'city' ? `All airports in ${airport.city}` : airport.name}
+                </p>
                 <p className="text-xs text-gray-500 mt-0.5">{airport.country}</p>
               </div>
             </button>
