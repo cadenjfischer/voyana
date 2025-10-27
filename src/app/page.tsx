@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from "@/components/Header";
-import { Plane, Bed, Car, Package, MapPin, Ship } from 'lucide-react';
+import { Plane, Bed, Car, Package, MapPin, Ship, ArrowLeftRight } from 'lucide-react';
 import AirportAutocomplete from '@/components/flights/AirportAutocomplete';
+import AirlineDatePicker from '@/components/AirlineDatePicker';
 import { format } from 'date-fns';
 
 export default function Home() {
@@ -38,8 +39,11 @@ export default function Home() {
     router.push(`/flights/loading-search?${params.toString()}`);
   };
 
-  // Get today's date for min date
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const handleSwap = () => {
+    const temp = origin;
+    setOrigin(destination);
+    setDestination(temp);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -173,54 +177,48 @@ export default function Home() {
 
                 {/* Origin and Destination */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <AirportAutocomplete
-                    id="origin"
-                    label="Leaving from"
-                    value={origin}
-                    onChange={setOrigin}
-                    placeholder="City or airport"
-                  />
-                  <AirportAutocomplete
-                    id="destination"
-                    label="Going to"
-                    value={destination}
-                    onChange={setDestination}
-                    placeholder="City or airport"
-                  />
-                </div>
-
-                {/* Dates and Travelers */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div>
-                    <label htmlFor="departure" className="block text-sm font-semibold text-gray-700 mb-2">
-                      Departure
-                    </label>
-                    <input
-                      type="date"
-                      id="departure"
-                      value={departureDate}
-                      onChange={(e) => setDepartureDate(e.target.value)}
-                      min={today}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  <div className="relative">
+                    <AirportAutocomplete
+                      id="origin"
+                      label="Leaving from"
+                      value={origin}
+                      onChange={setOrigin}
+                      placeholder="City or airport"
                     />
                   </div>
+                  
+                  {/* Swap Button */}
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 hidden md:block">
+                    <button
+                      type="button"
+                      onClick={handleSwap}
+                      className="p-2 bg-white border-2 border-gray-300 rounded-full hover:bg-gray-50 transition-colors shadow-md"
+                    >
+                      <ArrowLeftRight className="w-5 h-5 text-gray-600" />
+                    </button>
+                  </div>
+                  
+                  <div className="relative">
+                    <AirportAutocomplete
+                      id="destination"
+                      label="Going to"
+                      value={destination}
+                      onChange={setDestination}
+                      placeholder="City or airport"
+                    />
+                  </div>
+                </div>
 
-                  {tripType === 'round-trip' && (
-                    <div>
-                      <label htmlFor="return" className="block text-sm font-semibold text-gray-700 mb-2">
-                        Return
-                      </label>
-                      <input
-                        type="date"
-                        id="return"
-                        value={returnDate}
-                        onChange={(e) => setReturnDate(e.target.value)}
-                        min={departureDate || today}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  )}
+                {/* Dates and Travelers - More Compact */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-2">
+                    <AirlineDatePicker
+                      startDate={departureDate}
+                      endDate={tripType === 'round-trip' ? returnDate : undefined}
+                      onStartDateChange={setDepartureDate}
+                      onEndDateChange={setReturnDate}
+                    />
+                  </div>
 
                   <div>
                     <label htmlFor="passengers" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -230,7 +228,7 @@ export default function Home() {
                       id="passengers"
                       value={passengers}
                       onChange={(e) => setPassengers(parseInt(e.target.value))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                     >
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                         <option key={num} value={num}>

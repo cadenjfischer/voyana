@@ -9,26 +9,13 @@ export default function LoadingSearchPage() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Fetch flight results in the background
-    const fetchFlights = async () => {
-      try {
-        const response = await fetch(`/api/flights/search?${searchParams.toString()}`);
-        const data = await response.json();
+    // Just show the loading animation for UX, then navigate
+    // The actual data fetching will happen on the flights page
+    const timer = setTimeout(() => {
+      router.push(`/flights?${searchParams.toString()}`);
+    }, 2000);
 
-        // After 2 seconds minimum (for nice UX), navigate to results
-        setTimeout(() => {
-          router.push(`/flights?${searchParams.toString()}`);
-        }, 2000);
-      } catch (error) {
-        console.error('Search error:', error);
-        // Still navigate to flights page even on error
-        setTimeout(() => {
-          router.push(`/flights?${searchParams.toString()}`);
-        }, 2000);
-      }
-    };
-
-    fetchFlights();
+    return () => clearTimeout(timer);
   }, [searchParams, router]);
 
   return (
