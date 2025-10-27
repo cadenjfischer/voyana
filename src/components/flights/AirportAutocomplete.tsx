@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { MapPin, Loader2, ChevronRight } from 'lucide-react';
+import { MapPin, Loader2 } from 'lucide-react';
 
 interface Airport {
   iataCode: string;
@@ -10,13 +10,6 @@ interface Airport {
   city: string;
   country: string;
   type: string;
-}
-
-interface GroupedAirport {
-  city: string;
-  country: string;
-  airports: Airport[];
-  isExpanded?: boolean;
 }
 
 interface AirportAutocompleteProps {
@@ -41,8 +34,6 @@ export default function AirportAutocomplete({
   inline = false,
 }: AirportAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<Airport[]>([]);
-  const [groupedSuggestions, setGroupedSuggestions] = useState<GroupedAirport[]>([]);
-  const [expandedCities, setExpandedCities] = useState<Set<string>>(new Set());
   const [isOpen, setIsOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -80,28 +71,10 @@ export default function AirportAutocomplete({
         console.log('Response data:', data);
         const allPlaces = (data.places || []).slice(0, 10);
         setSuggestions(allPlaces);
-        
-        // Group airports by city
-        const cityMap = new Map<string, GroupedAirport>();
-        allPlaces.forEach((place: Airport) => {
-          const cityKey = `${place.city}-${place.country}`;
-          if (!cityMap.has(cityKey)) {
-            cityMap.set(cityKey, {
-              city: place.city,
-              country: place.country,
-              airports: [],
-            });
-          }
-          cityMap.get(cityKey)!.airports.push(place);
-        });
-        
-        
-        setGroupedSuggestions(Array.from(cityMap.values()));
         setIsOpen(true);
       } catch (error) {
         console.error('Airport search error:', error);
         setSuggestions([]);
-        setGroupedSuggestions([]);
       } finally {
         setIsLoading(false);
       }
@@ -242,83 +215,27 @@ export default function AirportAutocomplete({
       </div>
 
       {/* Dropdown */}
-      {isOpen && isFocused && groupedSuggestions.length > 0 && (!inline ? (
+      {isOpen && isFocused && suggestions.length > 0 && (!inline ? (
         <div className="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-96 overflow-y-auto">
-          {groupedSuggestions.map((group, groupIndex) => (
-            <div key={`${group.city}-${group.country}`}>
-              {group.airports.length === 1 ? (
-                // Single airport - show directly
-                <button
-                  type="button"
-                  onClick={() => handleSelect(group.airports[0])}
-                  className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors flex items-start gap-3 border-b border-gray-100 last:border-b-0"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="font-bold text-gray-900 text-base">{group.airports[0].iataCode}</span>
-                      <span className="text-xs text-gray-500">•</span>
-                      <span className="font-semibold text-gray-700 text-sm truncate">{group.city}</span>
-                    </div>
-                    <p className="text-xs text-gray-600 truncate">{group.airports[0].name}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{group.country}</p>
-                  </div>
-                </button>
-              ) : (
-                // Multiple airports - show expandable group
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const cityKey = `${group.city}-${group.country}`;
-                      setExpandedCities(prev => {
-                        const newSet = new Set(prev);
-                        if (newSet.has(cityKey)) {
-                          newSet.delete(cityKey);
-                        } else {
-                          newSet.add(cityKey);
-                        }
-                        return newSet;
-                      });
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors flex items-center gap-3 border-b border-gray-100"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="font-bold text-gray-900 text-base">
-                          {group.city} ({group.airports.length} airports)
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500">{group.country}</p>
-                    </div>
-                    <ChevronRight
-                      className={`w-5 h-5 text-gray-400 transition-transform ${
-                        expandedCities.has(`${group.city}-${group.country}`) ? 'rotate-90' : ''
-                      }`}
-                    />
-                  </button>
-                  {expandedCities.has(`${group.city}-${group.country}`) && (
-                    <div className="bg-gray-50">
-                      {group.airports.map((airport) => (
-                        <button
-                          key={airport.iataCode}
-                          type="button"
-                          onClick={() => handleSelect(airport)}
-                          className="w-full px-4 py-2 pl-8 text-left hover:bg-blue-50 transition-colors flex items-start gap-3 border-b border-gray-100 last:border-b-0"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="font-bold text-gray-900 text-sm">{airport.iataCode}</span>
-                              <span className="text-xs text-gray-500">•</span>
-                              <span className="font-medium text-gray-700 text-xs truncate">{airport.name}</span>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+          {suggestions.map((airport, index) => (
+            <button
+              key={airport.iataCode}
+              type="button"
+              onClick={() => handleSelect(airport)}
+              className={`w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors flex items-start gap-3 border-b border-gray-100 last:border-b-0 ${
+                index === selectedIndex ? 'bg-blue-50' : ''
+              }`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="font-bold text-gray-900 text-base">{airport.iataCode}</span>
+                  <span className="text-xs text-gray-500">•</span>
+                  <span className="font-semibold text-gray-700 text-sm truncate">{airport.city}</span>
                 </div>
-              )}
-            </div>
+                <p className="text-xs text-gray-600 truncate">{airport.name}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{airport.country}</p>
+              </div>
+            </button>
           ))}
         </div>
       ) : createPortal(
@@ -326,88 +243,28 @@ export default function AirportAutocomplete({
           className="absolute z-[1000] bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-96 overflow-y-auto"
           style={{ top: portalPos.top, left: portalPos.left, width: portalPos.width }}
         >
-          {groupedSuggestions.map((group) => (
-            <div key={`${group.city}-${group.country}`}>
-              {group.airports.length === 1 ? (
-                // Single airport - show directly
-                <button
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    handleSelect(group.airports[0]);
-                  }}
-                  className="w-full px-5 py-4 text-left hover:bg-blue-50 transition-colors flex items-start gap-3 border-b border-gray-100 last:border-b-0"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="font-bold text-gray-900 text-base">{group.airports[0].iataCode}</span>
-                      <span className="text-xs text-gray-500">•</span>
-                      <span className="font-semibold text-gray-700 text-sm truncate">{group.city}</span>
-                    </div>
-                    <p className="text-xs text-gray-600 truncate">{group.airports[0].name}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{group.country}</p>
-                  </div>
-                </button>
-              ) : (
-                // Multiple airports - show expandable group
-                <div>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      const cityKey = `${group.city}-${group.country}`;
-                      setExpandedCities(prev => {
-                        const newSet = new Set(prev);
-                        if (newSet.has(cityKey)) {
-                          newSet.delete(cityKey);
-                        } else {
-                          newSet.add(cityKey);
-                        }
-                        return newSet;
-                      });
-                    }}
-                    className="w-full px-5 py-4 text-left hover:bg-blue-50 transition-colors flex items-center gap-3 border-b border-gray-100"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="font-bold text-gray-900 text-base">
-                          {group.city} - All Airports
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500">{group.country}</p>
-                    </div>
-                    <ChevronRight
-                      className={`w-5 h-5 text-gray-400 transition-transform ${
-                        expandedCities.has(`${group.city}-${group.country}`) ? 'rotate-90' : ''
-                      }`}
-                    />
-                  </button>
-                  {expandedCities.has(`${group.city}-${group.country}`) && (
-                    <div className="bg-gray-50">
-                      {group.airports.map((airport) => (
-                        <button
-                          key={airport.iataCode}
-                          type="button"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            handleSelect(airport);
-                          }}
-                          className="w-full px-5 py-3 pl-10 text-left hover:bg-blue-50 transition-colors flex items-start gap-3 border-b border-gray-100 last:border-b-0"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="font-bold text-gray-900 text-sm">{airport.iataCode}</span>
-                              <span className="text-xs text-gray-500">•</span>
-                              <span className="font-medium text-gray-700 text-xs truncate">{airport.name}</span>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+          {suggestions.map((airport, index) => (
+            <button
+              key={airport.iataCode}
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleSelect(airport);
+              }}
+              className={`w-full px-5 py-4 text-left hover:bg-blue-50 transition-colors flex items-start gap-3 border-b border-gray-100 last:border-b-0 ${
+                index === selectedIndex ? 'bg-blue-50' : ''
+              }`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="font-bold text-gray-900 text-base">{airport.iataCode}</span>
+                  <span className="text-xs text-gray-500">•</span>
+                  <span className="font-semibold text-gray-700 text-sm truncate">{airport.city}</span>
                 </div>
-              )}
-            </div>
+                <p className="text-xs text-gray-600 truncate">{airport.name}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{airport.country}</p>
+              </div>
+            </button>
           ))}
         </div>,
         document.body
