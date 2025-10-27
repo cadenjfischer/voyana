@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Duffel } from '@duffel/api';
+import { majorAirports } from '@/constants/airports';
 
 // Deployment timestamp: 2025-10-26 18:20 UTC - Enhanced error logging
 
 interface DuffelPlace {
   iata_code?: string;
+  iata_city_code?: string | null;
   name?: string;
   city_name?: string | null;
   country_name?: string | null;
@@ -74,9 +76,28 @@ export async function GET(request: NextRequest) {
       first: places.data[0]
     });
 
-    // Include both airports and cities for better search results
+    // Filter and map airports
     const airports = places.data
-      .filter((place: DuffelPlace) => place.type === 'airport' || place.type === 'city')
+      .filter((place: DuffelPlace) => {
+        // Always include cities
+        if (place.type === 'city') return true;
+        
+        // For airports, check if they're in the major airports list
+        if (place.type === 'airport') {
+          const airportCode = place.iata_code;
+          const cityCode = place.iata_city_code;
+          
+          // If this city is in our major airports list, only show major airports
+          if (cityCode && majorAirports[cityCode]) {
+            return majorAirports[cityCode].includes(airportCode || '');
+          }
+          
+          // If city not in list, show all airports for that city
+          return true;
+        }
+        
+        return false;
+      })
       .map((place: DuffelPlace) => ({
         iataCode: place.iata_code || '',
         name: place.name || '',
