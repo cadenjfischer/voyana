@@ -82,17 +82,31 @@ export async function GET(request: NextRequest) {
         // Always include cities
         if (place.type === 'city') return true;
         
-        // For airports, check if they're in the major airports list
+        // For airports, check if they're major airports
         if (place.type === 'airport') {
           const airportCode = place.iata_code;
-          const cityCode = place.iata_city_code;
           
-          // If this city is in our major airports list, only show major airports
-          if (cityCode && majorAirports[cityCode]) {
-            return majorAirports[cityCode].includes(airportCode || '');
+          // Check if this airport code appears in ANY major airport list
+          // This filters out small regional airports with misleading city codes
+          const isMajorAirport = Object.values(majorAirports).some(airports => 
+            airports.includes(airportCode || '')
+          );
+          
+          if (isMajorAirport) {
+            return true;
           }
           
-          // If city not in list, show all airports for that city
+          // If not in major airports list, check if its city is also not in the list
+          // This allows small city airports through (cities we don't have in majorAirports)
+          const cityCode = place.iata_city_code;
+          const isInMajorCity = cityCode && majorAirports[cityCode];
+          
+          // If in a major city but not a major airport, filter it out
+          if (isInMajorCity) {
+            return false;
+          }
+          
+          // Small city airport - allow it through
           return true;
         }
         
