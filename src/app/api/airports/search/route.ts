@@ -74,13 +74,13 @@ export async function GET(request: NextRequest) {
       first: places.data[0]
     });
 
-    // Filter to only show airports (not cities)
+    // Include both airports and cities for better search results
     const airports = places.data
-      .filter((place: DuffelPlace) => place.type === 'airport')
+      .filter((place: DuffelPlace) => place.type === 'airport' || place.type === 'city')
       .map((place: DuffelPlace) => ({
         iataCode: place.iata_code || '',
         name: place.name || '',
-        city: place.city_name || '',
+        city: place.city_name || place.name || '', // Use name if city_name is null
         country: place.country_name || '',
         type: place.type || '',
       }))

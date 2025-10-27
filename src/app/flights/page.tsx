@@ -84,18 +84,29 @@ export default function FlightsPage() {
         origin,
         destination,
         departureDate,
-        passengers: totalPassengers.toString(),
+        adults: adults || '1',
+        children: children || '0',
+        infantsLap: infantsLap || '0',
+        infantsSeat: infantsSeat || '0',
       });
       
       if (returnDate) {
         params.append('returnDate', returnDate);
       }
+      if (searchParams.get('cabin')) {
+        params.append('cabin', searchParams.get('cabin')!);
+      }
 
       fetch(`/api/flights/search?${params}`)
         .then(res => res.json())
         .then(data => {
+          console.log('Flight search response:', data);
+          console.log('Number of flights:', data.flights?.length);
           if (data.flights) {
             setSearchResults(data.flights);
+            console.log('Search results set to:', data.flights.length, 'flights');
+          } else {
+            console.log('No flights in response data');
           }
         })
         .catch(error => {
@@ -103,9 +114,10 @@ export default function FlightsPage() {
         })
         .finally(() => {
           setIsSearching(false);
+          console.log('Search complete, isSearching set to false');
         });
     }
-  }, []); // Only run on mount
+  }, [searchParams]); // Re-run when URL params change
 
   const handleSearch = async (results: NormalizedFlight[], passengers: number) => {
     setSearchResults(results);

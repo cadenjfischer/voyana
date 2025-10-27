@@ -12,7 +12,11 @@ interface SearchParams {
   destination: string;
   departureDate: string;
   returnDate?: string;
-  passengers?: number;
+  passengers?: number; // Legacy - for backward compatibility
+  adults?: number;
+  children?: number;
+  infantsLap?: number;
+  infantsSeat?: number;
   cabinClass?: 'ECONOMY' | 'PREMIUM_ECONOMY' | 'BUSINESS' | 'FIRST';
 }
 
@@ -44,16 +48,31 @@ export async function searchFlights(params: SearchParams): Promise<NormalizedFli
     
     // Single cabin class search
     console.log(`Amadeus: Searching ${params.cabinClass} cabin class...`);
+    
+    // Use new passenger breakdown or fall back to legacy passengers param
+    const adults = params.adults || params.passengers || 1;
+    const children = params.children || 0;
+    const infantsLap = params.infantsLap || 0;
+    // Amadeus API doesn't distinguish between infants in lap vs seat, combine them
+    const infants = infantsLap + (params.infantsSeat || 0);
+    
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await amadeus.shopping.flightOffersSearch.get({
+    const searchParams: any = {
       originLocationCode: params.origin,
       destinationLocationCode: params.destination,
       departureDate: params.departureDate,
-      returnDate: params.returnDate,
-      adults: params.passengers || 1,
+      adults,
       travelClass: params.cabinClass,
       max: 50,
-    });
+    };
+    
+    // Add optional params
+    if (params.returnDate) searchParams.returnDate = params.returnDate;
+    if (children > 0) searchParams.children = children;
+    if (infants > 0) searchParams.infants = infants;
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const response = await amadeus.shopping.flightOffersSearch.get(searchParams);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return response.data.map((offer: any) => normalizeFlightData(offer));

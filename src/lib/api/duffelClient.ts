@@ -48,12 +48,43 @@ interface SearchParams {
   destination: string;
   departureDate: string;
   returnDate?: string;
-  passengers?: number;
+  passengers?: number; // Legacy - for backward compatibility
+  adults?: number;
+  children?: number;
+  infantsLap?: number;
+  infantsSeat?: number;
   cabinClass?: 'economy' | 'premium_economy' | 'business' | 'first';
 }
 
 export async function searchFlights(params: SearchParams): Promise<NormalizedFlight[]> {
   try {
+    // Use new passenger breakdown or fall back to legacy passengers param
+    const adults = params.adults || params.passengers || 1;
+    const children = params.children || 0;
+    const infantsLap = params.infantsLap || 0;
+    const infantsSeat = params.infantsSeat || 0;
+
+    console.log('Duffel search params:', { 
+      origin: params.origin, 
+      destination: params.destination,
+      departureDate: params.departureDate,
+      returnDate: params.returnDate,
+      adults, 
+      children, 
+      infantsLap, 
+      infantsSeat 
+    });
+
+    // Build passengers array for Duffel API
+    const passengers = [
+      ...Array(adults).fill({ type: 'adult' as const }),
+      ...Array(children).fill({ type: 'child' as const }),
+      ...Array(infantsLap).fill({ type: 'infant_without_seat' as const }),
+      ...Array(infantsSeat).fill({ type: 'infant_with_seat' as const }),
+    ];
+
+    console.log('Duffel passengers array:', passengers);
+
     const offerRequest = await duffel.offerRequests.create({
       slices: [
         {
@@ -69,13 +100,7 @@ export async function searchFlights(params: SearchParams): Promise<NormalizedFli
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any] : []),
       ],
-      passengers: [
-        { type: 'adult' as const },
-        ...(params.passengers && params.passengers > 1 
-          ? Array(params.passengers - 1).fill({ type: 'adult' as const }) 
-          : []
-        ),
-      ],
+      passengers,
       // Don't specify cabin_class to get offers for ALL cabin classes
       // This allows us to show economy, premium economy, business options
       // cabin_class: params.cabinClass || 'economy',
@@ -83,11 +108,15 @@ export async function searchFlights(params: SearchParams): Promise<NormalizedFli
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
+    console.log('Duffel offer request created:', offerRequest.data.id);
+
     // Get offers from the offer request
     const offers = await duffel.offers.list({
       offer_request_id: offerRequest.data.id,
       sort: 'total_amount',
     });
+
+    console.log(`Duffel returned ${offers.data.length} offers`);
 
     return offers.data.map(offer => normalizeFlightData(offer));
   } catch (error) {

@@ -17,7 +17,14 @@ export async function GET(request: NextRequest) {
     const destination = searchParams.get('destination');
     const departureDate = searchParams.get('departureDate');
     const returnDate = searchParams.get('returnDate') || undefined;
-    const passengers = parseInt(searchParams.get('passengers') || '1');
+    
+    // Handle new passenger breakdown structure
+    const adults = parseInt(searchParams.get('adults') || '1');
+    const children = parseInt(searchParams.get('children') || '0');
+    const infantsLap = parseInt(searchParams.get('infantsLap') || '0');
+    const infantsSeat = parseInt(searchParams.get('infantsSeat') || '0');
+    const passengers = adults + children + infantsLap + infantsSeat;
+    
     // Don't use cabinClass parameter - we want ALL cabin classes for fare options
     // const cabinClass = searchParams.get('cabinClass') as any || 'economy';
 
@@ -30,6 +37,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(`Searching flights: ${origin} → ${destination} on ${departureDate}`);
+    console.log(`Passengers: ${adults} adults, ${children} children, ${infantsLap} infants (lap), ${infantsSeat} infants (seat)`);
 
     // Search both APIs in parallel - WITHOUT cabin class filter to get all fare options
     const [duffelResults, amadeusResults] = await Promise.allSettled([
@@ -38,7 +46,10 @@ export async function GET(request: NextRequest) {
         destination,
         departureDate,
         returnDate,
-        passengers,
+        adults,
+        children,
+        infantsLap,
+        infantsSeat,
         // No cabinClass - returns all cabin classes
       }),
       amadeusClient.searchFlights({
@@ -46,7 +57,10 @@ export async function GET(request: NextRequest) {
         destination,
         departureDate,
         returnDate,
-        passengers,
+        adults,
+        children,
+        infantsLap,
+        infantsSeat,
         // No cabinClass - returns all cabin classes
       }),
     ]);

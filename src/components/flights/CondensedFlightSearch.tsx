@@ -25,8 +25,11 @@ export default function CondensedFlightSearch({
   initialTripType = 'round-trip',
 }: CondensedFlightSearchProps) {
   const router = useRouter();
+  // Store both display name and code for airports
   const [origin, setOrigin] = useState(initialOrigin);
+  const [originCode, setOriginCode] = useState(initialOrigin);
   const [destination, setDestination] = useState(initialDestination);
+  const [destinationCode, setDestinationCode] = useState(initialDestination);
   const [departureDate, setDepartureDate] = useState(initialDepartureDate);
   const [returnDate, setReturnDate] = useState(initialReturnDate);
   const [travelers, setTravelers] = useState<TravelersValue>({
@@ -42,8 +45,8 @@ export default function CondensedFlightSearch({
     e.preventDefault();
     
     const params = new URLSearchParams({
-      origin: origin.toUpperCase(),
-      destination: destination.toUpperCase(),
+      origin: originCode.toUpperCase(),
+      destination: destinationCode.toUpperCase(),
       departureDate,
       adults: travelers.adults.toString(),
       children: travelers.children.toString(),
@@ -60,9 +63,12 @@ export default function CondensedFlightSearch({
   };
 
   const handleSwap = () => {
-    const temp = origin;
+    const tempDisplay = origin;
+    const tempCode = originCode;
     setOrigin(destination);
-    setDestination(temp);
+    setOriginCode(destinationCode);
+    setDestination(tempDisplay);
+    setDestinationCode(tempCode);
   };
 
   return (
@@ -124,6 +130,11 @@ export default function CondensedFlightSearch({
                     label=""
                     value={origin}
                     onChange={setOrigin}
+                    onSelect={(airport) => {
+                      const displayName = `${airport.city} (${airport.iataCode})`;
+                      setOrigin(displayName);
+                      setOriginCode(airport.iataCode);
+                    }}
                     placeholder="City or airport"
                     inline
                   />
@@ -153,6 +164,11 @@ export default function CondensedFlightSearch({
                     label=""
                     value={destination}
                     onChange={setDestination}
+                    onSelect={(airport) => {
+                      const displayName = `${airport.city} (${airport.iataCode})`;
+                      setDestination(displayName);
+                      setDestinationCode(airport.iataCode);
+                    }}
                     placeholder="City or airport"
                     inline
                   />
