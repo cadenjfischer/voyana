@@ -83,10 +83,11 @@ export async function GET(request: NextRequest) {
         // Always include cities (they aggregate major airports)
         if (place.type === 'city') return true;
         
-        // For airports, filter out non-commercial ones
+        // For airports, be very selective - only major commercial airports
         if (place.type === 'airport') {
           const name = (place.name || '').toLowerCase();
-          // Exclude military bases, air force bases, and other non-commercial facilities
+          
+          // Exclude non-commercial facilities
           const nonCommercialKeywords = [
             'air force base',
             'air base',
@@ -104,7 +105,29 @@ export async function GET(request: NextRequest) {
             name.includes(keyword)
           );
           
-          return !isNonCommercial;
+          if (isNonCommercial) return false;
+          
+          // Exclude small regional airports, county airports, municipal airports
+          const smallAirportKeywords = [
+            'regional',
+            'county',
+            'municipal',
+            'field', // Like "Cox Field"
+            'executive',
+            'airpark',
+          ];
+          
+          const isSmallAirport = smallAirportKeywords.some(keyword => 
+            name.includes(keyword)
+          );
+          
+          if (isSmallAirport) return false;
+          
+          // Only include airports that explicitly say "Airport" or "International"
+          // This filters out smaller facilities
+          const isMajorAirport = name.includes('airport') || name.includes('international');
+          
+          return isMajorAirport;
         }
         
         return false;
