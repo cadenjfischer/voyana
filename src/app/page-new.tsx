@@ -6,8 +6,6 @@ import Header from "@/components/Header";
 import { Plane, Bed, Car, Package, MapPin, Ship, ArrowLeftRight } from 'lucide-react';
 import AirportAutocomplete from '@/components/flights/AirportAutocomplete';
 import AirlineDatePicker from '@/components/AirlineDatePicker';
-import { format } from 'date-fns';
-import TravelersSelector, { TravelersValue } from '@/components/flights/TravelersSelector';
 
 export default function Home() {
   const router = useRouter();
@@ -18,25 +16,18 @@ export default function Home() {
   const [destination, setDestination] = useState('');
   const [departureDate, setDepartureDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
-  const [travelers, setTravelers] = useState<TravelersValue>({
-    adults: 1,
-    children: 0,
-    infantsLap: 0,
-    infantsSeat: 0,
-    cabin: 'ECONOMY',
-  });
+  const [passengers, setPassengers] = useState(1);
   const [tripType, setTripType] = useState<'one-way' | 'round-trip'>('round-trip');
 
   const handleFlightSearch = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Build query params
-    const totalPassengers = travelers.adults + travelers.children + travelers.infantsLap + travelers.infantsSeat;
     const params = new URLSearchParams({
       origin: origin.toUpperCase(),
       destination: destination.toUpperCase(),
       departureDate,
-      passengers: totalPassengers.toString(),
+      passengers: passengers.toString(),
     });
 
     if (tripType === 'round-trip' && returnDate) {
@@ -77,7 +68,7 @@ export default function Home() {
           </p>
 
           {/* Search Card */}
-          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-7xl mx-auto">
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-5xl mx-auto">
             {/* Tabs */}
             <div className="flex gap-6 mb-6 border-b border-gray-200">
               <button
@@ -154,7 +145,7 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Flight Search Form */}
+            {/* Flight Search Form - Expedia Style */}
             {activeTab === 'flights' && (
               <form onSubmit={handleFlightSearch} className="space-y-6">
                 {/* Trip Type */}
@@ -176,94 +167,89 @@ export default function Home() {
                       name="tripType"
                       value="one-way"
                       checked={tripType === 'one-way'}
-                      onChange={(e) => setTripType(e.target.value as 'one-way')}
+                      onChange={(e) => {
+                        setTripType(e.target.value as 'one-way');
+                        setReturnDate('');
+                      }}
                       className="w-4 h-4 text-blue-600"
                     />
                     <span className="text-gray-900 font-medium">One-way</span>
                   </label>
                 </div>
 
-                {/* Search Fields - Horizontal Layout */}
-                <div className="flex items-end gap-2">
-                  {/* Leaving From */}
-                  <div className="flex-[1.7]">
-                    <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
-                      Leaving from
-                    </label>
-                    <div className="relative">
-                      <div className="flex items-center h-12 border border-gray-300 rounded-xl bg-white px-4 hover:border-gray-400 focus-within:border-blue-500 transition-colors">
-                        <MapPin className="w-4 h-4 text-gray-400 mr-3" />
-                        <AirportAutocomplete
-                          id="origin-home"
-                          label=""
-                          value={origin}
-                          onChange={setOrigin}
-                          placeholder="City or airport"
-                          inline
-                        />
-                      </div>
-                    </div>
+                {/* Search Fields Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                  {/* Leaving From - col-span-3 */}
+                  <div className="md:col-span-3">
+                    <AirportAutocomplete
+                      id="origin"
+                      label="Leaving from"
+                      value={origin}
+                      onChange={setOrigin}
+                      placeholder="City or airport"
+                    />
                   </div>
 
-                  {/* Swap Button */}
-                  <button
-                    type="button"
-                    onClick={handleSwap}
-                    className="mb-1 -mx-3 h-12 w-12 flex items-center justify-center border border-gray-300 rounded-full bg-white hover:border-gray-400 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-white"
-                  >
-                    <ArrowLeftRight className="w-5 h-5 text-gray-600" />
-                  </button>
-
-                  {/* Going To */}
-                  <div className="flex-[1.7]">
-                    <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
-                      Going to
-                    </label>
-                    <div className="relative">
-                      <div className="flex items-center h-12 border border-gray-300 rounded-xl bg-white px-4 hover:border-gray-400 focus-within:border-blue-500 transition-colors">
-                        <MapPin className="w-4 h-4 text-gray-400 mr-3" />
-                        <AirportAutocomplete
-                          id="destination-home"
-                          label=""
-                          value={destination}
-                          onChange={setDestination}
-                          placeholder="City or airport"
-                          inline
-                        />
-                      </div>
-                    </div>
+                  {/* Swap Button - col-span-1 */}
+                  <div className="hidden md:flex md:col-span-1 items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={handleSwap}
+                      className="p-3 bg-white border-2 border-gray-300 rounded-full hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm"
+                    >
+                      <ArrowLeftRight className="w-5 h-5 text-gray-600" />
+                    </button>
                   </div>
 
-                  {/* Dates */}
-                  <div className="flex-[1.6]">
-                    <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
-                      Dates
-                    </label>
+                  {/* Going To - col-span-3 */}
+                  <div className="md:col-span-3">
+                    <AirportAutocomplete
+                      id="destination"
+                      label="Going to"
+                      value={destination}
+                      onChange={setDestination}
+                      placeholder="City or airport"
+                    />
+                  </div>
+
+                  {/* Dates - col-span-3 */}
+                  <div className="md:col-span-3">
                     <AirlineDatePicker
                       startDate={departureDate}
                       endDate={tripType === 'round-trip' ? returnDate : undefined}
                       onStartDateChange={setDepartureDate}
                       onEndDateChange={setReturnDate}
-                      single={tripType === 'one-way'}
                     />
                   </div>
 
-                  {/* Travelers */}
-                  <div className="flex-[1.4]">
-                    <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
-                      Travelers
-                    </label>
-                    <TravelersSelector value={travelers} onChange={setTravelers} />
+                  {/* Travelers - col-span-2 */}
+                  <div className="md:col-span-2">
+                    <div className="relative h-full">
+                      <label className="absolute top-3 left-4 text-xs font-medium text-gray-600 z-10 pointer-events-none">
+                        Travelers
+                      </label>
+                      <select
+                        value={passengers}
+                        onChange={(e) => setPassengers(parseInt(e.target.value))}
+                        className="w-full h-full min-h-[60px] px-4 pt-8 pb-3 border-2 border-gray-300 rounded-xl hover:border-blue-500 focus:border-blue-500 transition-colors bg-white text-base font-medium text-gray-900 cursor-pointer focus:ring-0 focus:outline-none"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                          <option key={num} value={num}>
+                            {num} traveler{num > 1 ? 's' : ''}, Economy
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-
-                  {/* Search Button */}
-                  <button
-                    type="submit"
-                    className="flex-shrink-0 h-12 px-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors shadow-lg mb-1 ml-6"
-                  >
-                    Search
-                  </button>
                 </div>
+
+                {/* Search Button */}
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-lg shadow-lg"
+                >
+                  Search
+                </button>
               </form>
             )}
           </div>

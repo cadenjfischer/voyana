@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { MapPin, Plane, Loader2 } from 'lucide-react';
 
 interface Airport {
@@ -19,6 +20,7 @@ interface AirportAutocompleteProps {
   label: string;
   id: string;
   disableSearch?: boolean; // New prop to disable search temporarily
+  inline?: boolean; // New prop for inline compact mode
 }
 
 export default function AirportAutocomplete({
@@ -29,6 +31,7 @@ export default function AirportAutocomplete({
   label,
   id,
   disableSearch = false,
+  inline = false,
 }: AirportAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<Airport[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -36,6 +39,7 @@ export default function AirportAutocomplete({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [portalPos, setPortalPos] = useState<{top:number;left:number;width:number}>({top:0,left:0,width:0});
 
   // Debounce search
   useEffect(() => {
@@ -122,13 +126,37 @@ export default function AirportAutocomplete({
     setSelectedIndex(-1);
   };
 
+  // Recalculate portal position when open
+  useEffect(() => {
+    if (!inline || !isOpen) return;
+    const update = () => {
+      const el = wrapperRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setPortalPos({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + window.scrollX,
+        width: Math.max(rect.width, 520),
+      });
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+    };
+  }, [inline, isOpen]);
+
   return (
     <div ref={wrapperRef} className="relative">
-      <label htmlFor={id} className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
-        {label}
-      </label>
+      {!inline && label && (
+        <label htmlFor={id} className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
+          {label}
+        </label>
+      )}
       <div className="relative">
-        <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+        {!inline && <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none z-10" />}
         <input
           ref={inputRef}
           type="text"
@@ -138,17 +166,20 @@ export default function AirportAutocomplete({
           onKeyDown={handleKeyDown}
           onFocus={() => value.length >= 2 && suggestions.length > 0 && setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full pl-9 pr-9 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase text-gray-900 font-semibold text-base placeholder:text-gray-400 placeholder:font-normal placeholder:normal-case transition-all"
+          className={inline 
+            ? "w-full p-0 border-0 focus:ring-0 focus:outline-none focus-visible:outline-none uppercase text-gray-900 font-medium text-sm placeholder:text-gray-400 placeholder:font-normal placeholder:normal-case bg-transparent selection:bg-gray-200 selection:text-gray-900"
+            : "w-full pl-9 pr-9 py-2.5 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-0 focus-visible:outline-none uppercase text-gray-900 font-semibold text-base placeholder:text-gray-400 placeholder:font-normal placeholder:normal-case transition-all selection:bg-gray-200 selection:text-gray-900"
+          }
           autoComplete="off"
         />
-        {isLoading && (
+        {isLoading && !inline && (
           <Loader2 className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 animate-spin" />
         )}
       </div>
 
       {/* Dropdown */}
-      {isOpen && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 overflow-y-auto">
+      {isOpen && suggestions.length > 0 && (!inline ? (
+        <div className="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 overflow-y-auto">
           {suggestions.map((airport, index) => (
             <button
               key={airport.iataCode}
@@ -181,11 +212,41 @@ export default function AirportAutocomplete({
             </button>
           ))}
         </div>
-      )}
+      ) : createPortal(
+        <div
+          className="fixed z-[1000] bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-[60vh] overflow-y-auto"
+          style={{ top: portalPos.top, left: portalPos.left, width: portalPos.width }}
+        >
+          {suggestions.map((airport, index) => (
+            <button
+              key={airport.iataCode}
+              type="button"
+              onClick={() => handleSelect(airport)}
+              className={`w-full px-5 py-4 text-left hover:bg-blue-50 transition-colors flex items-start gap-3 border-b border-gray-100 last:border-b-0 ${
+                index === selectedIndex ? 'bg-blue-50' : ''
+              }`}
+            >
+              <div className="mt-0.5 p-1.5 bg-blue-100 rounded-lg flex-shrink-0">
+                <Plane className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="font-bold text-gray-900 text-base">{airport.iataCode}</span>
+                  <span className="text-xs text-gray-500">•</span>
+                  <span className="font-semibold text-gray-700 text-sm truncate">{airport.city}</span>
+                </div>
+                <p className="text-xs text-gray-600 truncate">{airport.name}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{airport.country}</p>
+              </div>
+            </button>
+          ))}
+        </div>,
+        document.body
+      ))}
 
       {/* No results */}
       {isOpen && !isLoading && suggestions.length === 0 && value.length >= 2 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl p-4 text-center">
+        <div className="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl p-4 text-center">
           <p className="text-sm text-gray-600">No airports found for &quot;{value}&quot;</p>
           <p className="text-xs text-gray-500 mt-1">Try a city name or airport code</p>
         </div>

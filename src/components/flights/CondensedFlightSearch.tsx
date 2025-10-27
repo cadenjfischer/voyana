@@ -194,6 +194,7 @@ export default function CondensedFlightSearch({
               onEndDateChange={setReturnDate}
               className=""
               compact={true}
+              single={tripType === 'one-way'}
             />
           </div>
 

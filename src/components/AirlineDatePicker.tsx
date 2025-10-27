@@ -12,6 +12,7 @@ interface AirlineDatePickerProps {
   onEndDateChange: (date: string) => void;
   className?: string;
   compact?: boolean; // New prop for condensed search bar style
+  single?: boolean; // If true, select a single date (one-way) and disable range hover
 }
 
 export default function AirlineDatePicker({
@@ -20,7 +21,8 @@ export default function AirlineDatePicker({
   onStartDateChange,
   onEndDateChange,
   className = '',
-  compact = false
+  compact = false,
+  single = false
 }: AirlineDatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -63,23 +65,11 @@ export default function AirlineDatePicker({
 
   // Format date for display
   const formatDateRange = () => {
-    if (!startDate) return 'Select departure date';
-    
+    if (!startDate) return 'Select date';
     const start = new Date(startDate);
     const end = endDate ? new Date(endDate) : null;
-    
-    const formatDate = (date: Date) => {
-      return date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric',
-        year: 'numeric'
-      });
-    };
-    
-    if (end) {
-      return `${formatDate(start)} - ${formatDate(end)}`;
-    }
-    return formatDate(start);
+    const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return end ? `${fmt(start)} - ${fmt(end)}` : fmt(start);
   };
 
   // Get month name and year
@@ -113,12 +103,14 @@ export default function AirlineDatePicker({
 
   // Check if date is in selected range
   const isDateInRange = (date: Date) => {
+    if (single) return false;
     if (!selectedStartDate || !selectedEndDate) return false;
     return date >= selectedStartDate && date <= selectedEndDate;
   };
 
   // Check if date is in hover range
   const isDateInHoverRange = (date: Date) => {
+    if (single) return false;
     if (!selectedStartDate || !hoveredDate || selectedEndDate) return false;
     const start = selectedStartDate;
     const end = hoveredDate;
@@ -137,6 +129,13 @@ export default function AirlineDatePicker({
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const dateString = `${year}-${month}-${day}`;
+
+    if (single) {
+      onStartDateChange(dateString);
+      onEndDateChange('');
+      setIsOpen(false);
+      return;
+    }
 
     if (selectingStart || !selectedStartDate) {
       onStartDateChange(dateString);
@@ -306,7 +305,7 @@ export default function AirlineDatePicker({
             </button>
             
             <div className="text-center">
-              <span className="text-sm text-gray-500">Select departure date</span>
+              <span className="text-sm text-gray-500">{single ? 'Select date' : 'Select departure date'}</span>
             </div>
             
             <button
