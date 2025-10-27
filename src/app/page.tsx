@@ -61,8 +61,8 @@ export default function Home() {
         params.append(`date${index + 1}`, flight.date);
       });
 
-      // Navigate to loading page with search params
-      router.push(`/flights/loading-search?${params.toString()}`);
+      // Navigate to flights page with search params
+      router.push(`/flights?${params.toString()}`);
     } else {
       // Build query params for one-way and round-trip
       const params = new URLSearchParams({
@@ -80,8 +80,8 @@ export default function Home() {
         params.append('returnDate', returnDate);
       }
 
-      // Navigate to loading page with search params
-      router.push(`/flights/loading-search?${params.toString()}`);
+      // Navigate to flights page with search params
+      router.push(`/flights?${params.toString()}`);
     }
   };
 

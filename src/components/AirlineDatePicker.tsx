@@ -318,8 +318,8 @@ export default function AirlineDatePicker({
           className="absolute bg-white rounded-xl shadow-xl border border-gray-200 z-[9999] p-6"
           style={{
             top: inputPosition.top + (compact ? 60 : inputPosition.height + 6),
-            left: inputPosition.left,
-            width: Math.max(inputPosition.width, 600)
+            right: typeof window !== 'undefined' ? window.innerWidth - inputPosition.left - inputPosition.width : 'auto',
+            width: '600px',
           }}
         >
           {/* Navigation header */}

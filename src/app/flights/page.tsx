@@ -13,29 +13,78 @@ export default function FlightsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchResults, setSearchResults] = useState<NormalizedFlight[]>([]);
+  const [multiCityResults, setMultiCityResults] = useState<NormalizedFlight[][] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<'search' | 'bookings'>('search');
   const [passengerCount, setPassengerCount] = useState(1);
+  const [isMultiCity, setIsMultiCity] = useState(false);
 
   // Restore search results on page load if URL params exist
   useEffect(() => {
+    const tripType = searchParams.get('tripType');
     const origin = searchParams.get('origin');
     const destination = searchParams.get('destination');
     const departureDate = searchParams.get('departureDate');
     const returnDate = searchParams.get('returnDate');
-    const passengers = searchParams.get('passengers');
+    const adults = searchParams.get('adults');
+    const children = searchParams.get('children');
+    const infantsLap = searchParams.get('infantsLap');
+    const infantsSeat = searchParams.get('infantsSeat');
+    
+    // Calculate total passengers
+    const totalPassengers = parseInt(adults || '1') + 
+                           parseInt(children || '0') + 
+                           parseInt(infantsLap || '0') + 
+                           parseInt(infantsSeat || '0');
+    setPassengerCount(totalPassengers);
 
-    // If we have search params, restore the search
-    if (origin && destination && departureDate) {
+    // Check if it's a multi-city search
+    if (tripType === 'multi-city') {
+      setIsMultiCity(true);
       setIsSearching(true);
-      setPassengerCount(passengers ? parseInt(passengers) : 1);
+      
+      // Build multi-city search params
+      const params = new URLSearchParams();
+      params.append('adults', adults || '1');
+      params.append('children', children || '0');
+      params.append('infantsLap', infantsLap || '0');
+      params.append('infantsSeat', infantsSeat || '0');
+      params.append('cabin', searchParams.get('cabin') || 'ECONOMY');
+      
+      // Add all flight segments
+      let segmentIndex = 1;
+      while (searchParams.get(`origin${segmentIndex}`)) {
+        params.append(`origin${segmentIndex}`, searchParams.get(`origin${segmentIndex}`)!);
+        params.append(`destination${segmentIndex}`, searchParams.get(`destination${segmentIndex}`)!);
+        params.append(`date${segmentIndex}`, searchParams.get(`date${segmentIndex}`)!);
+        segmentIndex++;
+      }
+      
+      // Fetch multi-city flights
+      fetch(`/api/flights/search-multi?${params}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.legs) {
+            setMultiCityResults(data.legs);
+          }
+        })
+        .catch(error => {
+          console.error('Failed to search multi-city flights:', error);
+        })
+        .finally(() => {
+          setIsSearching(false);
+        });
+    } else if (origin && destination && departureDate) {
+      // Regular one-way or round-trip search
+      setIsMultiCity(false);
+      setIsSearching(true);
       
       // Fetch the flights
       const params = new URLSearchParams({
         origin,
         destination,
         departureDate,
-        passengers: passengers || '1',
+        passengers: totalPassengers.toString(),
       });
       
       if (returnDate) {
@@ -134,7 +183,7 @@ export default function FlightsPage() {
             )}
 
             {/* Results */}
-            {!isSearching && searchResults.length > 0 && (
+            {!isSearching && !isMultiCity && searchResults.length > 0 && (
               <div>
                 <FlightResults 
                   flights={searchResults} 
@@ -144,8 +193,33 @@ export default function FlightsPage() {
               </div>
             )}
 
+            {/* Multi-City Results */}
+            {!isSearching && isMultiCity && multiCityResults && multiCityResults.length > 0 && (
+              <div className="space-y-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-blue-900 mb-1">Multi-City Journey</h3>
+                  <p className="text-sm text-blue-700">
+                    Select one flight for each leg of your journey. Total price will be calculated at checkout.
+                  </p>
+                </div>
+                
+                {multiCityResults.map((legFlights, legIndex) => (
+                  <div key={legIndex} className="space-y-3">
+                    <h3 className="text-lg font-bold text-gray-900">
+                      Flight {legIndex + 1}
+                    </h3>
+                    <FlightResults 
+                      flights={legFlights} 
+                      passengerCount={passengerCount}
+                      onFlightBooked={() => setActiveTab('bookings')}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* No results state */}
-            {!isSearching && searchResults.length === 0 && (
+            {!isSearching && !isMultiCity && searchResults.length === 0 && (
               <div className="bg-white rounded-lg shadow-sm p-12 text-center">
                 <div className="flex flex-col items-center">
                   <div className="p-4 bg-blue-50 rounded-full mb-4">
