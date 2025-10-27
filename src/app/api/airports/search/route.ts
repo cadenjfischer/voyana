@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
         country: place.country_name || '',
         type: place.type || '',
       }))
-      .slice(0, 10); // Limit to top 10 results
+      .slice(0, 5); // Limit to top 5 results for cleaner UI
 
     console.log('Filtered airports:', airports.length);
     return NextResponse.json({ places: airports });
