@@ -13,6 +13,7 @@ interface AirlineDatePickerProps {
   className?: string;
   compact?: boolean; // New prop for condensed search bar style
   single?: boolean; // If true, select a single date (one-way) and disable range hover
+  mobile?: boolean; // If true, use mobile style with label inside
 }
 
 export default function AirlineDatePicker({
@@ -22,7 +23,8 @@ export default function AirlineDatePicker({
   onEndDateChange,
   className = '',
   compact = false,
-  single = false
+  single = false,
+  mobile = false
 }: AirlineDatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -30,7 +32,7 @@ export default function AirlineDatePicker({
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLButtonElement>(null);
-  const [inputPosition, setInputPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [inputPosition, setInputPosition] = useState({ top: 0, left: 0, width: 0, height: 0 });
 
   const today = new Date();
   today.setHours(12, 0, 0, 0); // Set to noon for consistent comparison
@@ -40,14 +42,31 @@ export default function AirlineDatePicker({
 
   // Update input position when opening
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (!isOpen || !inputRef.current) return;
+    
+    const update = () => {
+      if (!inputRef.current) return;
       const rect = inputRef.current.getBoundingClientRect();
       setInputPosition({
-        top: rect.top,
-        left: rect.left,
-        width: rect.width
+        top: rect.top + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+        height: rect.height
       });
-    }
+    };
+    
+    update();
+    // Use requestAnimationFrame for smoother position updates
+    let rafId: number;
+    const smoothUpdate = () => {
+      update();
+      rafId = requestAnimationFrame(smoothUpdate);
+    };
+    rafId = requestAnimationFrame(smoothUpdate);
+    
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, [isOpen]);
 
   // Close picker when clicking outside
@@ -65,7 +84,7 @@ export default function AirlineDatePicker({
 
   // Format date for display
   const formatDateRange = () => {
-    if (!startDate) return 'Select date';
+    if (!startDate) return single ? 'Select date' : 'Select dates';
     const start = new Date(startDate);
     const end = endDate ? new Date(endDate) : null;
     const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -248,14 +267,28 @@ export default function AirlineDatePicker({
           ref={inputRef}
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={compact 
-            ? "w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors"
-            : "w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-xl bg-white hover:border-gray-400 transition-colors duration-200"
+          className={
+            mobile
+              ? "w-full h-14 px-4 flex items-center border border-gray-300 rounded-lg bg-white hover:border-gray-400 transition-colors"
+              : compact 
+              ? "w-full h-12 px-4 flex flex-col justify-center text-left hover:bg-gray-50 transition-colors"
+              : "w-full h-12 flex items-center justify-between px-4 border border-gray-300 rounded-xl bg-white hover:border-gray-400 transition-colors duration-200"
           }
         >
-          {compact ? (
+          {mobile ? (
             <>
-              <div className="text-xs text-gray-500 mb-1">Dates</div>
+              <Calendar className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-xs text-gray-600 font-medium mb-0.5">{single ? 'Date' : 'Dates'}</div>
+                <div className={`text-sm truncate ${startDate ? 'text-gray-900' : 'text-gray-500'}`}>
+                  {formatDateRange()}
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            </>
+          ) : compact ? (
+            <>
+              <div className="text-xs text-gray-500 mb-1">{single ? 'Date' : 'Dates'}</div>
               <div className="font-semibold text-gray-900 truncate">
                 {startDate && endDate
                   ? `${format(new Date(startDate), 'MMM d')} - ${format(new Date(endDate), 'MMM d')}`
@@ -265,15 +298,15 @@ export default function AirlineDatePicker({
               </div>
             </>
           ) : (
-            <div className="flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-gray-400" />
-              <span className={`text-sm ${startDate ? 'text-gray-900' : 'text-gray-500'}`}>
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
+              <span className={`text-sm truncate ${startDate ? 'text-gray-900' : 'text-gray-500'}`}>
                 {formatDateRange()}
               </span>
             </div>
           )}
-          {!compact && (
-            <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
+          {!compact && !mobile && (
+            <ChevronRight className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
           )}
         </button>
       </div>
@@ -282,16 +315,11 @@ export default function AirlineDatePicker({
       {isOpen && typeof window !== 'undefined' && createPortal(
         <div 
           ref={pickerRef}
-          className="fixed bg-white rounded-xl shadow-xl border border-gray-200 z-[9999] p-6"
-          style={compact ? {
-            top: inputPosition.top + 60,
+          className="absolute bg-white rounded-xl shadow-xl border border-gray-200 z-[9999] p-6"
+          style={{
+            top: inputPosition.top + (compact ? 60 : inputPosition.height + 6),
             left: inputPosition.left,
             width: Math.max(inputPosition.width, 600)
-          } : {
-            top: inputPosition.top - 20,
-            left: inputPosition.left,
-            width: Math.max(inputPosition.width, 600),
-            transform: 'translateY(-100%)'
           }}
         >
           {/* Navigation header */}

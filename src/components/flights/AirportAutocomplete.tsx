@@ -35,6 +35,7 @@ export default function AirportAutocomplete({
 }: AirportAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<Airport[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -62,7 +63,8 @@ export default function AirportAutocomplete({
         console.log('Response status:', response.status);
         const data = await response.json();
         console.log('Response data:', data);
-        setSuggestions(data.places || []);
+        // Limit to top 5 results to avoid scrolling
+        setSuggestions((data.places || []).slice(0, 5));
         setIsOpen(true);
       } catch (error) {
         console.error('Airport search error:', error);
@@ -134,17 +136,22 @@ export default function AirportAutocomplete({
       if (!el) return;
       const rect = el.getBoundingClientRect();
       setPortalPos({
-        top: rect.bottom + window.scrollY + 8,
+        top: rect.bottom + window.scrollY + 16,
         left: rect.left + window.scrollX,
         width: Math.max(rect.width, 520),
       });
     };
     update();
-    window.addEventListener('resize', update);
-    window.addEventListener('scroll', update, true);
+    // Use requestAnimationFrame for smoother updates
+    let rafId: number;
+    const smoothUpdate = () => {
+      update();
+      rafId = requestAnimationFrame(smoothUpdate);
+    };
+    rafId = requestAnimationFrame(smoothUpdate);
+    
     return () => {
-      window.removeEventListener('resize', update);
-      window.removeEventListener('scroll', update, true);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, [inline, isOpen]);
 
@@ -164,7 +171,16 @@ export default function AirportAutocomplete({
           value={value}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => value.length >= 2 && suggestions.length > 0 && setIsOpen(true)}
+          onFocus={() => {
+            setIsFocused(true);
+            if (value.length >= 2 && suggestions.length > 0) {
+              setIsOpen(true);
+            }
+          }}
+          onBlur={() => {
+            // Delay to allow click events on suggestions
+            setTimeout(() => setIsFocused(false), 200);
+          }}
           placeholder={placeholder}
           className={inline 
             ? "w-full p-0 border-0 focus:ring-0 focus:outline-none focus-visible:outline-none uppercase text-gray-900 font-medium text-sm placeholder:text-gray-400 placeholder:font-normal placeholder:normal-case bg-transparent selection:bg-gray-200 selection:text-gray-900"
@@ -178,8 +194,8 @@ export default function AirportAutocomplete({
       </div>
 
       {/* Dropdown */}
-      {isOpen && suggestions.length > 0 && (!inline ? (
-        <div className="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-80 overflow-y-auto">
+      {isOpen && isFocused && suggestions.length > 0 && (!inline ? (
+        <div className="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl">
           {suggestions.map((airport, index) => (
             <button
               key={airport.iataCode}
@@ -189,9 +205,6 @@ export default function AirportAutocomplete({
                 index === selectedIndex ? 'bg-blue-50' : ''
               }`}
             >
-              <div className="mt-0.5 p-1.5 bg-blue-100 rounded-lg flex-shrink-0">
-                <Plane className="h-4 w-4 text-blue-600" />
-              </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <span className="font-bold text-gray-900 text-base">
@@ -214,7 +227,7 @@ export default function AirportAutocomplete({
         </div>
       ) : createPortal(
         <div
-          className="fixed z-[1000] bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-[60vh] overflow-y-auto"
+          className="absolute z-[1000] bg-white border border-gray-200 rounded-2xl shadow-2xl"
           style={{ top: portalPos.top, left: portalPos.left, width: portalPos.width }}
         >
           {suggestions.map((airport, index) => (
@@ -226,9 +239,6 @@ export default function AirportAutocomplete({
                 index === selectedIndex ? 'bg-blue-50' : ''
               }`}
             >
-              <div className="mt-0.5 p-1.5 bg-blue-100 rounded-lg flex-shrink-0">
-                <Plane className="h-4 w-4 text-blue-600" />
-              </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <span className="font-bold text-gray-900 text-base">{airport.iataCode}</span>
