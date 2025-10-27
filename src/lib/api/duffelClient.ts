@@ -37,6 +37,8 @@ export interface NormalizedFlight {
       weight?: string;
     };
   };
+  // All fare options for this flight route (same route, different fares)
+  fareOptions?: NormalizedFlight[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rawData: any;
 }
@@ -74,7 +76,9 @@ export async function searchFlights(params: SearchParams): Promise<NormalizedFli
           : []
         ),
       ],
-      cabin_class: params.cabinClass || 'economy',
+      // Don't specify cabin_class to get offers for ALL cabin classes
+      // This allows us to show economy, premium economy, business options
+      // cabin_class: params.cabinClass || 'economy',
       return_offers: params.returnDate ? true : false,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
@@ -90,6 +94,26 @@ export async function searchFlights(params: SearchParams): Promise<NormalizedFli
     console.error('Duffel search error:', error);
     return [];
   }
+}
+
+/**
+ * Normalize cabin class to standardized lowercase format
+ */
+function normalizeCabinClass(cabinClass: string): string {
+  const normalized = cabinClass.toLowerCase().trim();
+  
+  // Map marketing names to standard cabin classes
+  if (normalized.includes('business') || normalized.includes('polaris') || normalized.includes('flagship')) {
+    return 'business';
+  }
+  if (normalized.includes('premium') || normalized.includes('comfort')) {
+    return 'premium_economy';
+  }
+  if (normalized.includes('first')) {
+    return 'first';
+  }
+  // Default to economy for basic/main/economy
+  return 'economy';
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,6 +140,13 @@ export function normalizeFlightData(offer: any): NormalizedFlight {
   const carryOnBag = passengerBaggages.find((b: any) => b.type === 'carry_on');
   const checkedBag = passengerBaggages.find((b: any) => b.type === 'checked');
   
+  // Normalize cabin class to lowercase standard format
+  const rawCabinClass = segment.passengers[0]?.cabin_class || segment.passengers[0]?.cabin_class_marketing_name || 'economy';
+  const normalizedCabinClass = normalizeCabinClass(rawCabinClass);
+  
+  // Log cabin class info for debugging
+  console.log(`Duffel offer ${offer.id}: raw="${rawCabinClass}" → normalized="${normalizedCabinClass}"`);
+  
   return {
     id: offer.id,
     carrier: segment.marketing_carrier.name,
@@ -130,7 +161,7 @@ export function normalizeFlightData(offer: any): NormalizedFlight {
     duration: slice.duration,
     price: parseFloat(offer.total_amount),
     currency: offer.total_currency,
-    cabinClass: segment.passengers[0]?.cabin_class_marketing_name || 'Economy',
+    cabinClass: normalizedCabinClass,
     stops: slice.segments.length - 1,
     apiSource: 'duffel',
     amenities: amenitiesArray.length > 0 ? {

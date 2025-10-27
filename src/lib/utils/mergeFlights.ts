@@ -38,8 +38,18 @@ export function mergeFlights(results: NormalizedFlight[][]): NormalizedFlight[] 
 
 /**
  * Generates a unique key for a flight based on its core attributes
+ * NOW INCLUDES: id to preserve different fare classes for the same flight
  */
 function generateFlightKey(flight: NormalizedFlight): string {
+  // Use the offer ID from the API to ensure we keep all fare options
+  // Each fare class from Duffel/Amadeus has a unique offer ID
+  return `${flight.apiSource}-${flight.id}`;
+}
+
+/**
+ * Generates a route key for grouping different fare options of the same flight
+ */
+function generateRouteKey(flight: NormalizedFlight): string {
   // Normalize departure time to just the date and hour (ignore minutes/seconds)
   const departureDate = new Date(flight.departure);
   const normalizedDeparture = new Date(
@@ -50,6 +60,31 @@ function generateFlightKey(flight: NormalizedFlight): string {
   ).toISOString();
 
   return `${flight.carrier}-${flight.flightNumber}-${flight.origin}-${flight.destination}-${normalizedDeparture}`;
+}
+
+/**
+ * Groups flight offers by route (same flight, different fare classes)
+ * Returns a map where key is route, value is array of fare options
+ */
+export function groupOffersByRoute(flights: NormalizedFlight[]): Map<string, NormalizedFlight[]> {
+  const routeMap = new Map<string, NormalizedFlight[]>();
+
+  for (const flight of flights) {
+    const routeKey = generateRouteKey(flight);
+    
+    if (!routeMap.has(routeKey)) {
+      routeMap.set(routeKey, []);
+    }
+    
+    routeMap.get(routeKey)!.push(flight);
+  }
+
+  // Sort fare options within each route by price
+  for (const [key, offers] of routeMap.entries()) {
+    routeMap.set(key, offers.sort((a, b) => a.price - b.price));
+  }
+
+  return routeMap;
 }
 
 /**

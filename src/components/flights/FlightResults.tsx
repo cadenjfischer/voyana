@@ -324,7 +324,7 @@ export default function FlightResults({
               {/* Route Timeline - Compact */}
               <div className="flex items-center gap-4">
                 {/* Departure */}
-                <div>
+                <div className="w-20 text-left">
                   <p className="text-2xl font-bold text-gray-900">
                     {format(new Date(flight.departure), 'HH:mm')}
                   </p>
@@ -352,7 +352,7 @@ export default function FlightResults({
                 </div>
 
                 {/* Arrival */}
-                <div>
+                <div className="w-20 text-right">
                   <p className="text-2xl font-bold text-gray-900">
                     {format(new Date(flight.arrival), 'HH:mm')}
                   </p>

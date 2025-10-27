@@ -18,6 +18,32 @@ interface SearchParams {
 
 export async function searchFlights(params: SearchParams): Promise<NormalizedFlight[]> {
   try {
+    // If no cabin class specified, search all cabin classes to get all fare options
+    if (!params.cabinClass) {
+      console.log('Amadeus: Searching ALL cabin classes...');
+      const cabinClasses: Array<'ECONOMY' | 'PREMIUM_ECONOMY' | 'BUSINESS' | 'FIRST'> = 
+        ['ECONOMY', 'PREMIUM_ECONOMY', 'BUSINESS', 'FIRST'];
+      
+      // Search each cabin class in parallel
+      const allResults = await Promise.allSettled(
+        cabinClasses.map(cabin => 
+          searchFlights({ ...params, cabinClass: cabin })
+        )
+      );
+      
+      // Combine all successful results
+      const allFlights = allResults
+        .filter((result): result is PromiseFulfilledResult<NormalizedFlight[]> => 
+          result.status === 'fulfilled'
+        )
+        .flatMap(result => result.value);
+      
+      console.log(`Amadeus: Found ${allFlights.length} total offers across all cabin classes`);
+      return allFlights;
+    }
+    
+    // Single cabin class search
+    console.log(`Amadeus: Searching ${params.cabinClass} cabin class...`);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await amadeus.shopping.flightOffersSearch.get({
       originLocationCode: params.origin,
@@ -25,7 +51,7 @@ export async function searchFlights(params: SearchParams): Promise<NormalizedFli
       departureDate: params.departureDate,
       returnDate: params.returnDate,
       adults: params.passengers || 1,
-      travelClass: params.cabinClass || 'ECONOMY',
+      travelClass: params.cabinClass,
       max: 50,
     });
 
@@ -37,8 +63,28 @@ export async function searchFlights(params: SearchParams): Promise<NormalizedFli
   }
 }
 
+/**
+ * Normalize cabin class to standardized lowercase format
+ */
+function normalizeCabinClass(cabinClass: string): string {
+  const normalized = cabinClass.toLowerCase().trim();
+  
+  // Map marketing names to standard cabin classes
+  if (normalized.includes('business') || normalized.includes('polaris') || normalized.includes('flagship')) {
+    return 'business';
+  }
+  if (normalized.includes('premium') || normalized.includes('comfort')) {
+    return 'premium_economy';
+  }
+  if (normalized.includes('first')) {
+    return 'first';
+  }
+  // Default to economy for basic/main/economy
+  return 'economy';
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function normalizeFlightData(offer: any): NormalizedFlight {
+function normalizeFlightData(offer: any): NormalizedFlight {
   const itinerary = offer.itineraries[0];
   const segment = itinerary.segments[0];
   
@@ -75,7 +121,12 @@ export function normalizeFlightData(offer: any): NormalizedFlight {
     duration: duration,
     price: parseFloat(offer.price.total),
     currency: offer.price.currency,
-    cabinClass: segment.cabin || 'Economy',
+    cabinClass: (() => {
+      const rawCabin = segment.cabin || 'economy';
+      const normalized = normalizeCabinClass(rawCabin);
+      console.log(`Amadeus offer ${offer.id}: raw="${rawCabin}" → normalized="${normalized}"`);
+      return normalized;
+    })(),
     stops: itinerary.segments.length - 1,
     apiSource: 'amadeus',
     amenities: amenitiesArray.length > 0 ? {

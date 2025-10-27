@@ -1,11 +1,12 @@
-import { X, Check, Ban, Wifi, Utensils } from 'lucide-react';
+import { X, Check, Ban, Wifi, Utensils, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NormalizedFlight } from '@/lib/api/duffelClient';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface FareOption {
   name: string; // Airline-specific name (e.g., "Main Cabin", "Basic Economy")
   price: number;
   currency: string;
+  offerId?: string; // The actual Duffel offer ID for booking
   features: {
     seatSelection: 'included' | 'free' | 'fee';
     carryOn: number;
@@ -38,103 +39,187 @@ export default function FareClassModal({
 }: FareClassModalProps) {
   const [selectedCabin, setSelectedCabin] = useState<'Economy' | 'Premium Economy' | 'Business'>('Economy');
   const [selectedFare, setSelectedFare] = useState<FareOption | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(false);
+
+  // Use REAL fare options from API instead of fake data
+  const allFareOptions = flight.fareOptions || [flight];
+  
+  // Group by cabin class (normalized to lowercase)
+  const groupedByCabin: Record<string, NormalizedFlight[]> = {};
+  allFareOptions.forEach((offer) => {
+    const cabin = (offer.cabinClass || 'economy').toLowerCase().trim();
+    if (!groupedByCabin[cabin]) {
+      groupedByCabin[cabin] = [];
+    }
+    groupedByCabin[cabin].push(offer);
+  });
+
+  // Map to cabin class structure
+  const cabinClasses: CabinClass[] = [];
+  
+  // Economy options
+  if (groupedByCabin['economy']) {
+    cabinClasses.push({
+      cabin: 'Economy',
+      options: groupedByCabin['economy'].map((offer) => ({
+        name: `Economy - $${Math.round(offer.price)}`,
+        price: offer.price,
+        currency: offer.currency,
+        offerId: offer.id,
+        features: {
+          seatSelection: 'fee',
+          carryOn: offer.baggage?.carryOn?.quantity || 1,
+          checked: offer.baggage?.checked?.quantity || 0,
+          changes: 'fee',
+          refund: 'not-allowed',
+          meals: offer.amenities?.meals || false,
+          wifi: offer.amenities?.wifi || false,
+        },
+      })),
+    });
+  }
+
+  // Premium Economy options
+  if (groupedByCabin['premium_economy']) {
+    cabinClasses.push({
+      cabin: 'Premium Economy',
+      options: groupedByCabin['premium_economy'].map((offer) => ({
+        name: `Premium Economy - $${Math.round(offer.price)}`,
+        price: offer.price,
+        currency: offer.currency,
+        offerId: offer.id,
+        features: {
+          seatSelection: 'included',
+          carryOn: offer.baggage?.carryOn?.quantity || 2,
+          checked: offer.baggage?.checked?.quantity || 1,
+          changes: 'included',
+          refund: 'fee',
+          meals: offer.amenities?.meals || true,
+          wifi: offer.amenities?.wifi || true,
+          priority: true,
+        },
+      })),
+    });
+  }
+
+  // Business class options
+  if (groupedByCabin['business']) {
+    cabinClasses.push({
+      cabin: 'Business',
+      options: groupedByCabin['business'].map((offer) => ({
+        name: `Business Class - $${Math.round(offer.price)}`,
+        price: offer.price,
+        currency: offer.currency,
+        offerId: offer.id,
+        features: {
+          seatSelection: 'included',
+          carryOn: offer.baggage?.carryOn?.quantity || 2,
+          checked: offer.baggage?.checked?.quantity || 2,
+          changes: 'included',
+          refund: 'included',
+          meals: offer.amenities?.meals || true,
+          wifi: offer.amenities?.wifi || true,
+          priority: true,
+        },
+      })),
+    });
+  }
+
+  // If no cabin classes found, create one from the main flight
+  if (cabinClasses.length === 0) {
+    cabinClasses.push({
+      cabin: 'Economy',
+      options: [{
+        name: `Economy - $${Math.round(flight.price)}`,
+        price: flight.price,
+        currency: flight.currency,
+        offerId: flight.id,
+        features: {
+          seatSelection: 'fee',
+          carryOn: flight.baggage?.carryOn?.quantity || 1,
+          checked: flight.baggage?.checked?.quantity || 0,
+          changes: 'fee',
+          refund: 'not-allowed',
+          meals: flight.amenities?.meals || false,
+          wifi: flight.amenities?.wifi || false,
+        },
+      }],
+    });
+  }
+
+  // Make sure we have a valid selected cabin - use effect to avoid setState during render
+  useEffect(() => {
+    if (isOpen && !cabinClasses.find(c => c.cabin === selectedCabin)) {
+      setSelectedCabin(cabinClasses[0].cabin);
+    }
+  }, [isOpen, cabinClasses, selectedCabin]);
+
+  // Check scroll position to show/hide arrows
+  const checkScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setShowLeftArrow(scrollLeft > 0);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  // Update arrow visibility when cabin changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(checkScroll, 100); // Delay to ensure DOM is ready
+    }
+  }, [isOpen, selectedCabin]);
+
+  // Scroll functions
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+      setTimeout(checkScroll, 300);
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+      setTimeout(checkScroll, 300);
+    }
+  };
+
+  // Debug logging
+  useEffect(() => {
+    if (isOpen) {
+      console.log('=== FareClassModal Debug ===');
+      console.log('All fare options:', allFareOptions.map(f => ({
+        id: f.id,
+        price: f.price,
+        cabinClass: f.cabinClass,
+        carrier: f.carrier,
+      })));
+      console.log('Grouped by cabin keys:', Object.keys(groupedByCabin));
+      console.log('Grouped by cabin details:', groupedByCabin);
+      console.log('Cabin classes array:', cabinClasses);
+      console.log('===========================');
+    }
+  }, [isOpen, allFareOptions, groupedByCabin]);
 
   if (!isOpen) return null;
+  
+  // Safety check: if no cabin classes, don't render
+  if (cabinClasses.length === 0) {
+    console.error('FareClassModal: No cabin classes available');
+    return null;
+  }
 
-  // Get airline name for fare naming
-  const airlineName = flight.carrier || 'Airline';
-
-  // Generate cabin classes with airline-specific fare options
-  const cabinClasses: CabinClass[] = [
-    {
-      cabin: 'Economy',
-      options: [
-        {
-          name: `Basic Economy`, // Airlines: United Basic, Delta Basic, etc.
-          price: flight.price * 0.85,
-          currency: flight.currency,
-          features: {
-            seatSelection: 'fee',
-            carryOn: 1,
-            checked: 0,
-            changes: 'not-allowed',
-            refund: 'not-allowed',
-          },
-        },
-        {
-          name: `Main Cabin`, // Standard economy name
-          price: flight.price,
-          currency: flight.currency,
-          features: {
-            seatSelection: 'free',
-            carryOn: 1,
-            checked: 1,
-            changes: 'fee',
-            refund: 'not-allowed',
-            meals: true,
-          },
-        },
-        {
-          name: `${airlineName === 'United' ? 'Economy Plus' : airlineName === 'Delta' ? 'Comfort+' : airlineName === 'American' ? 'Main Cabin Extra' : 'Economy Flex'}`,
-          price: flight.price * 1.2,
-          currency: flight.currency,
-          features: {
-            seatSelection: 'included',
-            carryOn: 1,
-            checked: 1,
-            changes: 'included',
-            refund: 'fee',
-            meals: true,
-            wifi: true,
-            priority: true,
-          },
-        },
-      ],
-    },
-    {
-      cabin: 'Premium Economy',
-      options: [
-        {
-          name: 'Premium Economy',
-          price: flight.price * 1.8,
-          currency: flight.currency,
-          features: {
-            seatSelection: 'included',
-            carryOn: 2,
-            checked: 2,
-            changes: 'included',
-            refund: 'included',
-            meals: true,
-            wifi: true,
-            priority: true,
-          },
-        },
-      ],
-    },
-    {
-      cabin: 'Business',
-      options: [
-        {
-          name: `${airlineName === 'United' ? 'United Polaris' : airlineName === 'Delta' ? 'Delta One' : airlineName === 'American' ? 'Flagship Business' : 'Business Class'}`,
-          price: flight.price * 2.8,
-          currency: flight.currency,
-          features: {
-            seatSelection: 'included',
-            carryOn: 2,
-            checked: 3,
-            changes: 'included',
-            refund: 'included',
-            meals: true,
-            wifi: true,
-            priority: true,
-          },
-        },
-      ],
-    },
-  ];
-
-  const currentCabinClass = cabinClasses.find((c) => c.cabin === selectedCabin)!;
-  const lowestPrice = currentCabinClass.options[0];
+  const currentCabinClass = cabinClasses.find((c) => c.cabin === selectedCabin);
+  
+  // If selected cabin not found, default to first available
+  if (!currentCabinClass) {
+    console.warn(`FareClassModal: Selected cabin "${selectedCabin}" not found, using first available`);
+    const firstCabin = cabinClasses[0];
+    return null; // Will re-render with correct cabin via useEffect
+  }
 
   // Extract time from ISO datetime (e.g., "2025-10-30T21:25:00" -> "21:25")
   const departureTime = new Date(flight.departure).toLocaleTimeString('en-US', {
@@ -247,12 +332,49 @@ export default function FareClassModal({
               </p>
             </div>
 
-            {/* Horizontal Grid of Fare Options */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Fare Options - Scrollable horizontally when more than 3 */}
+            <div className="relative">
+              {/* Left Arrow */}
+              {currentCabinClass.options.length > 3 && showLeftArrow && (
+                <button
+                  onClick={scrollLeft}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-blue-600 rounded-full shadow-lg p-2 hover:bg-blue-700 transition-colors"
+                  aria-label="Scroll left"
+                >
+                  <ChevronLeft className="w-6 h-6 text-white" />
+                </button>
+              )}
+
+              {/* Right Arrow */}
+              {currentCabinClass.options.length > 3 && showRightArrow && (
+                <button
+                  onClick={scrollRight}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-blue-600 rounded-full shadow-lg p-2 hover:bg-blue-700 transition-colors"
+                  aria-label="Scroll right"
+                >
+                  <ChevronRight className="w-6 h-6 text-white" />
+                </button>
+              )}
+
+              <div 
+                ref={scrollContainerRef}
+                onScroll={checkScroll}
+                className={`${
+                  currentCabinClass.options.length > 3 
+                    ? 'flex gap-4 overflow-x-auto scrollbar-hide' 
+                    : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
+                }`}
+                style={currentCabinClass.options.length > 3 ? {
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                } : {}}
+              >
               {currentCabinClass.options.map((fareOption, index) => (
               <div
                 key={index}
                 className={`border-2 rounded-lg p-4 transition-all cursor-pointer flex flex-col ${
+                  currentCabinClass.options.length > 3 ? 'min-w-[280px] flex-shrink-0' : ''
+                } ${
                   selectedFare?.name === fareOption.name
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-200 hover:border-blue-300'
@@ -409,7 +531,8 @@ export default function FareClassModal({
                 </button>
               </div>
             ))}
-          </div>
+            </div>
+            </div>
           </div>
         </div>
       </div>

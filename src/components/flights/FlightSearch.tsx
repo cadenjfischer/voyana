@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { NormalizedFlight } from '@/lib/api/duffelClient';
 import { ArrowLeftRight, Calendar, Users } from 'lucide-react';
@@ -12,15 +13,42 @@ interface FlightSearchProps {
 }
 
 export default function FlightSearch({ onSearch, onSearching }: FlightSearchProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [departureDate, setDepartureDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
   const [passengers, setPassengers] = useState(1);
-  const [cabinClass, setCabinClass] = useState('economy');
+  // Removed cabinClass - we now search ALL cabin classes to show all fare options
   const [tripType, setTripType] = useState<'one-way' | 'round-trip' | 'multi-city'>('round-trip');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isRestoringFromUrl, setIsRestoringFromUrl] = useState(true);
+
+  // Restore search form from URL params
+  useEffect(() => {
+    const originParam = searchParams.get('origin');
+    const destinationParam = searchParams.get('destination');
+    const departureDateParam = searchParams.get('departureDate');
+    const returnDateParam = searchParams.get('returnDate');
+    const passengersParam = searchParams.get('passengers');
+
+    if (originParam) setOrigin(originParam);
+    if (destinationParam) setDestination(destinationParam);
+    if (departureDateParam) setDepartureDate(departureDateParam);
+    if (returnDateParam) {
+      setReturnDate(returnDateParam);
+      setTripType('round-trip');
+    } else if (originParam) { // Only set one-way if we're restoring from URL
+      setTripType('one-way');
+    }
+    if (passengersParam) setPassengers(parseInt(passengersParam));
+    
+    // Mark that we're done restoring from URL after a brief delay
+    setTimeout(() => setIsRestoringFromUrl(false), 100);
+  }, []); // Only run on mount
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,17 +57,20 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
     onSearching(true);
 
     try {
+      // Don't send cabinClass - this allows API to return ALL cabin classes
       const params = new URLSearchParams({
         origin: origin.toUpperCase(),
         destination: destination.toUpperCase(),
         departureDate,
         passengers: passengers.toString(),
-        cabinClass,
       });
 
       if (tripType === 'round-trip' && returnDate) {
         params.append('returnDate', returnDate);
       }
+
+      // Update URL with search params (preserves state on refresh)
+      router.push(`/flights?${params.toString()}`, { scroll: false });
 
       const response = await fetch(`/api/flights/search?${params}`);
       const data = await response.json();
@@ -47,6 +78,21 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
       if (!response.ok) {
         throw new Error(data.error || 'Failed to search flights');
       }
+
+      console.log('FlightSearch received data:', {
+        flightCount: data.flights?.length,
+        firstFlightSample: data.flights?.[0] ? {
+          id: data.flights[0].id,
+          flightNumber: data.flights[0].flightNumber,
+          price: data.flights[0].price,
+          cabinClass: data.flights[0].cabinClass,
+          fareOptionsCount: data.flights[0].fareOptions?.length,
+          fareOptions: data.flights[0].fareOptions?.map((f: any) => ({
+            price: f.price,
+            cabin: f.cabinClass
+          }))
+        } : null
+      });
 
       onSearch(data.flights, passengers);
     } catch (err) {
@@ -121,6 +167,7 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
             value={origin}
             onChange={setOrigin}
             placeholder="City or airport"
+            disableSearch={isRestoringFromUrl}
           />
 
           <button
@@ -138,6 +185,7 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
             value={destination}
             onChange={setDestination}
             placeholder="City or airport"
+            disableSearch={isRestoringFromUrl}
           />
         </div>
 
@@ -200,23 +248,6 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
                 ))}
               </select>
             </div>
-          </div>
-
-          <div>
-            <label htmlFor="cabinClass" className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
-              Class
-            </label>
-            <select
-              id="cabinClass"
-              value={cabinClass}
-              onChange={(e) => setCabinClass(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium text-sm appearance-none bg-white cursor-pointer transition-all"
-            >
-              <option value="economy">Economy</option>
-              <option value="premium_economy">Premium</option>
-              <option value="business">Business</option>
-              <option value="first">First</option>
-            </select>
           </div>
         </div>
 

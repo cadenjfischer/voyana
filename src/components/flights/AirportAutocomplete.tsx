@@ -18,6 +18,7 @@ interface AirportAutocompleteProps {
   placeholder?: string;
   label: string;
   id: string;
+  disableSearch?: boolean; // New prop to disable search temporarily
 }
 
 export default function AirportAutocomplete({
@@ -27,6 +28,7 @@ export default function AirportAutocomplete({
   placeholder = 'City or airport',
   label,
   id,
+  disableSearch = false,
 }: AirportAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<Airport[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -37,6 +39,11 @@ export default function AirportAutocomplete({
 
   // Debounce search
   useEffect(() => {
+    // Don't search if disabled (e.g., when restoring from URL)
+    if (disableSearch) {
+      return;
+    }
+    
     if (value.length < 2) {
       setSuggestions([]);
       setIsOpen(false);
@@ -62,7 +69,7 @@ export default function AirportAutocomplete({
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timer);
-  }, [value]);
+  }, [value, disableSearch]);
 
   // Close dropdown when clicking outside
   useEffect(() => {

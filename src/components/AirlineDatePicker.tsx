@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { format } from 'date-fns';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 
 interface AirlineDatePickerProps {
@@ -10,6 +11,7 @@ interface AirlineDatePickerProps {
   onStartDateChange: (date: string) => void;
   onEndDateChange: (date: string) => void;
   className?: string;
+  compact?: boolean; // New prop for condensed search bar style
 }
 
 export default function AirlineDatePicker({
@@ -17,7 +19,8 @@ export default function AirlineDatePicker({
   endDate,
   onStartDateChange,
   onEndDateChange,
-  className = ''
+  className = '',
+  compact = false
 }: AirlineDatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -246,15 +249,33 @@ export default function AirlineDatePicker({
           ref={inputRef}
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-xl bg-white hover:border-gray-400 transition-colors duration-200"
+          className={compact 
+            ? "w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+            : "w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-xl bg-white hover:border-gray-400 transition-colors duration-200"
+          }
         >
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-gray-400" />
-            <span className={`text-sm ${startDate ? 'text-gray-900' : 'text-gray-500'}`}>
-              {formatDateRange()}
-            </span>
-          </div>
-          <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
+          {compact ? (
+            <>
+              <div className="text-xs text-gray-500 mb-1">Dates</div>
+              <div className="font-semibold text-gray-900 truncate">
+                {startDate && endDate
+                  ? `${format(new Date(startDate), 'MMM d')} - ${format(new Date(endDate), 'MMM d')}`
+                  : startDate
+                  ? format(new Date(startDate), 'MMM d, yyyy')
+                  : 'Add dates'}
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Calendar className="w-5 h-5 text-gray-400" />
+              <span className={`text-sm ${startDate ? 'text-gray-900' : 'text-gray-500'}`}>
+                {formatDateRange()}
+              </span>
+            </div>
+          )}
+          {!compact && (
+            <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
+          )}
         </button>
       </div>
 
@@ -263,7 +284,11 @@ export default function AirlineDatePicker({
         <div 
           ref={pickerRef}
           className="fixed bg-white rounded-xl shadow-xl border border-gray-200 z-[9999] p-6"
-          style={{
+          style={compact ? {
+            top: inputPosition.top + 60,
+            left: inputPosition.left,
+            width: Math.max(inputPosition.width, 600)
+          } : {
             top: inputPosition.top - 20,
             left: inputPosition.left,
             width: Math.max(inputPosition.width, 600),
