@@ -111,27 +111,27 @@ export default function Home() {
     <div className="min-h-screen bg-neutral-50">
       {/* Hero Section with Search */}
       <div 
-        className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white"
+        className="relative bg-gradient-to-r from-background-600 via-background-700 to-background-800 text-white"
         style={{
           backgroundImage: 'url(https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1600)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/80 via-blue-800/70 to-indigo-900/80"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-background-900/80 via-background-800/70 to-background-900/80"></div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-28 lg:pt-32 pb-16 sm:pb-20 lg:pb-24">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-3 sm:mb-4">
             Made to Travel
           </h1>
-          <p className="text-base sm:text-lg md:text-xl text-center text-blue-100 mb-8 sm:mb-10 lg:mb-12">
+          <p className="text-base sm:text-lg md:text-xl text-center text-background-100 mb-8 sm:mb-10 lg:mb-12">
             Book flights, hotels, and more with Voyana
           </p>
 
           {/* Search Card */}
           <div className="bg-white rounded-xl shadow-2xl p-4 sm:p-6 max-w-7xl mx-auto overflow-visible">
             {/* Tabs */}
-            <div className="flex gap-4 sm:gap-6 mb-6 border-b border-gray-200 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-4 sm:gap-6 mb-6 border-b border-neutral-200 overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => setActiveTab('flights')}
                 className={`flex items-center gap-2 pb-4 px-2 font-semibold transition-all relative whitespace-nowrap text-sm sm:text-base ${
