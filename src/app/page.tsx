@@ -129,7 +129,7 @@ export default function Home() {
           </p>
 
           {/* Search Card */}
-          <div className="bg-white rounded-xl shadow-2xl p-4 sm:p-6 max-w-7xl mx-auto overflow-visible">
+          <div className="bg-neutral-50 rounded-xl shadow-2xl p-4 sm:p-6 max-w-7xl mx-auto overflow-visible">
             {/* Tabs */}
             <div className="flex gap-4 sm:gap-6 mb-6 border-b border-neutral-200 overflow-x-auto scrollbar-hide">
               <button
@@ -280,7 +280,7 @@ export default function Home() {
                               <label className="block text-xs font-semibold text-neutral-700 mb-2 uppercase tracking-wide">
                                 Leaving from
                               </label>
-                              <div className="flex items-center h-12 border border-neutral-300 rounded-xl bg-white px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
+                              <div className="flex items-center h-12 border border-neutral-300 rounded-xl bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
                                 <MapPin className="w-4 h-4 text-neutral-400 mr-3" />
                                 <AirportAutocomplete
                                   id={`multi-origin-${flight.id}`}
@@ -300,7 +300,7 @@ export default function Home() {
                                   updateMultiCityFlight(flight.id, 'origin', flight.destination);
                                   updateMultiCityFlight(flight.id, 'destination', temp);
                                 }}
-                                className="absolute -right-5 bottom-1 h-10 w-10 flex items-center justify-center border border-neutral-300 rounded-full bg-white hover:border-neutral-400 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-white"
+                                className="absolute -right-5 bottom-1 h-10 w-10 flex items-center justify-center border border-neutral-300 rounded-full bg-neutral-50 hover:border-neutral-400 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-neutral-50"
                               >
                                 <ArrowLeftRight className="w-4 h-4 text-neutral-600" />
                               </button>
@@ -311,7 +311,7 @@ export default function Home() {
                               <label className="block text-xs font-semibold text-neutral-700 mb-2 uppercase tracking-wide">
                                 Going to
                               </label>
-                              <div className="flex items-center h-12 border border-neutral-300 rounded-xl bg-white px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
+                              <div className="flex items-center h-12 border border-neutral-300 rounded-xl bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
                                 <MapPin className="w-4 h-4 text-neutral-400 mr-3" />
                                 <AirportAutocomplete
                                   id={`multi-destination-${flight.id}`}
@@ -369,7 +369,7 @@ export default function Home() {
                         Leaving from
                       </label>
                       <div className="relative">
-                        <div className="flex items-center h-12 border border-neutral-300 rounded-xl bg-white px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
+                        <div className="flex items-center h-12 border border-neutral-300 rounded-xl bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
                           <MapPin className="w-4 h-4 text-neutral-400 mr-3" />
                           <AirportAutocomplete
                             id="origin-home"
@@ -387,7 +387,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={handleSwap}
-                      className="mb-1 -mx-3 h-10 w-10 flex items-center justify-center border border-neutral-300 rounded-full bg-white hover:border-neutral-400 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-white"
+                      className="mb-1 -mx-3 h-10 w-10 flex items-center justify-center border border-neutral-300 rounded-full bg-neutral-50 hover:border-neutral-400 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-neutral-50"
                     >
                       <ArrowLeftRight className="w-4 h-4 text-neutral-600" />
                     </button>
@@ -398,7 +398,7 @@ export default function Home() {
                         Going to
                       </label>
                       <div className="relative">
-                        <div className="flex items-center h-12 border border-neutral-300 rounded-xl bg-white px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
+                        <div className="flex items-center h-12 border border-neutral-300 rounded-xl bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
                           <MapPin className="w-4 h-4 text-neutral-400 mr-3" />
                           <AirportAutocomplete
                             id="destination-home"
@@ -448,7 +448,7 @@ export default function Home() {
                   <div className="lg:hidden">
                     {/* Row 1: Leaving From */}
                     <div className="relative mb-2">
-                      <div className="flex items-center h-14 border border-neutral-300 rounded-lg bg-white px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
+                      <div className="flex items-center h-14 border border-neutral-300 rounded-lg bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
                         <MapPin className="w-5 h-5 text-neutral-400 mr-3 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="text-xs text-neutral-600 font-medium mb-0.5">Leaving from</div>
@@ -468,7 +468,7 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={handleSwap}
-                          className="h-9 w-9 flex items-center justify-center border border-neutral-300 rounded-full bg-white hover:bg-neutral-50 transition-colors shadow-md"
+                          className="h-9 w-9 flex items-center justify-center border border-neutral-300 rounded-full bg-neutral-50 hover:bg-neutral-50 transition-colors shadow-md"
                         >
                           <ArrowLeftRight className="w-4 h-4 text-neutral-600" />
                         </button>
@@ -477,7 +477,7 @@ export default function Home() {
 
                     {/* Row 2: Going To */}
                     <div className="relative mb-2">
-                      <div className="flex items-center h-14 border border-neutral-300 rounded-lg bg-white px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
+                      <div className="flex items-center h-14 border border-neutral-300 rounded-lg bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
                         <MapPin className="w-5 h-5 text-neutral-400 mr-3 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="text-xs text-neutral-600 font-medium mb-0.5">Going to</div>
@@ -547,7 +547,7 @@ export default function Home() {
 
                           {/* Leaving From */}
                           <div className="relative">
-                            <div className="flex items-center h-14 border border-neutral-300 rounded-lg bg-white px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
+                            <div className="flex items-center h-14 border border-neutral-300 rounded-lg bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
                               <MapPin className="w-5 h-5 text-neutral-400 mr-3 flex-shrink-0" />
                               <div className="flex-1 min-w-0">
                                 <div className="text-xs text-neutral-600 font-medium mb-0.5">Leaving from</div>
@@ -571,7 +571,7 @@ export default function Home() {
                                   updateMultiCityFlight(flight.id, 'origin', flight.destination);
                                   updateMultiCityFlight(flight.id, 'destination', temp);
                                 }}
-                                className="h-9 w-9 flex items-center justify-center border border-neutral-300 rounded-full bg-white hover:bg-neutral-50 transition-colors shadow-md"
+                                className="h-9 w-9 flex items-center justify-center border border-neutral-300 rounded-full bg-neutral-50 hover:bg-neutral-50 transition-colors shadow-md"
                               >
                                 <ArrowLeftRight className="w-4 h-4 text-neutral-600" />
                               </button>
@@ -580,7 +580,7 @@ export default function Home() {
 
                           {/* Going To */}
                           <div className="relative">
-                            <div className="flex items-center h-14 border border-neutral-300 rounded-lg bg-white px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
+                            <div className="flex items-center h-14 border border-neutral-300 rounded-lg bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
                               <MapPin className="w-5 h-5 text-neutral-400 mr-3 flex-shrink-0" />
                               <div className="flex-1 min-w-0">
                                 <div className="text-xs text-neutral-600 font-medium mb-0.5">Going to</div>
@@ -637,7 +637,7 @@ export default function Home() {
       </div>
 
       {/* Features Section */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-neutral-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">

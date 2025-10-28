@@ -48,7 +48,7 @@ export default function Header() {
   const isSignedIn = !!user;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[10000] bg-white/95 backdrop-blur-md border-b border-neutral-200/50 transition-all duration-300">
+    <header className="fixed top-0 left-0 right-0 z-[10000] bg-neutral-50/95 backdrop-blur-md border-b border-neutral-200/50 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
@@ -146,7 +146,7 @@ export default function Header() {
                     </div>
                   </button>
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-neutral-200 py-1 z-50">
+                    <div className="absolute right-0 mt-2 w-48 bg-neutral-50 rounded-lg shadow-xl border border-neutral-200 py-1 z-50">
                       <div className="px-4 py-2 border-b border-neutral-200">
                         <p className="text-sm font-medium text-neutral-900 truncate">{user?.email}</p>
                       </div>
