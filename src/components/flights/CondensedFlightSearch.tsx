@@ -40,9 +40,37 @@ export default function CondensedFlightSearch({
     cabin: 'ECONOMY',
   });
   const [tripType, setTripType] = useState<'one-way' | 'round-trip' | 'multi-city'>(initialTripType);
+  
+  // Multi-city flights state
+  const [multiCityFlights, setMultiCityFlights] = useState([
+    { origin: '', originCode: '', destination: '', destinationCode: '', date: '' },
+    { origin: '', originCode: '', destination: '', destinationCode: '', date: '' },
+  ]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (tripType === 'multi-city') {
+      // Build multi-city search params
+      const params = new URLSearchParams({
+        tripType: 'multi-city',
+        adults: travelers.adults.toString(),
+        children: travelers.children.toString(),
+        infantsLap: travelers.infantsLap.toString(),
+        infantsSeat: travelers.infantsSeat.toString(),
+        cabin: travelers.cabin,
+      });
+
+      multiCityFlights.forEach((flight, index) => {
+        const segmentNum = index + 1;
+        params.append(`origin${segmentNum}`, flight.originCode.toUpperCase());
+        params.append(`destination${segmentNum}`, flight.destinationCode.toUpperCase());
+        params.append(`date${segmentNum}`, flight.date);
+      });
+
+      router.push(`/flights?${params.toString()}`);
+      return;
+    }
     
     const params = new URLSearchParams({
       origin: originCode.toUpperCase(),
@@ -69,6 +97,38 @@ export default function CondensedFlightSearch({
     setOriginCode(destinationCode);
     setDestination(tempDisplay);
     setDestinationCode(tempCode);
+  };
+
+  const handleAddFlight = () => {
+    setMultiCityFlights([
+      ...multiCityFlights,
+      { origin: '', originCode: '', destination: '', destinationCode: '', date: '' },
+    ]);
+  };
+
+  const handleRemoveFlight = (index: number) => {
+    if (multiCityFlights.length > 2) {
+      setMultiCityFlights(multiCityFlights.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleMultiCitySwap = (index: number) => {
+    const newFlights = [...multiCityFlights];
+    const temp = {
+      origin: newFlights[index].origin,
+      originCode: newFlights[index].originCode,
+    };
+    newFlights[index].origin = newFlights[index].destination;
+    newFlights[index].originCode = newFlights[index].destinationCode;
+    newFlights[index].destination = temp.origin;
+    newFlights[index].destinationCode = temp.originCode;
+    setMultiCityFlights(newFlights);
+  };
+
+  const updateMultiCityFlight = (index: number, field: string, value: string) => {
+    const newFlights = [...multiCityFlights];
+    (newFlights[index] as any)[field] = value;
+    setMultiCityFlights(newFlights);
   };
 
   return (

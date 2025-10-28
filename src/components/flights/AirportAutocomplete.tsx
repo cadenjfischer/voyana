@@ -216,7 +216,7 @@ export default function AirportAutocomplete({
 
       {/* Dropdown */}
       {isOpen && isFocused && suggestions.length > 0 && (!inline ? (
-        <div className="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-96 overflow-y-auto">
+        <div className="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-96 overflow-y-auto scrollbar-hide">
           {suggestions.map((airport, index) => (
             <button
               key={airport.iataCode}
@@ -242,7 +242,7 @@ export default function AirportAutocomplete({
         </div>
       ) : createPortal(
         <div
-          className="absolute z-[1000] bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-96 overflow-y-auto"
+          className="absolute z-[1000] bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-96 overflow-y-auto scrollbar-hide"
           style={{ top: portalPos.top, left: portalPos.left, width: portalPos.width }}
         >
           {suggestions.map((airport, index) => (

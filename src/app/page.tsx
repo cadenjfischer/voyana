@@ -277,9 +277,9 @@ export default function Home() {
                             )}
                           </div>
                           
-                          <div className="grid grid-cols-1 lg:grid-cols-[2fr_auto_2fr_1.5fr] gap-3 items-end">
+                          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1.5fr] gap-2 items-end">
                             {/* Leaving From */}
-                            <div>
+                            <div className="relative">
                               <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
                                 Leaving from
                               </label>
@@ -294,20 +294,20 @@ export default function Home() {
                                   inline
                                 />
                               </div>
+                              
+                              {/* Swap Button - Overlapping on the right edge */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const temp = flight.origin;
+                                  updateMultiCityFlight(flight.id, 'origin', flight.destination);
+                                  updateMultiCityFlight(flight.id, 'destination', temp);
+                                }}
+                                className="absolute -right-5 bottom-1 h-10 w-10 flex items-center justify-center border border-gray-300 rounded-full bg-white hover:border-gray-400 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-white"
+                              >
+                                <ArrowLeftRight className="w-4 h-4 text-gray-600" />
+                              </button>
                             </div>
-
-                            {/* Swap Button */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const temp = flight.origin;
-                                updateMultiCityFlight(flight.id, 'origin', flight.destination);
-                                updateMultiCityFlight(flight.id, 'destination', temp);
-                              }}
-                              className="mb-1 h-10 w-10 flex items-center justify-center border border-gray-300 rounded-full bg-white hover:border-gray-400 transition-colors shadow-sm flex-shrink-0"
-                            >
-                              <ArrowLeftRight className="w-4 h-4 text-gray-600" />
-                            </button>
 
                             {/* Going To */}
                             <div>
