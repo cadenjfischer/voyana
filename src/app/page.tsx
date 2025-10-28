@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Header from "@/components/Header";
 import { Plane, Bed, Car, Package, MapPin, Ship, ArrowLeftRight } from 'lucide-react';
 import AirportAutocomplete from '@/components/flights/AirportAutocomplete';
 import AirlineDatePicker from '@/components/AirlineDatePicker';
@@ -110,8 +109,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <Header />
-      
       {/* Hero Section with Search */}
       <div 
         className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white"
@@ -356,7 +353,8 @@ export default function Home() {
                       {/* Search Button */}
                       <button
                         type="submit"
-                        className="w-full h-12 px-10 bg-secondary-600 hover:bg-secondary-700 text-white font-bold rounded-xl transition-colors shadow-lg"
+                        className="btn btn-primary btn-md btn-full"
+                        style={{ height: '3rem' }}
                       >
                         Search
                       </button>
@@ -439,7 +437,8 @@ export default function Home() {
                     {/* Search Button */}
                     <button
                       type="submit"
-                      className="flex-shrink-0 h-12 px-10 bg-secondary-600 hover:bg-secondary-700 text-white font-bold rounded-xl transition-colors shadow-lg mb-1 ml-6"
+                      className="btn btn-primary btn-md mb-1 ml-6"
+                      style={{ height: '3rem', width: 'auto', flexShrink: 0 }}
                     >
                       Search
                     </button>
@@ -514,13 +513,14 @@ export default function Home() {
                     {/* Search Button - Full width on mobile */}
                     <button
                       type="submit"
-                      className="w-full h-12 px-10 bg-secondary-600 hover:bg-secondary-700 text-white font-bold rounded-xl transition-colors shadow-lg"
+                      className="btn btn-primary btn-md btn-full"
+                      style={{ height: '3rem' }}
                     >
                       Search
                     </button>
                   </div>
                   </>
-                  )}
+                )}
 
                   {/* Mobile Multi-city Layout */}
                   {tripType === 'multi-city' && (
@@ -622,7 +622,8 @@ export default function Home() {
                       {/* Search Button - Full width on mobile */}
                       <button
                         type="submit"
-                        className="w-full h-12 px-10 bg-secondary-600 hover:bg-secondary-700 text-white font-bold rounded-xl transition-colors shadow-lg"
+                        className="btn btn-primary btn-md btn-full"
+                        style={{ height: '3rem' }}
                       >
                         Search
                       </button>

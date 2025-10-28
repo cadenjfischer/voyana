@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserClient } from '@supabase/ssr';
 import type { User } from '@supabase/supabase-js';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,6 +14,7 @@ export default function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -109,6 +111,23 @@ export default function Header() {
 
           {/* Authentication Section */}
           <div className="hidden lg:flex items-center space-x-4">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg hover:bg-neutral-100 transition-colors duration-300"
+              aria-label="Toggle theme"
+            >
+              {theme === 'light' ? (
+                <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              )}
+            </button>
+            
             {isSignedIn ? (
               <div className="flex items-center space-x-4">
                 <Link 
@@ -240,6 +259,28 @@ export default function Header() {
                 Contact
               </a>
               <div className="px-4 pt-4 border-t border-gray-200">
+                {/* Theme Toggle - Mobile */}
+                <button
+                  onClick={toggleTheme}
+                  className="flex items-center space-x-2 w-full text-left text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2 mb-3"
+                >
+                  {theme === 'light' ? (
+                    <>
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                      </svg>
+                      <span>Dark Mode</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                      </svg>
+                      <span>Light Mode</span>
+                    </>
+                  )}
+                </button>
+                
                 {isSignedIn ? (
                   <div className="flex flex-col space-y-3">
                     <Link 
