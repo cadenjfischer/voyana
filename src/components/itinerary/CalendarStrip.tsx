@@ -224,13 +224,13 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
           // Get destination color with transfer day support
           const getDayColors = () => {
             if (!day.destinationId) {
-              return { bg: '#f9fafb', text: '#6b7280', isTransfer: false };
+              return { bg: 'var(--color-neutral-50)', text: 'var(--color-neutral-700)', isTransfer: false };
             }
             
             // Check if this day is beyond the allocated nights for this destination
             const destination = trip.destinations.find(d => d.id === day.destinationId);
             if (!destination || destination.nights === 0) {
-              return { bg: '#f9fafb', text: '#6b7280', isTransfer: false };
+              return { bg: 'var(--color-neutral-50)', text: 'var(--color-neutral-700)', isTransfer: false };
             }
             
             // Count how many days are assigned to this destination up to this point
@@ -239,7 +239,7 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
             // If this day exceeds the allocated nights + 1 (for departure day), treat as unassigned
             // You get (nights + 1) days in a destination because you wake up there on the departure day
             if (destination.nights === 0 || daysAssignedToThisDestination > destination.nights + 1) {
-              return { bg: '#f9fafb', text: '#6b7280', isTransfer: false };
+              return { bg: 'var(--color-neutral-50)', text: 'var(--color-neutral-700)', isTransfer: false };
             }
             
             return getCalendarColorsWithTransfer(day.destinationId, index, days, trip.destinations);
@@ -247,21 +247,46 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
           
           const dynamicColors = getDayColors();
           
-          // Convert hex to rgba with opacity for overlay effect
-          const hexToRgba = (hex: string, opacity: number) => {
-            const r = parseInt(hex.slice(1, 3), 16);
-            const g = parseInt(hex.slice(3, 5), 16);
-            const b = parseInt(hex.slice(5, 7), 16);
-            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+          // Apply alpha to a color string (supports oklch(), hex, CSS vars, and falls back safely)
+          const colorWithAlpha = (color: string, alpha: number) => {
+            // Already a gradient? Return as-is
+            if (color.startsWith('linear-gradient(') || color.startsWith('radial-gradient(')) {
+              return color;
+            }
+            // OKLCH color e.g. oklch(L C H)
+            if (color.startsWith('oklch(')) {
+              // If it already has an alpha, replace it; otherwise append
+              if (color.includes('/')) {
+                return color.replace(/\/(.*)\)/, `/ ${alpha})`);
+              }
+              return color.replace(/\)$/, ` / ${alpha})`);
+            }
+            // CSS variable: use color-mix to apply alpha in OKLab
+            if (color.startsWith('var(')) {
+              const pct = Math.round(alpha * 100);
+              return `color-mix(in oklab, ${color} ${pct}%, transparent)`;
+            }
+            // Hex fallback: #rrggbb or #rgb
+            if (color.startsWith('#')) {
+              const pct = Math.round(alpha * 100);
+              return `color-mix(in oklab, ${color} ${pct}%, transparent)`;
+            }
+            // As a last resort, try color-mix
+            const pct = Math.round(alpha * 100);
+            return `color-mix(in oklab, ${color} ${pct}%, transparent)`;
           };
           
           // Create layered background: white base with colored overlay
           const getLayeredBackground = () => {
-            if (typeof dynamicColors.bg === 'string' && dynamicColors.bg.startsWith('#')) {
-              const colorOverlay = hexToRgba(dynamicColors.bg, 0.4);
-              return `linear-gradient(${colorOverlay}, ${colorOverlay}), white`;
+            if (typeof dynamicColors.bg === 'string') {
+              // If background is a gradient, return as-is (transfer day)
+              if (dynamicColors.bg.startsWith('linear-gradient(') || dynamicColors.bg.startsWith('radial-gradient(')) {
+                return dynamicColors.bg;
+              }
+              // Otherwise layer a translucent color over white for subtle tint
+              const overlay = colorWithAlpha(dynamicColors.bg, 0.4);
+              return `linear-gradient(${overlay}, ${overlay}), white`;
             }
-            // For gradients or special cases
             return dynamicColors.bg;
           };
           
@@ -275,8 +300,10 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
               style={{
                 background: getLayeredBackground(),
                 color: dynamicColors.text,
-                '--hover-bg': typeof dynamicColors.bg === 'string' && dynamicColors.bg.startsWith('#') 
-                  ? `linear-gradient(${hexToRgba(dynamicColors.bg, 0.7)}, ${hexToRgba(dynamicColors.bg, 0.7)}), white`
+                '--hover-bg': typeof dynamicColors.bg === 'string'
+                  ? (dynamicColors.bg.startsWith('linear-gradient(') || dynamicColors.bg.startsWith('radial-gradient(')
+                      ? dynamicColors.bg
+                      : `linear-gradient(${colorWithAlpha(dynamicColors.bg, 0.7)}, ${colorWithAlpha(dynamicColors.bg, 0.7)}), white`)
                   : dynamicColors.bg
               } as React.CSSProperties & { '--hover-bg': string }}
             >

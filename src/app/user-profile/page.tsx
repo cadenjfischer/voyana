@@ -80,7 +80,7 @@ export default function UserProfilePage() {
                     id="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-[#078FA5] focus:border-[#078FA5]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-600 focus:border-primary-600"
                   />
                 </div>
 
@@ -93,7 +93,7 @@ export default function UserProfilePage() {
                 <button
                   type="submit"
                   disabled={updating || email === user?.email}
-                  className="w-full bg-[#078FA5] hover:bg-[#065a6b] text-white px-4 py-2 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {updating ? 'Updating...' : 'Update Email'}
                 </button>

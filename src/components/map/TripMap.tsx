@@ -96,25 +96,25 @@ export default function TripMap({ trip, isExpanded, onToggleExpand, embedded = f
         // Get destination color
         const classes = getDestinationColors(d.id, trip.destinations, true);
         const bgToHex: Record<string, string> = {
-          'bg-sky-500': '#0ea5e9',
-          'bg-green-500': '#22c55e',
-          'bg-purple-500': '#a855f7',
-          'bg-orange-500': '#f97316',
-          'bg-pink-500': '#ec4899',
-          'bg-indigo-500': '#6366f1',
-          'bg-red-500': '#ef4444',
-          'bg-teal-500': '#14b8a6',
-          'bg-yellow-500': '#eab308',
-          'bg-red-800': '#991b1b',
-          'bg-yellow-600': '#ca8a04',
-          'bg-slate-800': '#1e293b',
-          'bg-emerald-500': '#10b981',
-          'bg-orange-600': '#ff6b35',
-          'bg-cyan-500': '#06b6d4',
-          'bg-fuchsia-500': '#d946ef',
-          'bg-slate-600': '#475569'
+          'bg-sky-500': 'oklch(68.47% 0.1479 237.32)',
+          'bg-green-500': 'oklch(72.27% 0.192 149.58)',
+          'bg-purple-500': 'oklch(62.68% 0.2325 303.9)',
+          'bg-orange-500': 'oklch(70.49% 0.1867 47.6)',
+          'bg-pink-500': 'oklch(65.59% 0.2118 354.31)',
+          'bg-indigo-500': 'oklch(58.54% 0.2041 277.12)',
+          'bg-red-500': 'oklch(63.68% 0.2078 25.33)',
+          'bg-teal-500': 'oklch(70.38% 0.123 182.5)',
+          'bg-yellow-500': 'oklch(79.52% 0.1617 86.05)',
+          'bg-red-800': 'oklch(44.37% 0.1613 26.9)',
+          'bg-yellow-600': 'oklch(68.06% 0.1423 75.83)',
+          'bg-slate-800': 'oklch(27.95% 0.0368 260.03)',
+          'bg-emerald-500': 'oklch(69.59% 0.1491 162.48)',
+          'bg-orange-600': 'oklch(70.45% 0.1926 39.23)',
+          'bg-cyan-500': 'oklch(71.48% 0.1257 215.22)',
+          'bg-fuchsia-500': 'oklch(66.68% 0.2591 322.15)',
+          'bg-slate-600': 'oklch(44.55% 0.0374 257.28)'
         };
-        const hex = d.customColor ? resolveColorHex(d.customColor) : (bgToHex[classes.bg] || '#0ea5e9');
+        const hex = d.customColor ? resolveColorHex(d.customColor) : (bgToHex[classes.bg] || 'oklch(68.47% 0.1479 237.32)');
 
         const el = document.createElement('div');
         el.className = 'w-7 h-7 rounded-full border-2 border-white shadow flex items-center justify-center text-white text-xs font-bold';
@@ -149,7 +149,7 @@ export default function TripMap({ trip, isExpanded, onToggleExpand, embedded = f
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#94a3b8',
+          'line-color': 'var(--color-neutral-400)',
           'line-width': 2,
           'line-dasharray': [2, 4],
           'line-opacity': 1

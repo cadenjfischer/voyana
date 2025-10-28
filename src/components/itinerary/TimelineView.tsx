@@ -276,24 +276,24 @@ export default function TimelineView({
                     const dest = trip.destinations.find(d => d.id === destId);
                     if (dest?.customColor) {
                       const colorMap: { [key: string]: string } = {
-                        'ocean-blue': `rgba(186, 230, 253, ${opacity})`,
-                        'tropical-green': `rgba(187, 247, 208, ${opacity})`, 
-                        'sunset-purple': `rgba(233, 213, 255, ${opacity})`,
-                        'adventure-orange': `rgba(254, 215, 170, ${opacity})`,
-                        'cherry-pink': `rgba(249, 168, 212, ${opacity})`,
-                        'deep-indigo': `rgba(199, 210, 254, ${opacity})`,
-                        'ruby-red': `rgba(254, 202, 202, ${opacity})`,
-                        'emerald-teal': `rgba(153, 246, 228, ${opacity})`,
-                        'golden-yellow': `rgba(253, 224, 71, ${opacity})`,
-                        'wine-burgundy': `rgba(252, 165, 165, ${opacity})`,
-                        'bronze-gold': `rgba(250, 204, 21, ${opacity})`,
-                        'navy-midnight': `rgba(203, 213, 225, ${opacity})`,
-                        'mint-fresh': `rgba(167, 243, 208, ${opacity})`,
-                        'sunset-coral': `rgba(253, 186, 116, ${opacity})`,
-                        'arctic-cyan': `rgba(165, 243, 252, ${opacity})`,
-                        'magenta-fuchsia': `rgba(232, 121, 249, ${opacity})`
+                        'ocean-blue': `oklch(90.14% 0.0555 230.9 / ${opacity})`,
+                        'tropical-green': `oklch(92.50% 0.0806 155.99 / ${opacity})`, 
+                        'sunset-purple': `oklch(90.24% 0.0604 306.7 / ${opacity})`,
+                        'adventure-orange': `oklch(90.15% 0.0729 70.7 / ${opacity})`,
+                        'cherry-pink': `oklch(82.28% 0.1095 346.02 / ${opacity})`,
+                        'deep-indigo': `oklch(86.99% 0.0622 274.04 / ${opacity})`,
+                        'ruby-red': `oklch(88.45% 0.0593 18.33 / ${opacity})`,
+                        'emerald-teal': `oklch(91.00% 0.0927 180.43 / ${opacity})`,
+                        'golden-yellow': `oklch(90.52% 0.1657 98.11 / ${opacity})`,
+                        'wine-burgundy': `oklch(80.77% 0.1035 19.57 / ${opacity})`,
+                        'bronze-gold': `oklch(86.06% 0.1731 91.94 / ${opacity})`,
+                        'navy-midnight': `oklch(86.90% 0.0198 252.89 / ${opacity})`,
+                        'mint-fresh': `oklch(90.49% 0.0895 164.15 / ${opacity})`,
+                        'sunset-coral': `oklch(83.66% 0.1165 66.29 / ${opacity})`,
+                        'arctic-cyan': `oklch(91.67% 0.0772 205.04 / ${opacity})`,
+                        'magenta-fuchsia': `oklch(74.77% 0.207 322.16 / ${opacity})`
                       };
-                      return colorMap[dest.customColor] || '#f9fafb';
+                      return colorMap[dest.customColor] || 'var(--color-neutral-50)';
                     }
                     // Fallback to hash-based selection for calendar colors
                     const generateHash = (str: string) => {
@@ -306,22 +306,22 @@ export default function TimelineView({
                       return Math.abs(hash);
                     };
                     const calendarBgs = [
-                      `rgba(186, 230, 253, ${opacity})`, 
-                      `rgba(187, 247, 208, ${opacity})`, 
-                      `rgba(233, 213, 255, ${opacity})`, 
-                      `rgba(254, 215, 170, ${opacity})`, 
-                      `rgba(249, 168, 212, ${opacity})`, 
-                      `rgba(199, 210, 254, ${opacity})`, 
-                      `rgba(254, 202, 202, ${opacity})`, 
-                      `rgba(153, 246, 228, ${opacity})`, 
-                      `rgba(253, 224, 71, ${opacity})`, 
-                      `rgba(252, 165, 165, ${opacity})`, 
-                      `rgba(250, 204, 21, ${opacity})`, 
-                      `rgba(203, 213, 225, ${opacity})`, 
-                      `rgba(167, 243, 208, ${opacity})`, 
-                      `rgba(253, 186, 116, ${opacity})`, 
-                      `rgba(165, 243, 252, ${opacity})`, 
-                      `rgba(232, 121, 249, ${opacity})`
+                      `oklch(90.14% 0.0555 230.9 / ${opacity})`, 
+                      `oklch(92.50% 0.0806 155.99 / ${opacity})`, 
+                      `oklch(90.24% 0.0604 306.7 / ${opacity})`, 
+                      `oklch(90.15% 0.0729 70.7 / ${opacity})`, 
+                      `oklch(82.28% 0.1095 346.02 / ${opacity})`, 
+                      `oklch(86.99% 0.0622 274.04 / ${opacity})`, 
+                      `oklch(88.45% 0.0593 18.33 / ${opacity})`, 
+                      `oklch(91.00% 0.0927 180.43 / ${opacity})`, 
+                      `oklch(90.52% 0.1657 98.11 / ${opacity})`, 
+                      `oklch(80.77% 0.1035 19.57 / ${opacity})`, 
+                      `oklch(86.06% 0.1731 91.94 / ${opacity})`, 
+                      `oklch(86.90% 0.0198 252.89 / ${opacity})`, 
+                      `oklch(90.49% 0.0895 164.15 / ${opacity})`, 
+                      `oklch(83.66% 0.1165 66.29 / ${opacity})`, 
+                      `oklch(91.67% 0.0772 205.04 / ${opacity})`, 
+                      `oklch(74.77% 0.207 322.16 / ${opacity})`
                     ];
                     const hash = generateHash(destId);
                     return calendarBgs[hash % calendarBgs.length];
@@ -335,7 +335,7 @@ export default function TimelineView({
                     if (destination && day.destinationId) {
                       const daysAssignedToThisDestination = trip.days.slice(0, dayIndexInTrip + 1).filter(d => d.destinationId === day.destinationId).length;
                       if (destination.nights === 0 || daysAssignedToThisDestination > destination.nights + 1) {
-                        return { backgroundColor: '#f9fafb' }; // light gray for unassigned
+                        return { backgroundColor: 'var(--color-neutral-50)' }; // light gray for unassigned
                       }
                     }
                     
@@ -351,14 +351,14 @@ export default function TimelineView({
                         const currentBg = getCalendarBgHex(destination.id, isHovered);
                         return { background: `linear-gradient(to right, ${prevBg}, ${currentBg})` };
                       } else {
-                        return { backgroundColor: '#fed7aa' }; // orange-200
+                        return { backgroundColor: 'oklch(90.15% 0.0729 70.7)' }; // orange-200
                       }
                     } else {
                       // Regular days
                       if (destination) {
                         return { backgroundColor: getCalendarBgHex(destination.id, isHovered) };
                       } else {
-                        return { backgroundColor: '#f9fafb' }; // light gray for unassigned days
+                        return { backgroundColor: 'var(--color-neutral-50)' }; // light gray for unassigned days
                       }
                     }
                   };

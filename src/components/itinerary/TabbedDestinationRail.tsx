@@ -199,7 +199,7 @@ export default function TabbedDestinationRail({
     // For default colors, we need to get the hex value from our palette
     const colors = getDestinationColors(destination.id, destinations);
     const defaultColorIndex = destinations.findIndex(d => d.id === destination.id) % PREMIUM_COLOR_PALETTE.length;
-    return PREMIUM_COLOR_PALETTE[defaultColorIndex]?.hex || '#6366f1';
+    return PREMIUM_COLOR_PALETTE[defaultColorIndex]?.hex || 'oklch(58.54% 0.2041 277.12)';
   };
 
   // Handle adding lodging

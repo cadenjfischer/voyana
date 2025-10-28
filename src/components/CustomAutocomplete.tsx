@@ -117,7 +117,7 @@ export default function CustomAutocomplete({
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     // Reset border color and width
-    e.target.style.borderColor = '#d1d5db';
+    e.target.style.borderColor = 'var(--color-neutral-300)';
     e.target.style.borderWidth = '1px';
     e.target.style.padding = '12px 16px';
     
@@ -161,7 +161,7 @@ export default function CustomAutocomplete({
         onBlur={handleBlur}
         onFocus={(e) => {
           handleFocus();
-          e.target.style.borderColor = '#3b82f6';
+          e.target.style.borderColor = 'oklch(62.31% 0.188 259.81)';
           e.target.style.borderWidth = '2px';
           e.target.style.padding = '11px 15px';
           e.target.style.boxShadow = 'none';

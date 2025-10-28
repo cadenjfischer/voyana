@@ -9,14 +9,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'luxury-primary': '#078FA5',
-        'luxury-primary-dark': '#065a6b',
-        'luxury-secondary': '#2D3748',
-        'luxury-accent': '#E2E8F0',
-        'luxury-dark': '#1A202C',
-        'luxury-gray': '#718096',
-        'luxury-light-gray': '#EDF2F7',
-        'luxury-bg': '#FAFAFA',
+        // Map legacy luxury colors to OKLCH token variables for themeability
+        'luxury-primary': 'var(--color-primary-600)',
+        'luxury-primary-dark': 'var(--color-primary-700)',
+        'luxury-secondary': 'var(--color-neutral-800)',
+        'luxury-accent': 'var(--color-neutral-200)',
+        'luxury-dark': 'var(--color-neutral-900)',
+        'luxury-gray': 'var(--color-neutral-500)',
+        'luxury-light-gray': 'var(--color-neutral-100)',
+        'luxury-bg': 'var(--color-neutral-50)',
       },
       fontFamily: {
         'sans': ['var(--font-inter)', 'system-ui', 'sans-serif'],
@@ -44,12 +45,12 @@ const config: Config = {
         },
       },
       backgroundImage: {
-        'luxury-gradient-primary': 'linear-gradient(135deg, #078FA5 0%, #065a6b 100%)',
-        'luxury-gradient-secondary': 'linear-gradient(135deg, #2D3748 0%, #4A5568 100%)',
-        'luxury-pattern': 'radial-gradient(circle at 25% 25%, rgba(7, 143, 165, 0.1) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(45, 55, 72, 0.05) 0%, transparent 50%)',
+        'luxury-gradient-primary': 'linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-700) 100%)',
+        'luxury-gradient-secondary': 'linear-gradient(135deg, var(--color-neutral-800) 0%, var(--color-neutral-900) 100%)',
+        'luxury-pattern': 'radial-gradient(circle at 25% 25%, oklch(var(--primary-600) / 0.1) 0%, transparent 50%), radial-gradient(circle at 75% 75%, oklch(var(--neutral-700) / 0.05) 0%, transparent 50%)',
       },
       boxShadow: {
-        'luxury': '0 20px 25px -5px rgba(7, 143, 165, 0.1), 0 10px 10px -5px rgba(7, 143, 165, 0.04)',
+        'luxury': '0 20px 25px -5px oklch(var(--primary-600) / 0.10), 0 10px 10px -5px oklch(var(--primary-600) / 0.04)',
       },
     },
   },
