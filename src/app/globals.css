@@ -1,6 +1,56 @@
 @import "tailwindcss";
 @import "mapbox-gl/dist/mapbox-gl.css";
 
+@theme {
+  --color-primary-50: oklch(96.85% 0.012 209.81);
+  --color-primary-100: oklch(93.48% 0.023 210.40);
+  --color-primary-200: oklch(87.27% 0.046 210.17);
+  --color-primary-300: oklch(80.88% 0.068 210.33);
+  --color-primary-400: oklch(74.96% 0.086 209.96);
+  --color-primary-500: oklch(69.08% 0.100 211.37);
+  --color-primary-600: oklch(58.80% 0.084 210.99);
+  --color-primary-700: oklch(47.78% 0.067 211.89);
+  --color-primary-800: oklch(36.36% 0.050 211.43);
+  --color-primary-900: oklch(23.66% 0.028 211.46);
+  --color-primary-950: oklch(16.77% 0.017 209.69);
+
+  --color-secondary-50: oklch(97.5% 0.02 65);
+  --color-secondary-100: oklch(95% 0.04 65);
+  --color-secondary-200: oklch(90% 0.08 65);
+  --color-secondary-300: oklch(85% 0.12 65);
+  --color-secondary-400: oklch(75% 0.16 65);
+  --color-secondary-500: oklch(70% 0.18 65);
+  --color-secondary-600: oklch(65% 0.20 65);
+  --color-secondary-700: oklch(55% 0.18 65);
+  --color-secondary-800: oklch(45% 0.14 65);
+  --color-secondary-900: oklch(35% 0.10 65);
+  --color-secondary-950: oklch(25% 0.06 65);
+
+  --color-accent-50: oklch(97.12% 0.017 210.19);
+  --color-accent-100: oklch(94.23% 0.035 209.82);
+  --color-accent-200: oklch(88.79% 0.068 210.04);
+  --color-accent-300: oklch(83.76% 0.096 210.69);
+  --color-accent-400: oklch(79.25% 0.117 212.06);
+  --color-accent-500: oklch(75.31% 0.128 213.98);
+  --color-accent-600: oklch(63.87% 0.108 214.35);
+  --color-accent-700: oklch(51.87% 0.087 214.04);
+  --color-accent-800: oklch(39.13% 0.064 213.49);
+  --color-accent-900: oklch(25.24% 0.039 212.15);
+  --color-accent-950: oklch(17.68% 0.025 204.72);
+
+  --color-neutral-50: oklch(95.90% 0.004 286.32);
+  --color-neutral-100: oklch(91.88% 0.007 268.54);
+  --color-neutral-200: oklch(83.58% 0.015 268.47);
+  --color-neutral-300: oklch(75.12% 0.021 270.14);
+  --color-neutral-400: oklch(66.18% 0.030 272.31);
+  --color-neutral-500: oklch(57.16% 0.040 271.17);
+  --color-neutral-600: oklch(48.78% 0.033 272.02);
+  --color-neutral-700: oklch(40.26% 0.024 269.78);
+  --color-neutral-800: oklch(30.95% 0.019 268.07);
+  --color-neutral-900: oklch(20.91% 0.010 268.19);
+  --color-neutral-950: oklch(15.41% 0.005 264.43);
+}
+
 /*
   OKLCH Master Palette
   ------------------------------------------------------------
@@ -49,17 +99,17 @@
   --primary-900: oklch(23.66% 0.028 211.46);
   --primary-950: oklch(16.77% 0.017 209.69);
 
-  --secondary-50: oklch(96.93% 0.015 207.11);
-  --secondary-100: oklch(93.73% 0.029 212.58);
-  --secondary-200: oklch(87.86% 0.058 211.27);
-  --secondary-300: oklch(82.05% 0.082 211.57);
-  --secondary-400: oklch(76.81% 0.103 212.23);
-  --secondary-500: oklch(71.79% 0.117 214.73);
-  --secondary-600: oklch(61.03% 0.098 214.02);
-  --secondary-700: oklch(49.51% 0.078 214.16);
-  --secondary-800: oklch(37.58% 0.058 214.05);
-  --secondary-900: oklch(24.28% 0.034 214.88);
-  --secondary-950: oklch(17.12% 0.020 213.32);
+  --secondary-50: oklch(97.5% 0.02 65);
+  --secondary-100: oklch(95% 0.04 65);
+  --secondary-200: oklch(90% 0.08 65);
+  --secondary-300: oklch(85% 0.12 65);
+  --secondary-400: oklch(75% 0.16 65);
+  --secondary-500: oklch(70% 0.18 65);
+  --secondary-600: oklch(65% 0.20 65);
+  --secondary-700: oklch(55% 0.18 65);
+  --secondary-800: oklch(45% 0.14 65);
+  --secondary-900: oklch(35% 0.10 65);
+  --secondary-950: oklch(25% 0.06 65);
 
   --accent-50: oklch(97.12% 0.017 210.19);
   --accent-100: oklch(94.23% 0.035 209.82);
@@ -67,8 +117,8 @@
   --accent-300: oklch(83.76% 0.096 210.69);
   --accent-400: oklch(79.25% 0.117 212.06);
   --accent-500: oklch(75.31% 0.128 213.98);
-  --accent-600: oklch(63.87% 0.108 214.35);
-  --accent-700: oklch(51.87% 0.087 214.04);
+  --accent-600: oklch(47.604% 0.05373 147.381);
+  --accent-700: oklch(55.6% 0.15935 136.617);
   --accent-800: oklch(39.13% 0.064 213.49);
   --accent-900: oklch(25.24% 0.039 212.15);
   --accent-950: oklch(17.68% 0.025 204.72);
@@ -153,17 +203,17 @@
   --primary-900: oklch(93.48% 0.023 210.40);
   --primary-950: oklch(96.85% 0.012 209.81);
 
-  --secondary-50: oklch(17.12% 0.020 213.32);
-  --secondary-100: oklch(24.28% 0.034 214.88);
-  --secondary-200: oklch(37.58% 0.058 214.05);
-  --secondary-300: oklch(49.51% 0.078 214.16);
-  --secondary-400: oklch(61.03% 0.098 214.02);
-  --secondary-500: oklch(71.79% 0.117 214.73);
-  --secondary-600: oklch(76.81% 0.103 212.23);
-  --secondary-700: oklch(82.05% 0.082 211.57);
-  --secondary-800: oklch(87.86% 0.058 211.27);
-  --secondary-900: oklch(93.73% 0.029 212.58);
-  --secondary-950: oklch(96.93% 0.015 207.11);
+  --secondary-50: oklch(25% 0.06 65);
+  --secondary-100: oklch(35% 0.10 65);
+  --secondary-200: oklch(45% 0.14 65);
+  --secondary-300: oklch(55% 0.18 65);
+  --secondary-400: oklch(65% 0.20 65);
+  --secondary-500: oklch(70% 0.18 65);
+  --secondary-600: oklch(75% 0.16 65);
+  --secondary-700: oklch(85% 0.12 65);
+  --secondary-800: oklch(90% 0.08 65);
+  --secondary-900: oklch(95% 0.04 65);
+  --secondary-950: oklch(97.5% 0.02 65);
 
   --accent-50: oklch(17.68% 0.025 204.72);
   --accent-100: oklch(25.24% 0.039 212.15);
