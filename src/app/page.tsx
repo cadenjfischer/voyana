@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plane, Bed, Car, Package, MapPin, Ship, ArrowLeftRight } from 'lucide-react';
+import { Plane, Bed, Car, Package, MapPin, Ship, ArrowLeftRight, ChevronDown, Check } from 'lucide-react';
 import AirportAutocomplete from '@/components/flights/AirportAutocomplete';
 import AirlineDatePicker from '@/components/AirlineDatePicker';
 import { format } from 'date-fns';
@@ -25,6 +25,19 @@ export default function Home() {
     cabin: 'ECONOMY',
   });
   const [tripType, setTripType] = useState<'one-way' | 'round-trip' | 'multi-city'>('round-trip');
+  const [isTripTypeOpen, setIsTripTypeOpen] = useState(false);
+  const tripTypeRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (tripTypeRef.current && !tripTypeRef.current.contains(event.target as Node)) {
+        setIsTripTypeOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Multi-city flights state
   interface FlightSegment {
@@ -84,10 +97,18 @@ export default function Home() {
     }
   };
 
+  const [isSwapping, setIsSwapping] = useState(false);
+  const [isRotated, setIsRotated] = useState(false);
+
   const handleSwap = () => {
+    if (!origin || !destination) return;
+    setIsSwapping(true);
+    setIsRotated(!isRotated);
     const temp = origin;
     setOrigin(destination);
     setDestination(temp);
+    // Reset ripple animation after it completes
+    setTimeout(() => setIsSwapping(false), 300);
   };
 
   const addMultiCityFlight = () => {
@@ -118,7 +139,7 @@ export default function Home() {
           backgroundPosition: 'center',
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-background-900/80 via-background-800/70 to-background-900/80"></div>
+        <div className="absolute inset-0 bg-black/60"></div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-28 lg:pt-32 pb-16 sm:pb-20 lg:pb-24">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-3 sm:mb-4">
@@ -129,7 +150,7 @@ export default function Home() {
           </p>
 
           {/* Search Card */}
-          <div className="bg-static-gray-50 dark:bg-static-bg-900 rounded-xl shadow-2xl p-4 sm:p-6 max-w-7xl mx-auto overflow-visible">
+          <div className="bg-static-gray-50 dark:bg-static-bg-900 rounded-xl shadow-2xl p-4 sm:p-6 max-w-7xl mx-auto overflow-visible shadow-[0_0_2px_.3px_var(--color-static-secondary-300),0_10px_15px_-3px_rgb(0_0_0_/_0.1),0_4px_6px_-4px_rgb(0_0_0_/_0.1)]">
             {/* Tabs */}
             <div className="flex gap-4 sm:gap-6 mb-6 border-b border-static-primary-300 dark:border-static-primary-700 overflow-x-auto scrollbar-hide">
               <button
@@ -211,16 +232,57 @@ export default function Home() {
               <form onSubmit={handleFlightSearch} className="space-y-4">
                 {/* Top Controls Bar - Google Flights Style */}
                 <div className="flex items-center gap-3 flex-wrap">
-                  {/* Trip Type Dropdown */}
-                  <select
-                    value={tripType}
-                    onChange={(e) => setTripType(e.target.value as any)}
-                    className="h-10 px-3 pr-8 border-0 rounded-md bg-transparent text-static-text-900 dark:text-static-text-50 text-sm font-medium hover:bg-static-bg-50 dark:hover:bg-static-bg-800 focus:outline-none focus:ring-0 transition-colors cursor-pointer"
-                  >
-                    <option value="round-trip">Round-trip</option>
-                    <option value="one-way">One-way</option>
-                    <option value="multi-city">Multi-city</option>
-                  </select>
+                  {/* Trip Type Dropdown - Custom Google Flights Style */}
+                  <div ref={tripTypeRef} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsTripTypeOpen(!isTripTypeOpen)}
+                      className="h-10 px-3 pr-8 border-0 rounded-md bg-transparent text-static-text-900 dark:text-static-text-50 text-sm font-medium hover:bg-static-bg-50 dark:hover:bg-static-bg-800 focus:outline-none transition-colors cursor-pointer flex items-center gap-2"
+                    >
+                      <ArrowLeftRight className="w-4 h-4" />
+                      <span>{tripType === 'round-trip' ? 'Round-trip' : tripType === 'one-way' ? 'One-way' : 'Multi-city'}</span>
+                      <ChevronDown className={`w-4 h-4 transition-transform ${isTripTypeOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {isTripTypeOpen && (
+                      <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTripType('round-trip');
+                            setIsTripTypeOpen(false);
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between transition-colors"
+                        >
+                          <span>Round-trip</span>
+                          {tripType === 'round-trip' && <Check className="w-4 h-4 text-blue-600" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTripType('one-way');
+                            setIsTripTypeOpen(false);
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between transition-colors"
+                        >
+                          <span>One-way</span>
+                          {tripType === 'one-way' && <Check className="w-4 h-4 text-blue-600" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTripType('multi-city');
+                            setIsTripTypeOpen(false);
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between transition-colors"
+                        >
+                          <span>Multi-city</span>
+                          {tripType === 'multi-city' && <Check className="w-4 h-4 text-blue-600" />}
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Travelers Selector - Compact inline version */}
                   <div className="[&>div>button]:h-10 [&>div>button]:rounded-md [&>div>button]:px-3 [&>div>button]:min-w-0 [&>div>button]:border-0 [&>div>button]:bg-transparent [&>div>button]:hover:bg-static-bg-50 dark:[&>div>button]:hover:bg-static-bg-800">
@@ -271,13 +333,25 @@ export default function Home() {
                               <button
                                 type="button"
                                 onClick={() => {
+                                  if (!flight.origin || !flight.destination) return;
+                                  setIsSwapping(true);
+                                  setIsRotated(!isRotated);
                                   const temp = flight.origin;
                                   updateMultiCityFlight(flight.id, 'origin', flight.destination);
                                   updateMultiCityFlight(flight.id, 'destination', temp);
+                                  setTimeout(() => setIsSwapping(false), 300);
                                 }}
-                                className="absolute -right-5 bottom-1 h-10 w-10 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600 rounded-full bg-background-50 dark:bg-background-900 hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 transition-all shadow-md hover:shadow-lg flex-shrink-0 z-20"
+                                disabled={!flight.origin || !flight.destination}
+                                className={`absolute -right-5 bottom-1 h-10 w-10 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600 rounded-full bg-background-50 dark:bg-background-900 transition-all duration-300 shadow-md flex-shrink-0 z-20 relative overflow-hidden ${
+                                  isSwapping ? 'animate-swap' : ''
+                                } ${!flight.origin || !flight.destination ? '' : 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 hover:shadow-lg'}`}
                               >
-                                <ArrowLeftRight className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                                {isSwapping && (
+                                  <span className="absolute inset-0 bg-white/30 dark:bg-white/20 rounded-full animate-ripple" />
+                                )}
+                                <ArrowLeftRight className={`w-4 h-4 text-gray-600 dark:text-gray-300 transition-transform duration-300 ${
+                                  isRotated ? 'rotate-180' : ''
+                                }`} />
                               </button>
                             </div>
 
@@ -339,7 +413,7 @@ export default function Home() {
                   {/* Desktop: Single row with swap overlap - Google Flights Style */}
                   <div className="hidden lg:flex items-center gap-2">
                     {/* Leaving From */}
-                    <div className="flex-1">
+                    <div className="flex-[0.85]">
                       <div className="relative">
                         <div className="flex items-center h-14 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
                           <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" />
@@ -359,13 +433,21 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={handleSwap}
-                      className="-mx-6 h-10 w-10 flex items-center justify-center border border-gray-300 dark:border-gray-600 rounded-full bg-static-bg-900 hover:bg-static-bg-800 hover:border-gray-400 dark:hover:border-gray-500 transition-colors shadow-sm flex-shrink-0 z-20"
+                      disabled={!origin || !destination}
+                      className={`-mx-6 h-10 w-10 flex items-center justify-center border border-gray-300 dark:border-gray-600 rounded-full bg-static-bg-900 transition-all duration-300 shadow-sm flex-shrink-0 z-20 relative overflow-hidden ${
+                        isSwapping ? 'animate-swap' : ''
+                      } ${!origin || !destination ? '' : 'cursor-pointer hover:bg-static-bg-800 hover:border-gray-400 dark:hover:border-gray-500'}`}
                     >
-                      <ArrowLeftRight className="w-4 h-4 text-gray-400" />
+                      {isSwapping && (
+                        <span className="absolute inset-0 bg-white/30 dark:bg-white/20 rounded-full animate-ripple" />
+                      )}
+                      <ArrowLeftRight className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${
+                        isRotated ? 'rotate-180' : ''
+                      }`} />
                     </button>
 
                     {/* Going To */}
-                    <div className="flex-1">
+                    <div className="flex-[0.85]">
                       <div className="relative">
                         <div className="flex items-center h-14 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
                           <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" />
@@ -382,7 +464,7 @@ export default function Home() {
                     </div>
 
                     {/* Dates */}
-                    <div className="flex-1">
+                    <div className="flex-[0.9]">
                       <AirlineDatePicker
                         startDate={departureDate}
                         endDate={tripType === 'round-trip' ? returnDate : undefined}
@@ -395,7 +477,7 @@ export default function Home() {
                     {/* Search Button */}
                     <button
                       type="submit"
-                      className="btn btn-primary btn-md h-14 px-8 flex-shrink-0"
+                      className="btn btn-primary btn-md h-14 px-12 min-w-[180px]"
                     >
                       Search
                     </button>
@@ -425,9 +507,17 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={handleSwap}
-                          className="h-9 w-9 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600 rounded-full bg-background-50 dark:bg-background-900 hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 transition-all shadow-md hover:shadow-lg"
+                          disabled={!origin || !destination}
+                          className={`h-9 w-9 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600 rounded-full bg-background-50 dark:bg-background-900 transition-all duration-300 shadow-md relative overflow-hidden ${
+                            isSwapping ? 'animate-swap' : ''
+                          } ${!origin || !destination ? '' : 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 hover:shadow-lg'}`}
                         >
-                          <ArrowLeftRight className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                          {isSwapping && (
+                            <span className="absolute inset-0 bg-white/30 dark:bg-white/20 rounded-full animate-ripple" />
+                          )}
+                          <ArrowLeftRight className={`w-4 h-4 text-gray-600 dark:text-gray-300 transition-transform duration-300 ${
+                            isRotated ? 'rotate-180' : ''
+                          }`} />
                         </button>
                       </div>
                     </div>
@@ -524,13 +614,25 @@ export default function Home() {
                               <button
                                 type="button"
                                 onClick={() => {
+                                  if (!flight.origin || !flight.destination) return;
+                                  setIsSwapping(true);
+                                  setIsRotated(!isRotated);
                                   const temp = flight.origin;
                                   updateMultiCityFlight(flight.id, 'origin', flight.destination);
                                   updateMultiCityFlight(flight.id, 'destination', temp);
+                                  setTimeout(() => setIsSwapping(false), 300);
                                 }}
-                                className="h-9 w-9 flex items-center justify-center border border-primary-300 rounded-full bg-transparent dark:bg-transparent hover:bg-transparent dark:bg-transparent transition-colors shadow-md"
+                                disabled={!flight.origin || !flight.destination}
+                                className={`h-9 w-9 flex items-center justify-center border border-primary-300 rounded-full bg-transparent dark:bg-transparent transition-all duration-300 shadow-md relative overflow-hidden ${
+                                  isSwapping ? 'animate-swap' : ''
+                                } ${!flight.origin || !flight.destination ? '' : 'cursor-pointer'}`}
                               >
-                                <ArrowLeftRight className="w-4 h-4 text-primary-600" />
+                                {isSwapping && (
+                                  <span className="absolute inset-0 bg-white/30 dark:bg-white/20 rounded-full animate-ripple" />
+                                )}
+                                <ArrowLeftRight className={`w-4 h-4 text-primary-600 transition-transform duration-300 ${
+                                  isRotated ? 'rotate-180' : ''
+                                }`} />
                               </button>
                             </div>
                           </div>

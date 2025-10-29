@@ -512,6 +512,17 @@ body {
   }
 }
 
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
@@ -522,6 +533,10 @@ body {
 
 .animate-float-slow {
   animation: float-slow 10s ease-in-out infinite;
+}
+
+.animate-ripple {
+  animation: ripple 0.3s ease-out forwards;
 }
 
 /* Custom Scrollbar */
@@ -611,9 +626,9 @@ h1, h2, h3, h4, h5, h6 {
 .btn-primary {
   background: linear-gradient(
     to right,
-    var(--color-secondary-500),
-    var(--color-secondary-300),
-    var(--color-secondary-500)
+    var(--color-static-secondary-500),
+    var(--color-static-secondary-300),
+    var(--color-static-secondary-500)
   );
   color: rgb(0, 0, 0);
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -622,15 +637,35 @@ h1, h2, h3, h4, h5, h6 {
 .btn-primary:hover {
   background: linear-gradient(
     to right,
-    var(--color-secondary-600),
-    var(--color-secondary-400),
-    var(--color-secondary-600)
+    var(--color-static-secondary-600),
+    var(--color-static-secondary-400),
+    var(--color-static-secondary-600)
   );
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
 .btn-primary:active {
   transform: scale(0.98);
+}
+
+/* Dark mode button overrides */
+.dark .btn-primary {
+  background: linear-gradient(
+    to right,
+    var(--color-static-secondary-500),
+    var(--color-static-secondary-300),
+    var(--color-static-secondary-500)
+  );
+  color: rgb(0, 0, 0);
+}
+
+.dark .btn-primary:hover {
+  background: linear-gradient(
+    to right,
+    var(--color-static-secondary-600),
+    var(--color-static-secondary-400),
+    var(--color-static-secondary-600)
+  );
 }
 
 /* Button Size Modifiers */
