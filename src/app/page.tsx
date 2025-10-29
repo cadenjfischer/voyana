@@ -108,7 +108,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-background-50">
       {/* Hero Section with Search */}
       <div 
         className="relative bg-gradient-to-r from-background-600 via-background-700 to-background-800 text-white"
@@ -124,18 +124,18 @@ export default function Home() {
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-3 sm:mb-4">
             Made to Travel
           </h1>
-          <p className="text-base sm:text-lg md:text-xl text-center text-background-100 mb-8 sm:mb-10 lg:mb-12">
+          <p className="text-base sm:text-lg md:text-xl text-center text-100 mb-8 sm:mb-10 lg:mb-12">
             Book flights, hotels, and more with Voyana
           </p>
 
           {/* Search Card */}
-          <div className="bg-neutral-50 rounded-xl shadow-2xl p-4 sm:p-6 max-w-7xl mx-auto overflow-visible">
+          <div className="bg-static-gray-50 dark:bg-static-bg-900 rounded-xl shadow-2xl p-4 sm:p-6 max-w-7xl mx-auto overflow-visible">
             {/* Tabs */}
-            <div className="flex gap-4 sm:gap-6 mb-6 border-b border-neutral-200 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-4 sm:gap-6 mb-6 border-b border-static-primary-300 dark:border-static-primary-700 overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => setActiveTab('flights')}
                 className={`flex items-center gap-2 pb-4 px-2 font-semibold transition-all relative whitespace-nowrap text-sm sm:text-base ${
-                  activeTab === 'flights' ? 'text-primary-600' : 'text-neutral-600 hover:text-neutral-900'
+                  activeTab === 'flights' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-100 hover:text-accent-600'
                 }`}
               >
                 <Plane className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -148,61 +148,61 @@ export default function Home() {
               <button
                 onClick={() => setActiveTab('stays')}
                 className={`flex items-center gap-2 pb-4 px-2 font-semibold transition-all relative whitespace-nowrap text-sm sm:text-base ${
-                  activeTab === 'stays' ? 'text-primary-600' : 'text-neutral-600 hover:text-neutral-900'
+                  activeTab === 'stays' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-100 hover:text-accent-300'
                 }`}
                 disabled
               >
                 <Bed className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Stays</span>
-                <span className="text-xs bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded">Soon</span>
+                <span className="text-xs bg-static-primary-200 dark:bg-static-primary-700 text-static-primary-700 dark:text-static-primary-100 px-2 py-0.5 rounded">Soon</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('cars')}
                 className={`flex items-center gap-2 pb-4 px-2 font-semibold transition-all relative whitespace-nowrap text-sm sm:text-base ${
-                  activeTab === 'cars' ? 'text-primary-600' : 'text-neutral-600 hover:text-neutral-900'
+                  activeTab === 'cars' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-100 hover:text-accent-300'
                 }`}
                 disabled
               >
                 <Car className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Cars</span>
-                <span className="text-xs bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded">Soon</span>
+                <span className="text-xs bg-static-primary-200 dark:bg-static-primary-700 text-static-primary-700 dark:text-static-primary-100 px-2 py-0.5 rounded">Soon</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('packages')}
                 className={`flex items-center gap-2 pb-4 px-2 font-semibold transition-all relative whitespace-nowrap text-sm sm:text-base ${
-                  activeTab === 'packages' ? 'text-primary-600' : 'text-neutral-600 hover:text-neutral-900'
+                  activeTab === 'packages' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-100 hover:text-accent-300'
                 }`}
                 disabled
               >
                 <Package className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Packages</span>
-                <span className="text-xs bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded">Soon</span>
+                <span className="text-xs bg-static-primary-200 dark:bg-static-primary-700 text-static-primary-700 dark:text-static-primary-100 px-2 py-0.5 rounded">Soon</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('things')}
                 className={`flex items-center gap-2 pb-4 px-2 font-semibold transition-all relative whitespace-nowrap text-sm sm:text-base ${
-                  activeTab === 'things' ? 'text-primary-600' : 'text-neutral-600 hover:text-neutral-900'
+                  activeTab === 'things' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-100 hover:text-accent-300'
                 }`}
                 disabled
               >
                 <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Things to do</span>
-                <span className="text-xs bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded">Soon</span>
+                <span className="text-xs bg-static-primary-200 dark:bg-static-primary-700 text-static-primary-700 dark:text-static-primary-300 px-2 py-0.5 rounded">Soon</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('cruises')}
                 className={`flex items-center gap-2 pb-4 px-2 font-semibold transition-all relative ${
-                  activeTab === 'cruises' ? 'text-primary-600' : 'text-neutral-600 hover:text-neutral-900'
+                  activeTab === 'cruises' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-100 hover:text-accent-300'
                 }`}
                 disabled
               >
                 <Ship className="w-5 h-5" />
                 <span>Cruises</span>
-                <span className="text-xs bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded">Soon</span>
+                <span className="text-xs bg-static-primary-200 dark:bg-static-primary-700 text-static-primary-700 dark:text-static-primary-100 px-2 py-0.5 rounded">Soon</span>
               </button>
             </div>
 
@@ -218,9 +218,9 @@ export default function Home() {
                       value="round-trip"
                       checked={tripType === 'round-trip'}
                       onChange={(e) => setTripType(e.target.value as 'round-trip')}
-                      className="w-4 h-4 text-primary-600"
+                      className="w-4 h-4 text-accent-600"
                     />
-                    <span className="text-neutral-900 font-medium">Round-trip</span>
+                    <span className="text-100 font-medium">Round-trip</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -229,9 +229,9 @@ export default function Home() {
                       value="one-way"
                       checked={tripType === 'one-way'}
                       onChange={(e) => setTripType(e.target.value as 'one-way')}
-                      className="w-4 h-4 text-primary-600"
+                      className="w-4 h-4 text-accent-600"
                     />
-                    <span className="text-neutral-900 font-medium">One-way</span>
+                    <span className="text-100 font-medium">One-way</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -240,9 +240,9 @@ export default function Home() {
                       value="multi-city"
                       checked={tripType === 'multi-city'}
                       onChange={(e) => setTripType(e.target.value as 'multi-city')}
-                      className="w-4 h-4 text-primary-600"
+                      className="w-4 h-4 text-accent-600"
                     />
-                    <span className="text-neutral-900 font-medium">Multi-city</span>
+                    <span className="text-100 font-medium">Multi-city</span>
                   </label>
                 </div>
 
@@ -253,7 +253,7 @@ export default function Home() {
                     <div className="space-y-4">
                       {/* Travelers - Shared across all flights */}
                       <div className="w-80">
-                        <label className="block text-xs font-semibold text-neutral-700 mb-2 uppercase tracking-wide">
+                        <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
                           Travelers
                         </label>
                         <TravelersSelector value={travelers} onChange={setTravelers} />
@@ -262,7 +262,7 @@ export default function Home() {
                       {multiCityFlights.map((flight, index) => (
                         <div key={flight.id} className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-neutral-700">Flight {index + 1}</h3>
+                            <h3 className="text-sm font-semibold text-100">Flight {index + 1}</h3>
                             {multiCityFlights.length > 2 && (
                               <button
                                 type="button"
@@ -277,11 +277,11 @@ export default function Home() {
                           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1.5fr] gap-2 items-end">
                             {/* Leaving From */}
                             <div className="relative">
-                              <label className="block text-xs font-semibold text-neutral-700 mb-2 uppercase tracking-wide">
+                              <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
                                 Leaving from
                               </label>
-                              <div className="flex items-center h-12 border border-neutral-300 rounded-xl bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
-                                <MapPin className="w-4 h-4 text-neutral-400 mr-3" />
+                              <div className="flex items-center h-12 border border-primary-300 rounded-xl bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
+                                <MapPin className="w-4 h-4 text-primary-400 mr-3" />
                                 <AirportAutocomplete
                                   id={`multi-origin-${flight.id}`}
                                   label=""
@@ -300,19 +300,19 @@ export default function Home() {
                                   updateMultiCityFlight(flight.id, 'origin', flight.destination);
                                   updateMultiCityFlight(flight.id, 'destination', temp);
                                 }}
-                                className="absolute -right-5 bottom-1 h-10 w-10 flex items-center justify-center border border-neutral-300 rounded-full bg-neutral-50 hover:border-neutral-400 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-neutral-50"
+                                className="absolute -right-5 bottom-1 h-10 w-10 flex items-center justify-center border border-primary-300 rounded-full bg-primary-50 hover:border-primary-400 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-primary-50"
                               >
-                                <ArrowLeftRight className="w-4 h-4 text-neutral-600" />
+                                <ArrowLeftRight className="w-4 h-4 text-primary-600" />
                               </button>
                             </div>
 
                             {/* Going To */}
                             <div>
-                              <label className="block text-xs font-semibold text-neutral-700 mb-2 uppercase tracking-wide">
+                              <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
                                 Going to
                               </label>
-                              <div className="flex items-center h-12 border border-neutral-300 rounded-xl bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
-                                <MapPin className="w-4 h-4 text-neutral-400 mr-3" />
+                              <div className="flex items-center h-12 border border-primary-300 rounded-xl bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
+                                <MapPin className="w-4 h-4 text-primary-400 mr-3" />
                                 <AirportAutocomplete
                                   id={`multi-destination-${flight.id}`}
                                   label=""
@@ -326,7 +326,7 @@ export default function Home() {
 
                             {/* Date */}
                             <div>
-                              <label className="block text-xs font-semibold text-neutral-700 mb-2 uppercase tracking-wide">
+                              <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
                                 Date
                               </label>
                               <AirlineDatePicker
@@ -345,7 +345,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={addMultiCityFlight}
-                        className="flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium text-sm"
+                        className="flex items-center gap-2 text-primary-600 hover:text-100 font-medium text-sm"
                       >
                         <span className="text-xl">+</span> Add another flight
                       </button>
@@ -365,12 +365,12 @@ export default function Home() {
                   <div className="hidden lg:flex items-end gap-2">
                     {/* Leaving From */}
                     <div className="flex-[1.7]">
-                      <label className="block text-xs font-semibold text-neutral-700 mb-2 uppercase tracking-wide">
+                      <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
                         Leaving from
                       </label>
                       <div className="relative">
-                        <div className="flex items-center h-12 border border-neutral-300 rounded-xl bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
-                          <MapPin className="w-4 h-4 text-neutral-400 mr-3" />
+                        <div className="flex items-center h-12 border border-primary-300 rounded-xl bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
+                          <MapPin className="w-4 h-4 text-primary-400 mr-3" />
                           <AirportAutocomplete
                             id="origin-home"
                             label=""
@@ -387,19 +387,19 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={handleSwap}
-                      className="mb-1 -mx-3 h-10 w-10 flex items-center justify-center border border-neutral-300 rounded-full bg-neutral-50 hover:border-neutral-400 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-neutral-50"
+                      className="mb-1 -mx-3 h-10 w-10 flex items-center justify-center border border-primary-300 rounded-full bg-primary-50 hover:border-primary-400 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-primary-50"
                     >
-                      <ArrowLeftRight className="w-4 h-4 text-neutral-600" />
+                      <ArrowLeftRight className="w-4 h-4 text-primary-600" />
                     </button>
 
                     {/* Going To */}
                     <div className="flex-[1.7]">
-                      <label className="block text-xs font-semibold text-neutral-700 mb-2 uppercase tracking-wide">
+                      <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
                         Going to
                       </label>
                       <div className="relative">
-                        <div className="flex items-center h-12 border border-neutral-300 rounded-xl bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
-                          <MapPin className="w-4 h-4 text-neutral-400 mr-3" />
+                        <div className="flex items-center h-12 border border-primary-300 rounded-xl bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
+                          <MapPin className="w-4 h-4 text-primary-400 mr-3" />
                           <AirportAutocomplete
                             id="destination-home"
                             label=""
@@ -414,7 +414,7 @@ export default function Home() {
 
                     {/* Dates */}
                     <div className="flex-[1.6]">
-                      <label className="block text-xs font-semibold text-neutral-700 mb-2 uppercase tracking-wide">
+                      <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
                         {tripType === 'one-way' ? 'Date' : 'Dates'}
                       </label>
                       <AirlineDatePicker
@@ -428,7 +428,7 @@ export default function Home() {
 
                     {/* Travelers */}
                     <div className="flex-[1.4]">
-                      <label className="block text-xs font-semibold text-neutral-700 mb-2 uppercase tracking-wide">
+                      <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
                         Travelers
                       </label>
                       <TravelersSelector value={travelers} onChange={setTravelers} />
@@ -448,10 +448,10 @@ export default function Home() {
                   <div className="lg:hidden">
                     {/* Row 1: Leaving From */}
                     <div className="relative mb-2">
-                      <div className="flex items-center h-14 border border-neutral-300 rounded-lg bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
-                        <MapPin className="w-5 h-5 text-neutral-400 mr-3 flex-shrink-0" />
+                      <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
+                        <MapPin className="w-5 h-5 text-primary-400 mr-3 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs text-neutral-600 font-medium mb-0.5">Leaving from</div>
+                          <div className="text-xs text-primary-600 font-medium mb-0.5">Leaving from</div>
                           <AirportAutocomplete
                             id="origin-home-mobile"
                             label=""
@@ -468,19 +468,19 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={handleSwap}
-                          className="h-9 w-9 flex items-center justify-center border border-neutral-300 rounded-full bg-neutral-50 hover:bg-neutral-50 transition-colors shadow-md"
+                          className="h-9 w-9 flex items-center justify-center border border-primary-300 rounded-full bg-primary-50 hover:bg-primary-50 transition-colors shadow-md"
                         >
-                          <ArrowLeftRight className="w-4 h-4 text-neutral-600" />
+                          <ArrowLeftRight className="w-4 h-4 text-primary-600" />
                         </button>
                       </div>
                     </div>
 
                     {/* Row 2: Going To */}
                     <div className="relative mb-2">
-                      <div className="flex items-center h-14 border border-neutral-300 rounded-lg bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
-                        <MapPin className="w-5 h-5 text-neutral-400 mr-3 flex-shrink-0" />
+                      <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
+                        <MapPin className="w-5 h-5 text-primary-400 mr-3 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs text-neutral-600 font-medium mb-0.5">Going to</div>
+                          <div className="text-xs text-primary-600 font-medium mb-0.5">Going to</div>
                           <AirportAutocomplete
                             id="destination-home-mobile"
                             label=""
@@ -533,7 +533,7 @@ export default function Home() {
                       {multiCityFlights.map((flight, index) => (
                         <div key={flight.id} className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-neutral-700">Flight {index + 1}</h3>
+                            <h3 className="text-sm font-semibold text-100">Flight {index + 1}</h3>
                             {multiCityFlights.length > 2 && (
                               <button
                                 type="button"
@@ -547,10 +547,10 @@ export default function Home() {
 
                           {/* Leaving From */}
                           <div className="relative">
-                            <div className="flex items-center h-14 border border-neutral-300 rounded-lg bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
-                              <MapPin className="w-5 h-5 text-neutral-400 mr-3 flex-shrink-0" />
+                            <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
+                              <MapPin className="w-5 h-5 text-primary-400 mr-3 flex-shrink-0" />
                               <div className="flex-1 min-w-0">
-                                <div className="text-xs text-neutral-600 font-medium mb-0.5">Leaving from</div>
+                                <div className="text-xs text-primary-600 font-medium mb-0.5">Leaving from</div>
                                 <AirportAutocomplete
                                   id={`multi-origin-mobile-${flight.id}`}
                                   label=""
@@ -571,19 +571,19 @@ export default function Home() {
                                   updateMultiCityFlight(flight.id, 'origin', flight.destination);
                                   updateMultiCityFlight(flight.id, 'destination', temp);
                                 }}
-                                className="h-9 w-9 flex items-center justify-center border border-neutral-300 rounded-full bg-neutral-50 hover:bg-neutral-50 transition-colors shadow-md"
+                                className="h-9 w-9 flex items-center justify-center border border-primary-300 rounded-full bg-primary-50 hover:bg-primary-50 transition-colors shadow-md"
                               >
-                                <ArrowLeftRight className="w-4 h-4 text-neutral-600" />
+                                <ArrowLeftRight className="w-4 h-4 text-primary-600" />
                               </button>
                             </div>
                           </div>
 
                           {/* Going To */}
                           <div className="relative">
-                            <div className="flex items-center h-14 border border-neutral-300 rounded-lg bg-neutral-50 px-4 hover:border-neutral-400 focus-within:border-primary-500 transition-colors">
-                              <MapPin className="w-5 h-5 text-neutral-400 mr-3 flex-shrink-0" />
+                            <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
+                              <MapPin className="w-5 h-5 text-primary-400 mr-3 flex-shrink-0" />
                               <div className="flex-1 min-w-0">
-                                <div className="text-xs text-neutral-600 font-medium mb-0.5">Going to</div>
+                                <div className="text-xs text-primary-600 font-medium mb-0.5">Going to</div>
                                 <AirportAutocomplete
                                   id={`multi-destination-mobile-${flight.id}`}
                                   label=""
@@ -614,7 +614,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={addMultiCityFlight}
-                        className="flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium text-sm"
+                        className="flex items-center gap-2 text-primary-600 hover:text-100 font-medium text-sm"
                       >
                         <span className="text-xl">+</span> Add another flight
                       </button>
@@ -637,15 +637,15 @@ export default function Home() {
       </div>
 
       {/* Features Section */}
-      <section className="py-16 bg-neutral-50">
+      <section className="py-16 bg-static-bg-100 dark:bg-static-bg-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
                 <Plane className="w-8 h-8 text-primary-600" />
               </div>
-              <h3 className="text-xl font-bold text-neutral-900 mb-2">Best Prices</h3>
-              <p className="text-neutral-600">
+              <h3 className="text-xl font-bold text-primary-900 mb-2">Best Prices</h3>
+              <p className="text-primary-600">
                 Compare flights from multiple airlines to find the best deals
               </p>
             </div>
@@ -653,8 +653,8 @@ export default function Home() {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
                 <Package className="w-8 h-8 text-primary-600" />
               </div>
-              <h3 className="text-xl font-bold text-neutral-900 mb-2">All-in-One</h3>
-              <p className="text-neutral-600">
+              <h3 className="text-xl font-bold text-primary-900 mb-2">All-in-One</h3>
+              <p className="text-primary-600">
                 Book flights, hotels, cars, and activities in one place
               </p>
             </div>
@@ -662,8 +662,8 @@ export default function Home() {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
                 <MapPin className="w-8 h-8 text-primary-600" />
               </div>
-              <h3 className="text-xl font-bold text-neutral-900 mb-2">Travel Planning</h3>
-              <p className="text-neutral-600">
+              <h3 className="text-xl font-bold text-primary-900 mb-2">Travel Planning</h3>
+              <p className="text-primary-600">
                 Plan your entire trip with our comprehensive itinerary tools
               </p>
             </div>

@@ -210,12 +210,12 @@ export default function ItineraryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-primary-50">
         <Header />
         <div className="pt-20 flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your trips...</p>
+            <p className="text-primary-600">Loading your trips...</p>
           </div>
         </div>
       </div>
@@ -223,7 +223,7 @@ export default function ItineraryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+    <div className="min-h-screen bg-background-50">
       <Header />
       
       <main className="pt-20">
@@ -231,12 +231,12 @@ export default function ItineraryPage() {
           {/* Header Section */}
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">My Trips</h1>
-              <p className="text-gray-600">Plan and manage your travel itineraries</p>
+              <h1 className="text-4xl font-bold text-primary-900 mb-2">My Trips</h1>
+              <p className="text-primary-600">Plan and manage your travel itineraries</p>
             </div>
             <button
               onClick={() => setIsAddTripOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+              className="btn btn-primary btn-md flex items-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -248,18 +248,18 @@ export default function ItineraryPage() {
           {/* Trips Grid */}
           {trips.length === 0 ? (
             <div className="text-center py-20">
-              <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-24 h-24 bg-accent-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-12 h-12 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">No trips yet</h3>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto">
+              <h3 className="text-2xl font-bold text-primary-900 mb-4">No trips yet</h3>
+              <p className="text-primary-600 mb-8 max-w-md mx-auto">
                 Start planning your next adventure! Create your first trip to organize your travel itinerary.
               </p>
               <button
                 onClick={() => setIsAddTripOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
+                className="btn btn-primary btn-lg"
               >
                 Create Your First Trip
               </button>
@@ -267,9 +267,9 @@ export default function ItineraryPage() {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {trips.map((trip) => (
-                <div key={trip.id} className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 flex flex-col h-full">
+                <div key={trip.id} className="bg-primary-50 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-primary-100 flex flex-col h-full">
                   {/* Trip Image */}
-                  <div className="relative h-48 bg-gradient-to-br from-blue-400 to-blue-600">
+                  <div className="relative h-48 bg-gradient-to-br from-accent-400 to-accent-600">
                     {trip.photo ? (
                       <Image
                         src={trip.photo}
@@ -290,7 +290,7 @@ export default function ItineraryPage() {
                     <div className="absolute top-3 right-3 flex gap-2">
                       <button
                         onClick={() => handleEditTrip(trip)}
-                        className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors duration-200 opacity-75 hover:opacity-100"
+                        className="w-8 h-8 bg-accent-500 hover:bg-accent-600 text-white rounded-full flex items-center justify-center transition-colors duration-200 opacity-75 hover:opacity-100"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -310,13 +310,13 @@ export default function ItineraryPage() {
                   {/* Trip Info */}
                   <div className="p-6 flex flex-col flex-grow">
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className="text-xl font-bold text-gray-900 truncate">{trip.title}</h3>
-                      <span className="text-sm text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-lg ml-2">
+                      <h3 className="text-xl font-bold text-primary-900 truncate">{trip.title}</h3>
+                      <span className="text-sm text-accent-600 font-medium bg-accent-50 px-2 py-1 rounded-lg ml-2">
                         {getDaysCount(trip.startDate, trip.endDate)} days
                       </span>
                     </div>
                     
-                    <div className="flex items-center text-gray-600 mb-3">
+                    <div className="flex items-center text-primary-600 mb-3">
                       <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -324,7 +324,7 @@ export default function ItineraryPage() {
                       <span className="truncate">{trip.destination}</span>
                     </div>
                     
-                    <div className="flex items-center text-gray-600 mb-4">
+                    <div className="flex items-center text-primary-600 mb-4">
                       <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
@@ -334,7 +334,7 @@ export default function ItineraryPage() {
                     {/* Description with fixed height to maintain consistency */}
                     <div className="flex-grow mb-4">
                       {trip.description ? (
-                        <p className="text-gray-600 text-sm line-clamp-2">
+                        <p className="text-primary-600 text-sm line-clamp-2">
                           {trip.description}
                         </p>
                       ) : (
@@ -345,7 +345,7 @@ export default function ItineraryPage() {
                     {/* Button pushed to bottom */}
                     <Link
                       href={`/itinerary/${trip.id}`}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2 mt-auto"
+                      className="btn btn-primary btn-md btn-full flex items-center justify-center gap-2 mt-auto"
                     >
                       View Itinerary
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
