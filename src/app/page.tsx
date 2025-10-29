@@ -317,7 +317,7 @@ export default function Home() {
                               <label className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 mb-2 uppercase tracking-wide">
                                 Leaving from
                               </label>
-                              <div className="flex items-center h-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
+                              <div className="flex items-center h-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-accent-500 focus-within:border-accent-500 transition-colors">
                                 <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-3" />
                                 <AirportAutocomplete
                                   id={`multi-origin-${flight.id}`}
@@ -360,7 +360,7 @@ export default function Home() {
                               <label className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 mb-2 uppercase tracking-wide">
                                 Going to
                               </label>
-                              <div className="flex items-center h-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
+                              <div className="flex items-center h-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-accent-500 focus-within:border-accent-500 transition-colors">
                                 <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-3" />
                                 <AirportAutocomplete
                                   id={`multi-destination-${flight.id}`}
@@ -415,7 +415,7 @@ export default function Home() {
                     {/* Leaving From */}
                     <div className="flex-[0.85]">
                       <div className="relative">
-                        <div className="flex items-center h-14 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
+                        <div className="flex items-center h-14 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-accent-500 focus-within:border-accent-500 transition-colors">
                           <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" />
                           <AirportAutocomplete
                             id="origin-home"
@@ -449,7 +449,7 @@ export default function Home() {
                     {/* Going To */}
                     <div className="flex-[0.85]">
                       <div className="relative">
-                        <div className="flex items-center h-14 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
+                        <div className="flex items-center h-14 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-accent-500 focus-within:border-accent-500 transition-colors">
                           <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" />
                           <AirportAutocomplete
                             id="destination-home"

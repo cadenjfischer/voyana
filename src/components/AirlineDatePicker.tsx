@@ -269,10 +269,10 @@ export default function AirlineDatePicker({
           onClick={() => setIsOpen(!isOpen)}
           className={
             mobile
-              ? "w-full h-14 px-4 flex items-center border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+              ? "w-full h-14 px-4 flex items-center border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent hover:border-gray-400 dark:hover:border-gray-500 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
               : compact 
-              ? "w-full h-14 px-4 flex flex-col justify-center text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              : "w-full h-14 flex items-center justify-between px-4 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-colors duration-200"
+              ? "w-full h-14 px-4 flex flex-col justify-center text-left hover:bg-gray-50 dark:hover:bg-gray-800 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
+              : "w-full h-14 flex items-center justify-between px-4 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent hover:border-gray-400 dark:hover:border-gray-500 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors duration-200"
           }
         >
           {mobile ? (
