@@ -134,14 +134,14 @@ export default function Home() {
       <div 
         className="relative bg-gradient-to-r from-background-600 via-background-700 to-background-800 text-white"
         style={{
-          backgroundImage: 'url(https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1600)',
+          backgroundImage: 'url(/homepage.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
       >
-        <div className="absolute inset-0 bg-black/60"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/40"></div>
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-28 lg:pt-32 pb-16 sm:pb-20 lg:pb-24">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 sm:pt-40 lg:pt-48 pb-24 sm:pb-32 lg:pb-40">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-3 sm:mb-4">
             Made to Travel
           </h1>
@@ -150,7 +150,7 @@ export default function Home() {
           </p>
 
           {/* Search Card */}
-          <div className="bg-static-gray-50 dark:bg-static-bg-900 rounded-xl shadow-2xl p-4 sm:p-6 max-w-7xl mx-auto overflow-visible shadow-[0_0_2px_.3px_var(--color-static-secondary-300),0_10px_15px_-3px_rgb(0_0_0_/_0.1),0_4px_6px_-4px_rgb(0_0_0_/_0.1)]">
+          <div className="bg-static-gray-50 dark:bg-static-bg-900 rounded-xl shadow-2xl p-4 sm:p-6 max-w-7xl mx-auto overflow-visible shadow-[0_0_10px_3px_rgba(0,0,0,.5),0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-4px_rgba(0,0,0,0.1)]">
             {/* Tabs */}
             <div className="flex gap-4 sm:gap-6 mb-6 border-b border-static-primary-300 dark:border-static-primary-700 overflow-x-auto scrollbar-hide">
               <button
