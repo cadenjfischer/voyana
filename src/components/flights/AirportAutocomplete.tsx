@@ -184,7 +184,7 @@ export default function AirportAutocomplete({
   return (
     <div ref={wrapperRef} className="relative">
       {!inline && label && (
-        <label htmlFor={id} className="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
+        <label htmlFor={id} className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 opacity-60 mb-1 uppercase tracking-wide">
           {label}
         </label>
       )}
@@ -204,8 +204,8 @@ export default function AirportAutocomplete({
           }}
           placeholder={placeholder}
           className={inline 
-            ? "w-full p-0 border-0 focus:ring-0 focus:outline-none focus-visible:outline-none uppercase text-gray-900 font-medium text-sm placeholder:text-gray-400 placeholder:font-normal placeholder:normal-case bg-transparent selection:bg-gray-200 selection:text-gray-900"
-            : "w-full pl-9 pr-9 py-2.5 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-0 focus-visible:outline-none uppercase text-gray-900 font-semibold text-base placeholder:text-gray-400 placeholder:font-normal placeholder:normal-case transition-all selection:bg-gray-200 selection:text-gray-900"
+            ? "w-full p-0 border-0 focus:ring-0 focus:outline-none focus-visible:outline-none uppercase text-static-text-900 dark:text-static-text-50 font-medium text-sm placeholder:text-static-text-900 dark:placeholder:text-static-text-100 placeholder:opacity-50 placeholder:font-normal placeholder:normal-case bg-transparent selection:bg-gray-200 dark:selection:bg-gray-700"
+            : "w-full pl-9 pr-9 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:ring-0 focus-visible:outline-none uppercase text-static-text-900 dark:text-static-text-50 font-semibold text-base placeholder:text-static-text-900 dark:placeholder:text-static-text-100 placeholder:opacity-50 placeholder:font-normal placeholder:normal-case transition-all selection:bg-gray-200 dark:selection:bg-gray-700 bg-transparent"
           }
           autoComplete="off"
         />
@@ -216,33 +216,33 @@ export default function AirportAutocomplete({
 
       {/* Dropdown */}
       {isOpen && isFocused && suggestions.length > 0 && (!inline ? (
-        <div className="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-96 overflow-y-auto scrollbar-hide">
+        <div className="absolute z-[100] w-full mt-1 bg-static-bg-50 dark:bg-static-bg-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-96 overflow-y-auto scrollbar-hide">
           {suggestions.map((airport, index) => (
             <button
               key={airport.iataCode}
               type="button"
               onClick={() => handleSelect(airport)}
-              className={`w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors flex items-start gap-3 border-b border-gray-100 last:border-b-0 ${
-                index === selectedIndex ? 'bg-blue-50' : ''
+              className={`w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors flex items-start gap-3 border-b border-gray-100 dark:border-gray-800 last:border-b-0 ${
+                index === selectedIndex ? 'bg-blue-50 dark:bg-blue-900' : ''
               }`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className="font-bold text-gray-900 text-base">{airport.iataCode}</span>
-                  <span className="text-xs text-gray-500">•</span>
-                  <span className="font-semibold text-gray-700 text-sm truncate">{airport.city}</span>
+                  <span className="font-bold text-static-text-900 dark:text-static-text-50 text-base">{airport.iataCode}</span>
+                  <span className="text-xs text-static-text-900 dark:text-static-text-50 opacity-50">•</span>
+                  <span className="font-semibold text-static-text-900 dark:text-static-text-50 text-sm truncate">{airport.city}</span>
                 </div>
-                <p className="text-xs text-gray-600 truncate">
+                <p className="text-xs text-static-text-900 dark:text-static-text-50 opacity-60 truncate">
                   {airport.type === 'city' ? `All airports in ${airport.city}` : airport.name}
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">{airport.country}</p>
+                <p className="text-xs text-static-text-900 dark:text-static-text-50 opacity-50 mt-0.5">{airport.country}</p>
               </div>
             </button>
           ))}
         </div>
       ) : createPortal(
         <div
-          className="absolute z-[1000] bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-96 overflow-y-auto scrollbar-hide"
+          className="absolute z-[1000] bg-static-bg-50 dark:bg-static-bg-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl max-h-96 overflow-y-auto scrollbar-hide"
           style={{ top: portalPos.top, left: portalPos.left, width: portalPos.width }}
         >
           {suggestions.map((airport, index) => (
@@ -253,20 +253,20 @@ export default function AirportAutocomplete({
                 e.preventDefault();
                 handleSelect(airport);
               }}
-              className={`w-full px-5 py-4 text-left hover:bg-blue-50 transition-colors flex items-start gap-3 border-b border-gray-100 last:border-b-0 ${
-                index === selectedIndex ? 'bg-blue-50' : ''
+              className={`w-full px-5 py-4 text-left hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors flex items-start gap-3 border-b border-gray-100 dark:border-gray-800 last:border-b-0 ${
+                index === selectedIndex ? 'bg-blue-50 dark:bg-blue-900' : ''
               }`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className="font-bold text-gray-900 text-base">{airport.iataCode}</span>
-                  <span className="text-xs text-gray-500">•</span>
-                  <span className="font-semibold text-gray-700 text-sm truncate">{airport.city}</span>
+                  <span className="font-bold text-static-text-900 dark:text-static-text-50 text-base">{airport.iataCode}</span>
+                  <span className="text-xs text-static-text-900 dark:text-static-text-50 opacity-50">•</span>
+                  <span className="font-semibold text-static-text-900 dark:text-static-text-50 text-sm truncate">{airport.city}</span>
                 </div>
-                <p className="text-xs text-gray-600 truncate">
+                <p className="text-xs text-static-text-900 dark:text-static-text-50 opacity-60 truncate">
                   {airport.type === 'city' ? `All airports in ${airport.city}` : airport.name}
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">{airport.country}</p>
+                <p className="text-xs text-static-text-900 dark:text-static-text-50 opacity-50 mt-0.5">{airport.country}</p>
               </div>
             </button>
           ))}
@@ -276,9 +276,9 @@ export default function AirportAutocomplete({
 
       {/* No results */}
       {isOpen && !isLoading && suggestions.length === 0 && value.length >= 2 && (
-        <div className="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl p-4 text-center">
-          <p className="text-sm text-gray-600">No airports found for &quot;{value}&quot;</p>
-          <p className="text-xs text-gray-500 mt-1">Try a city name or airport code</p>
+        <div className="absolute z-[100] w-full mt-1 bg-static-bg-50 dark:bg-static-bg-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-4 text-center">
+          <p className="text-sm text-static-text-900 dark:text-static-text-50 opacity-60">No airports found for &quot;{value}&quot;</p>
+          <p className="text-xs text-static-text-900 dark:text-static-text-50 opacity-50 mt-1">Try a city name or airport code</p>
         </div>
       )}
     </div>

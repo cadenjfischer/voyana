@@ -69,7 +69,7 @@ export default function Header() {
           <nav className="hidden lg:flex items-center space-x-8">
             <Link 
               href="/" 
-              className="text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
+              className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
             >
               Home
             </Link>
@@ -77,13 +77,13 @@ export default function Header() {
               <>
                 <Link 
                   href="/itinerary" 
-                  className="text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
+                  className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
                 >
                   My Trips
                 </Link>
                 <Link 
                   href="/flights" 
-                  className="text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
+                  className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
                 >
                   Flights
                 </Link>
@@ -91,19 +91,19 @@ export default function Header() {
             )}
             <a 
               href="#services" 
-              className="text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
+              className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
             >
               Services
             </a>
             <a 
               href="#about" 
-              className="text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
+              className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
             >
               About
             </a>
             <a 
               href="#contact" 
-              className="text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
+              className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
             >
               Contact
             </a>
@@ -118,11 +118,11 @@ export default function Header() {
               aria-label="Toggle theme"
             >
               {theme === 'light' ? (
-                <svg className="w-5 h-5 text-primary-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-static-text-900 dark:text-static-text-100" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
               ) : (
-                <svg className="w-5 h-5 text-primary-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-static-text-900 dark:text-static-text-100300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               )}
@@ -132,14 +132,14 @@ export default function Header() {
               <div className="flex items-center space-x-4">
                 <Link 
                   href="/dashboard"
-                  className="text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium"
+                  className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium"
                 >
                   Dashboard
                 </Link>
                 <div className="relative">
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center space-x-2 text-primary-700 hover:text-accent-600 transition-colors duration-300"
+                    className="flex items-center space-x-2 text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300"
                   >
                     <div className="w-10 h-10 rounded-full bg-accent-600 flex items-center justify-center text-white font-semibold">
                       {user?.email?.[0]?.toUpperCase() || 'U'}
@@ -148,11 +148,11 @@ export default function Header() {
                   {isUserMenuOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-primary-50 rounded-lg shadow-xl border border-primary-200 py-1 z-50">
                       <div className="px-4 py-2 border-b border-primary-200">
-                        <p className="text-sm font-medium text-primary-900 truncate">{user?.email}</p>
+                        <p className="text-sm font-medium text-static-text-900 dark:text-static-text-100900 truncate">{user?.email}</p>
                       </div>
                       <Link
                         href="/user-profile"
-                        className="block px-4 py-2 text-sm text-primary-700 hover:bg-accent-50"
+                        className="block px-4 py-2 text-sm text-static-text-900 dark:text-static-text-100 hover:bg-accent-50"
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         Profile Settings
@@ -170,7 +170,7 @@ export default function Header() {
             ) : (
               <div className="flex items-center space-x-3">
                 <Link href="/sign-in">
-                  <button className="text-primary-700 hover:text-accent-600 font-medium tracking-wide transition-colors duration-300">
+                  <button className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 font-medium tracking-wide transition-colors duration-300">
                     Sign In
                   </button>
                 </Link>
@@ -187,7 +187,7 @@ export default function Header() {
           <div className="lg:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-primary-700 hover:text-accent-600 focus:outline-none focus:text-accent-600 transition-colors duration-300"
+              className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 focus:outline-none focus:text-accent-600 transition-colors duration-300"
             >
               <svg
                 className="h-6 w-6"
@@ -214,7 +214,7 @@ export default function Header() {
             <div className="flex flex-col space-y-4">
               <Link 
                 href="/" 
-                className="text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+                className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Home
@@ -223,14 +223,14 @@ export default function Header() {
                 <>
                   <Link 
                     href="/itinerary" 
-                    className="text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+                    className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     My Trips
                   </Link>
                   <Link 
                     href="/flights" 
-                    className="text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+                    className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Flights
@@ -239,21 +239,21 @@ export default function Header() {
               )}
               <a 
                 href="#services" 
-                className="text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+                className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Services
               </a>
               <a 
                 href="#about" 
-                className="text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+                className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 About
               </a>
               <a 
                 href="#contact" 
-                className="text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+                className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Contact
@@ -262,7 +262,7 @@ export default function Header() {
                 {/* Theme Toggle - Mobile */}
                 <button
                   onClick={toggleTheme}
-                  className="flex items-center space-x-2 w-full text-left text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2 mb-3"
+                  className="flex items-center space-x-2 w-full text-left text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2 mb-3"
                 >
                   {theme === 'light' ? (
                     <>
@@ -285,14 +285,14 @@ export default function Header() {
                   <div className="flex flex-col space-y-3">
                     <Link 
                       href="/dashboard"
-                      className="text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+                      className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Dashboard
                     </Link>
                     <Link
                       href="/user-profile"
-                      className="text-primary-700 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+                      className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Profile Settings
@@ -311,7 +311,7 @@ export default function Header() {
                   <div className="flex flex-col space-y-3">
                     <Link href="/sign-in">
                       <button 
-                        className="w-full text-center text-primary-700 hover:text-accent-600 font-medium tracking-wide py-2 transition-colors duration-300"
+                        className="w-full text-center text-static-text-900 dark:text-static-text-100 hover:text-accent-600 font-medium tracking-wide py-2 transition-colors duration-300"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Sign In

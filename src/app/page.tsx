@@ -124,7 +124,7 @@ export default function Home() {
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-center mb-3 sm:mb-4">
             Made to Travel
           </h1>
-          <p className="text-base sm:text-lg md:text-xl text-center text-100 mb-8 sm:mb-10 lg:mb-12">
+          <p className="text-base sm:text-lg md:text-xl text-center text-static-text-900 dark:text-static-text-50 mb-8 sm:mb-10 lg:mb-12">
             Book flights, hotels, and more with Voyana
           </p>
 
@@ -135,7 +135,7 @@ export default function Home() {
               <button
                 onClick={() => setActiveTab('flights')}
                 className={`flex items-center gap-2 pb-4 px-2 font-semibold transition-all relative whitespace-nowrap text-sm sm:text-base ${
-                  activeTab === 'flights' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-100 hover:text-accent-600'
+                  activeTab === 'flights' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-static-text-900 dark:text-static-text-50 hover:text-accent-600'
                 }`}
               >
                 <Plane className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -148,7 +148,7 @@ export default function Home() {
               <button
                 onClick={() => setActiveTab('stays')}
                 className={`flex items-center gap-2 pb-4 px-2 font-semibold transition-all relative whitespace-nowrap text-sm sm:text-base ${
-                  activeTab === 'stays' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-100 hover:text-accent-300'
+                  activeTab === 'stays' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-static-text-900 dark:text-static-text-50 hover:text-accent-300'
                 }`}
                 disabled
               >
@@ -160,7 +160,7 @@ export default function Home() {
               <button
                 onClick={() => setActiveTab('cars')}
                 className={`flex items-center gap-2 pb-4 px-2 font-semibold transition-all relative whitespace-nowrap text-sm sm:text-base ${
-                  activeTab === 'cars' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-100 hover:text-accent-300'
+                  activeTab === 'cars' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-static-text-900 dark:text-static-text-50 hover:text-accent-300'
                 }`}
                 disabled
               >
@@ -172,7 +172,7 @@ export default function Home() {
               <button
                 onClick={() => setActiveTab('packages')}
                 className={`flex items-center gap-2 pb-4 px-2 font-semibold transition-all relative whitespace-nowrap text-sm sm:text-base ${
-                  activeTab === 'packages' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-100 hover:text-accent-300'
+                  activeTab === 'packages' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-static-text-900 dark:text-static-text-50 hover:text-accent-300'
                 }`}
                 disabled
               >
@@ -184,7 +184,7 @@ export default function Home() {
               <button
                 onClick={() => setActiveTab('things')}
                 className={`flex items-center gap-2 pb-4 px-2 font-semibold transition-all relative whitespace-nowrap text-sm sm:text-base ${
-                  activeTab === 'things' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-100 hover:text-accent-300'
+                  activeTab === 'things' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-static-text-900 dark:text-static-text-50 hover:text-accent-300'
                 }`}
                 disabled
               >
@@ -196,7 +196,7 @@ export default function Home() {
               <button
                 onClick={() => setActiveTab('cruises')}
                 className={`flex items-center gap-2 pb-4 px-2 font-semibold transition-all relative ${
-                  activeTab === 'cruises' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-100 hover:text-accent-300'
+                  activeTab === 'cruises' ? 'text-accent-600' : 'text-static-text-600 dark:text-static-text-static-text-900 dark:text-static-text-50 hover:text-accent-300'
                 }`}
                 disabled
               >
@@ -220,7 +220,7 @@ export default function Home() {
                       onChange={(e) => setTripType(e.target.value as 'round-trip')}
                       className="w-4 h-4 text-accent-600"
                     />
-                    <span className="text-100 font-medium">Round-trip</span>
+                    <span className="text-static-text-900 dark:text-static-text-static-text-900 dark:text-static-text-50 font-medium">Round-trip</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -231,7 +231,7 @@ export default function Home() {
                       onChange={(e) => setTripType(e.target.value as 'one-way')}
                       className="w-4 h-4 text-accent-600"
                     />
-                    <span className="text-100 font-medium">One-way</span>
+                    <span className="text-static-text-900 dark:text-static-text-static-text-900 dark:text-static-text-50 font-medium">One-way</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -242,7 +242,7 @@ export default function Home() {
                       onChange={(e) => setTripType(e.target.value as 'multi-city')}
                       className="w-4 h-4 text-accent-600"
                     />
-                    <span className="text-100 font-medium">Multi-city</span>
+                    <span className="text-static-text-900 dark:text-static-text-static-text-900 dark:text-static-text-50 font-medium">Multi-city</span>
                   </label>
                 </div>
 
@@ -253,7 +253,7 @@ export default function Home() {
                     <div className="space-y-4">
                       {/* Travelers - Shared across all flights */}
                       <div className="w-80">
-                        <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
+                        <label className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 mb-2 uppercase tracking-wide">
                           Travelers
                         </label>
                         <TravelersSelector value={travelers} onChange={setTravelers} />
@@ -262,7 +262,7 @@ export default function Home() {
                       {multiCityFlights.map((flight, index) => (
                         <div key={flight.id} className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-100">Flight {index + 1}</h3>
+                            <h3 className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">Flight {index + 1}</h3>
                             {multiCityFlights.length > 2 && (
                               <button
                                 type="button"
@@ -277,11 +277,11 @@ export default function Home() {
                           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1.5fr] gap-2 items-end">
                             {/* Leaving From */}
                             <div className="relative">
-                              <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
+                              <label className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 mb-2 uppercase tracking-wide">
                                 Leaving from
                               </label>
-                              <div className="flex items-center h-12 border border-primary-300 rounded-xl bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
-                                <MapPin className="w-4 h-4 text-primary-400 mr-3" />
+                              <div className="flex items-center h-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
+                                <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-3" />
                                 <AirportAutocomplete
                                   id={`multi-origin-${flight.id}`}
                                   label=""
@@ -300,19 +300,19 @@ export default function Home() {
                                   updateMultiCityFlight(flight.id, 'origin', flight.destination);
                                   updateMultiCityFlight(flight.id, 'destination', temp);
                                 }}
-                                className="absolute -right-5 bottom-1 h-10 w-10 flex items-center justify-center border border-primary-300 rounded-full bg-primary-50 hover:border-primary-400 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-primary-50"
+                                className="absolute -right-5 bottom-1 h-10 w-10 flex items-center justify-center border border-gray-300 dark:border-gray-600 rounded-full bg-transparent dark:bg-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-background-50 dark:ring-background-900"
                               >
-                                <ArrowLeftRight className="w-4 h-4 text-primary-600" />
+                                <ArrowLeftRight className="w-4 h-4 text-static-text-900 dark:text-static-text-50" />
                               </button>
                             </div>
 
                             {/* Going To */}
                             <div>
-                              <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
+                              <label className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 mb-2 uppercase tracking-wide">
                                 Going to
                               </label>
-                              <div className="flex items-center h-12 border border-primary-300 rounded-xl bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
-                                <MapPin className="w-4 h-4 text-primary-400 mr-3" />
+                              <div className="flex items-center h-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
+                                <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-3" />
                                 <AirportAutocomplete
                                   id={`multi-destination-${flight.id}`}
                                   label=""
@@ -326,7 +326,7 @@ export default function Home() {
 
                             {/* Date */}
                             <div>
-                              <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
+                              <label className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 mb-2 uppercase tracking-wide">
                                 Date
                               </label>
                               <AirlineDatePicker
@@ -345,7 +345,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={addMultiCityFlight}
-                        className="flex items-center gap-2 text-primary-600 hover:text-100 font-medium text-sm"
+                        className="flex items-center gap-2 text-primary-600 hover:text-static-text-900 dark:text-static-text-50 font-medium text-sm"
                       >
                         <span className="text-xl">+</span> Add another flight
                       </button>
@@ -365,12 +365,12 @@ export default function Home() {
                   <div className="hidden lg:flex items-end gap-2">
                     {/* Leaving From */}
                     <div className="flex-[1.7]">
-                      <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
+                      <label className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 mb-2 uppercase tracking-wide">
                         Leaving from
                       </label>
                       <div className="relative">
-                        <div className="flex items-center h-12 border border-primary-300 rounded-xl bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
-                          <MapPin className="w-4 h-4 text-primary-400 mr-3" />
+                        <div className="flex items-center h-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
+                          <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-3" />
                           <AirportAutocomplete
                             id="origin-home"
                             label=""
@@ -387,19 +387,19 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={handleSwap}
-                      className="mb-1 -mx-3 h-10 w-10 flex items-center justify-center border border-primary-300 rounded-full bg-primary-50 hover:border-primary-400 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-primary-50"
+                      className="mb-1 -mx-3 h-10 w-10 flex items-center justify-center border border-gray-300 dark:border-gray-600 rounded-full bg-transparent dark:bg-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-background-50 dark:ring-background-900"
                     >
-                      <ArrowLeftRight className="w-4 h-4 text-primary-600" />
+                      <ArrowLeftRight className="w-4 h-4 text-static-text-900 dark:text-static-text-50" />
                     </button>
 
                     {/* Going To */}
                     <div className="flex-[1.7]">
-                      <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
+                      <label className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 mb-2 uppercase tracking-wide">
                         Going to
                       </label>
                       <div className="relative">
-                        <div className="flex items-center h-12 border border-primary-300 rounded-xl bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
-                          <MapPin className="w-4 h-4 text-primary-400 mr-3" />
+                        <div className="flex items-center h-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
+                          <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-3" />
                           <AirportAutocomplete
                             id="destination-home"
                             label=""
@@ -414,7 +414,7 @@ export default function Home() {
 
                     {/* Dates */}
                     <div className="flex-[1.6]">
-                      <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
+                      <label className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 mb-2 uppercase tracking-wide">
                         {tripType === 'one-way' ? 'Date' : 'Dates'}
                       </label>
                       <AirlineDatePicker
@@ -428,7 +428,7 @@ export default function Home() {
 
                     {/* Travelers */}
                     <div className="flex-[1.4]">
-                      <label className="block text-xs font-semibold text-100 mb-2 uppercase tracking-wide">
+                      <label className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 mb-2 uppercase tracking-wide">
                         Travelers
                       </label>
                       <TravelersSelector value={travelers} onChange={setTravelers} />
@@ -448,7 +448,7 @@ export default function Home() {
                   <div className="lg:hidden">
                     {/* Row 1: Leaving From */}
                     <div className="relative mb-2">
-                      <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
+                      <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-transparent dark:bg-transparent px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
                         <MapPin className="w-5 h-5 text-primary-400 mr-3 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="text-xs text-primary-600 font-medium mb-0.5">Leaving from</div>
@@ -468,7 +468,7 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={handleSwap}
-                          className="h-9 w-9 flex items-center justify-center border border-primary-300 rounded-full bg-primary-50 hover:bg-primary-50 transition-colors shadow-md"
+                          className="h-9 w-9 flex items-center justify-center border border-primary-300 rounded-full bg-transparent dark:bg-transparent hover:bg-transparent dark:bg-transparent transition-colors shadow-md"
                         >
                           <ArrowLeftRight className="w-4 h-4 text-primary-600" />
                         </button>
@@ -477,7 +477,7 @@ export default function Home() {
 
                     {/* Row 2: Going To */}
                     <div className="relative mb-2">
-                      <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
+                      <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-transparent dark:bg-transparent px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
                         <MapPin className="w-5 h-5 text-primary-400 mr-3 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="text-xs text-primary-600 font-medium mb-0.5">Going to</div>
@@ -533,7 +533,7 @@ export default function Home() {
                       {multiCityFlights.map((flight, index) => (
                         <div key={flight.id} className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-100">Flight {index + 1}</h3>
+                            <h3 className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">Flight {index + 1}</h3>
                             {multiCityFlights.length > 2 && (
                               <button
                                 type="button"
@@ -547,7 +547,7 @@ export default function Home() {
 
                           {/* Leaving From */}
                           <div className="relative">
-                            <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
+                            <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-transparent dark:bg-transparent px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
                               <MapPin className="w-5 h-5 text-primary-400 mr-3 flex-shrink-0" />
                               <div className="flex-1 min-w-0">
                                 <div className="text-xs text-primary-600 font-medium mb-0.5">Leaving from</div>
@@ -571,7 +571,7 @@ export default function Home() {
                                   updateMultiCityFlight(flight.id, 'origin', flight.destination);
                                   updateMultiCityFlight(flight.id, 'destination', temp);
                                 }}
-                                className="h-9 w-9 flex items-center justify-center border border-primary-300 rounded-full bg-primary-50 hover:bg-primary-50 transition-colors shadow-md"
+                                className="h-9 w-9 flex items-center justify-center border border-primary-300 rounded-full bg-transparent dark:bg-transparent hover:bg-transparent dark:bg-transparent transition-colors shadow-md"
                               >
                                 <ArrowLeftRight className="w-4 h-4 text-primary-600" />
                               </button>
@@ -580,7 +580,7 @@ export default function Home() {
 
                           {/* Going To */}
                           <div className="relative">
-                            <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-primary-50 px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
+                            <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-transparent dark:bg-transparent px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
                               <MapPin className="w-5 h-5 text-primary-400 mr-3 flex-shrink-0" />
                               <div className="flex-1 min-w-0">
                                 <div className="text-xs text-primary-600 font-medium mb-0.5">Going to</div>
@@ -614,7 +614,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={addMultiCityFlight}
-                        className="flex items-center gap-2 text-primary-600 hover:text-100 font-medium text-sm"
+                        className="flex items-center gap-2 text-primary-600 hover:text-static-text-900 dark:text-static-text-50 font-medium text-sm"
                       >
                         <span className="text-xl">+</span> Add another flight
                       </button>

@@ -109,28 +109,28 @@ export default function TravelersSelector({ value, onChange, mobile = false }: T
         onClick={() => setOpen((s) => !s)}
         className={
           mobile
-            ? "w-full h-14 border border-gray-300 rounded-lg bg-white px-4 text-left hover:border-gray-400 transition-colors flex items-center"
-            : "w-full h-12 min-w-[260px] md:min-w-[300px] border border-gray-300 rounded-xl bg-white px-4 text-left hover:border-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors flex items-center justify-between whitespace-nowrap"
+            ? "w-full h-14 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent px-4 text-left hover:border-gray-400 dark:hover:border-gray-500 transition-colors flex items-center"
+            : "w-full h-12 min-w-[260px] md:min-w-[300px] border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 text-left hover:border-gray-400 dark:hover:border-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors flex items-center justify-between whitespace-nowrap"
         }
       >
         {mobile ? (
           <>
-            <User2 className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
+            <User2 className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <div className="text-xs text-gray-600 font-medium mb-0.5">Travelers, Cabin class</div>
-              <div className="text-sm text-gray-900 truncate">
+              <div className="text-xs text-static-text-900 dark:text-static-text-50 opacity-60 font-medium mb-0.5">Travelers, Cabin class</div>
+              <div className="text-sm text-static-text-900 dark:text-static-text-50 truncate">
                 {total} traveler{total > 1 ? "s" : ""}, {cabinLabel}
               </div>
             </div>
-            <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
           </>
         ) : (
           <>
-            <span className="flex items-center gap-2 text-gray-900 font-medium whitespace-nowrap">
-              <User2 className="w-4 h-4 text-gray-500" />
+            <span className="flex items-center gap-2 text-static-text-900 dark:text-static-text-50 font-medium whitespace-nowrap">
+              <User2 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               {total} traveler{total > 1 ? "s" : ""}, {cabinLabel}
             </span>
-            <ChevronDown className="w-4 h-4 text-gray-500" />
+            <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
           </>
         )}
       </button>
@@ -138,11 +138,11 @@ export default function TravelersSelector({ value, onChange, mobile = false }: T
       {open && createPortal(
         <div
           ref={dropdownRef}
-          className="absolute z-[1000] bg-white border border-gray-200 rounded-2xl shadow-2xl" 
+          className="absolute z-[1000] bg-static-bg-50 dark:bg-static-bg-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl" 
           style={{ top: pos.top, left: pos.left, width: Math.max(420, pos.width) }}
         >
           <div className="p-5">
-            <h4 className="text-sm font-semibold text-gray-700 mb-4">Travelers and Cabin class</h4>
+            <h4 className="text-sm font-semibold text-static-text-900 dark:text-static-text-50 mb-4">Travelers and Cabin class</h4>
 
             {/* Rows */}
             {([
@@ -153,38 +153,38 @@ export default function TravelersSelector({ value, onChange, mobile = false }: T
             ] as const).map((row) => (
               <div key={row.key} className="flex items-center justify-between py-3">
                 <div>
-                  <div className="text-gray-900 font-medium">{row.label}</div>
-                  {row.sub && <div className="text-xs text-gray-500">{row.sub}</div>}
+                  <div className="text-static-text-900 dark:text-static-text-50 font-medium">{row.label}</div>
+                  {row.sub && <div className="text-xs text-static-text-900 dark:text-static-text-50 opacity-60">{row.sub}</div>}
                 </div>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => dec(row.key)}
-                    className="h-8 w-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100"
+                    className="h-8 w-8 rounded-full border border-gray-300 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
-                    <Minus className="w-4 h-4 text-gray-600" />
+                    <Minus className="w-4 h-4 text-static-text-900 dark:text-static-text-50" />
                   </button>
-                  <div className="w-6 text-center font-semibold text-gray-900">{(value as any)[row.key]}</div>
+                  <div className="w-6 text-center font-semibold text-static-text-900 dark:text-static-text-50">{(value as any)[row.key]}</div>
                   <button
                     type="button"
                     onClick={() => inc(row.key)}
-                    className="h-8 w-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100"
+                    className="h-8 w-8 rounded-full border border-gray-300 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
-                    <Plus className="w-4 h-4 text-gray-600" />
+                    <Plus className="w-4 h-4 text-static-text-900 dark:text-static-text-50" />
                   </button>
                 </div>
               </div>
             ))}
 
             {/* Cabin class and Done button row */}
-            <div className="flex items-end gap-4 pt-4 border-t border-gray-100 mt-2">
+            <div className="flex items-end gap-4 pt-4 border-t border-gray-100 dark:border-gray-700 mt-2">
               <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Cabin class</label>
+                <label className="block text-xs font-medium text-static-text-900 dark:text-static-text-50 opacity-60 mb-1.5">Cabin class</label>
                 <div className="relative">
                   <select
                     value={value.cabin}
                     onChange={(e) => change({ cabin: e.target.value as CabinCode })}
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 pr-9 text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 pr-9 text-static-text-900 dark:text-static-text-50 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-transparent dark:bg-transparent"
                   >
                     <option value="ECONOMY">Economy</option>
                     <option value="PREMIUM_ECONOMY">Premium economy</option>

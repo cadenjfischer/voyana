@@ -199,7 +199,7 @@ export default function AirlineDatePicker({
       <div className="flex-1 min-w-0">
         {/* Month header */}
         <div className="text-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-static-text-900 dark:text-static-text-50">
             {getMonthYear(month)}
           </h3>
         </div>
@@ -208,7 +208,7 @@ export default function AirlineDatePicker({
         <div className="grid grid-cols-7 mb-3">
           {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((day) => (
             <div key={day} className="h-8 flex items-center justify-center">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <span className="text-xs font-medium text-static-text-900 dark:text-static-text-50 opacity-60 uppercase tracking-wide">
                 {day}
               </span>
             </div>
@@ -229,15 +229,15 @@ export default function AirlineDatePicker({
             let buttonClass = 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors';
             
             if (isPastDate) {
-              buttonClass += ' text-gray-300 cursor-not-allowed';
+              buttonClass += ' text-static-text-900 dark:text-static-text-50 opacity-20 cursor-not-allowed';
             } else if (isStartDate || isEndDate) {
               buttonClass += ' bg-blue-500 text-white font-semibold';
             } else if (isInRange || isInHoverRange) {
-              buttonClass += ' bg-blue-100 text-blue-700';
+              buttonClass += ' bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300';
             } else if (isToday) {
-              buttonClass += ' text-blue-700 font-semibold bg-white';
+              buttonClass += ' text-blue-700 dark:text-blue-400 font-semibold bg-transparent dark:bg-transparent';
             } else {
-              buttonClass += ' text-gray-700 hover:bg-blue-50 cursor-pointer';
+              buttonClass += ' text-static-text-900 dark:text-static-text-50 hover:bg-blue-50 dark:hover:bg-blue-900 cursor-pointer';
             }
 
             return (
@@ -269,27 +269,27 @@ export default function AirlineDatePicker({
           onClick={() => setIsOpen(!isOpen)}
           className={
             mobile
-              ? "w-full h-14 px-4 flex items-center border border-gray-300 rounded-lg bg-white hover:border-gray-400 transition-colors"
+              ? "w-full h-14 px-4 flex items-center border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
               : compact 
-              ? "w-full h-12 px-4 flex flex-col justify-center text-left hover:bg-gray-50 transition-colors"
-              : "w-full h-12 flex items-center justify-between px-4 border border-gray-300 rounded-xl bg-white hover:border-gray-400 transition-colors duration-200"
+              ? "w-full h-12 px-4 flex flex-col justify-center text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              : "w-full h-12 flex items-center justify-between px-4 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-colors duration-200"
           }
         >
           {mobile ? (
             <>
-              <Calendar className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
+              <Calendar className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-gray-600 font-medium mb-0.5">{single ? 'Date' : 'Dates'}</div>
-                <div className={`text-sm truncate ${startDate ? 'text-gray-900' : 'text-gray-500'}`}>
+                <div className="text-xs text-static-text-900 dark:text-static-text-50 font-medium mb-0.5">{single ? 'Date' : 'Dates'}</div>
+                <div className="text-sm truncate text-static-text-900 dark:text-static-text-50">
                   {formatDateRange()}
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
             </>
           ) : compact ? (
             <>
-              <div className="text-xs text-gray-500 mb-1">{single ? 'Date' : 'Dates'}</div>
-              <div className="font-semibold text-gray-900 truncate">
+              <div className="text-xs text-static-text-900 dark:text-static-text-50 mb-1">{single ? 'Date' : 'Dates'}</div>
+              <div className="font-semibold text-static-text-900 dark:text-static-text-50 truncate">
                 {startDate && endDate
                   ? `${format(new Date(startDate), 'MMM d')} - ${format(new Date(endDate), 'MMM d')}`
                   : startDate
@@ -299,14 +299,14 @@ export default function AirlineDatePicker({
             </>
           ) : (
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
-              <span className={`text-sm truncate ${startDate ? 'text-gray-900' : 'text-gray-500'}`}>
+              <Calendar className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+              <span className="text-sm truncate text-static-text-900 dark:text-static-text-50">
                 {formatDateRange()}
               </span>
             </div>
           )}
           {!compact && !mobile && (
-            <ChevronRight className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
+            <ChevronRight className={`w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
           )}
         </button>
       </div>
@@ -315,7 +315,7 @@ export default function AirlineDatePicker({
       {isOpen && typeof window !== 'undefined' && createPortal(
         <div 
           ref={pickerRef}
-          className="absolute bg-white rounded-xl shadow-xl border border-gray-200 z-[9999] p-6"
+          className="absolute bg-static-bg-50 dark:bg-static-bg-900 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-[9999] p-6"
           style={{
             top: inputPosition.top + (compact ? 60 : inputPosition.height + 6),
             right: typeof window !== 'undefined' ? window.innerWidth - inputPosition.left - inputPosition.width : 'auto',
@@ -327,21 +327,21 @@ export default function AirlineDatePicker({
             <button
               type="button"
               onClick={() => navigateMonth('prev')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200"
             >
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
+              <ChevronLeft className="w-5 h-5 text-static-text-900 dark:text-static-text-50" />
             </button>
             
             <div className="text-center">
-              <span className="text-sm text-gray-500">{single ? 'Select date' : 'Select departure date'}</span>
+              <span className="text-sm text-static-text-900 dark:text-static-text-50 opacity-60">{single ? 'Select date' : 'Select departure date'}</span>
             </div>
             
             <button
               type="button"
               onClick={() => navigateMonth('next')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200"
             >
-              <ChevronRight className="w-5 h-5 text-gray-600" />
+              <ChevronRight className="w-5 h-5 text-static-text-900 dark:text-static-text-50" />
             </button>
           </div>
 

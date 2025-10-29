@@ -455,6 +455,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Placeholder text colors */
+::placeholder {
+  color: var(--color-static-text-900);
+  opacity: 0.5;
+}
+
+.dark ::placeholder {
+  color: var(--color-static-text-50);
+  opacity: 1;
+}
+
 /* Luxury Pattern Background */
 .bg-luxury-pattern {
   background-image:
