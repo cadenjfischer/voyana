@@ -208,42 +208,24 @@ export default function Home() {
 
             {/* Flight Search Form */}
             {activeTab === 'flights' && (
-              <form onSubmit={handleFlightSearch} className="space-y-6">
-                {/* Trip Type */}
-                <div className="flex gap-6">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="tripType"
-                      value="round-trip"
-                      checked={tripType === 'round-trip'}
-                      onChange={(e) => setTripType(e.target.value as 'round-trip')}
-                      className="w-4 h-4 text-accent-600"
-                    />
-                    <span className="text-static-text-900 dark:text-static-text-static-text-900 dark:text-static-text-50 font-medium">Round-trip</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="tripType"
-                      value="one-way"
-                      checked={tripType === 'one-way'}
-                      onChange={(e) => setTripType(e.target.value as 'one-way')}
-                      className="w-4 h-4 text-accent-600"
-                    />
-                    <span className="text-static-text-900 dark:text-static-text-static-text-900 dark:text-static-text-50 font-medium">One-way</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="tripType"
-                      value="multi-city"
-                      checked={tripType === 'multi-city'}
-                      onChange={(e) => setTripType(e.target.value as 'multi-city')}
-                      className="w-4 h-4 text-accent-600"
-                    />
-                    <span className="text-static-text-900 dark:text-static-text-static-text-900 dark:text-static-text-50 font-medium">Multi-city</span>
-                  </label>
+              <form onSubmit={handleFlightSearch} className="space-y-4">
+                {/* Top Controls Bar - Google Flights Style */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* Trip Type Dropdown */}
+                  <select
+                    value={tripType}
+                    onChange={(e) => setTripType(e.target.value as any)}
+                    className="h-10 px-3 pr-8 border-0 rounded-md bg-transparent text-static-text-900 dark:text-static-text-50 text-sm font-medium hover:bg-static-bg-50 dark:hover:bg-static-bg-800 focus:outline-none focus:ring-0 transition-colors cursor-pointer"
+                  >
+                    <option value="round-trip">Round-trip</option>
+                    <option value="one-way">One-way</option>
+                    <option value="multi-city">Multi-city</option>
+                  </select>
+
+                  {/* Travelers Selector - Compact inline version */}
+                  <div className="[&>div>button]:h-10 [&>div>button]:rounded-md [&>div>button]:px-3 [&>div>button]:min-w-0 [&>div>button]:border-0 [&>div>button]:bg-transparent [&>div>button]:hover:bg-static-bg-50 dark:[&>div>button]:hover:bg-static-bg-800">
+                    <TravelersSelector value={travelers} onChange={setTravelers} />
+                  </div>
                 </div>
 
                 {/* Search Fields - Responsive Layout */}
@@ -251,13 +233,6 @@ export default function Home() {
                   {/* Multi-city mode */}
                   {tripType === 'multi-city' ? (
                     <div className="space-y-4">
-                      {/* Travelers - Shared across all flights */}
-                      <div className="w-80">
-                        <label className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 mb-2 uppercase tracking-wide">
-                          Travelers
-                        </label>
-                        <TravelersSelector value={travelers} onChange={setTravelers} />
-                      </div>
 
                       {multiCityFlights.map((flight, index) => (
                         <div key={flight.id} className="space-y-4">
@@ -292,7 +267,7 @@ export default function Home() {
                                 />
                               </div>
                               
-                              {/* Swap Button - Overlapping on the right edge */}
+                              {/* Swap Button - Google Flights Style */}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -300,9 +275,9 @@ export default function Home() {
                                   updateMultiCityFlight(flight.id, 'origin', flight.destination);
                                   updateMultiCityFlight(flight.id, 'destination', temp);
                                 }}
-                                className="absolute -right-5 bottom-1 h-10 w-10 flex items-center justify-center border border-gray-300 dark:border-gray-600 rounded-full bg-transparent dark:bg-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-background-50 dark:ring-background-900"
+                                className="absolute -right-5 bottom-1 h-10 w-10 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600 rounded-full bg-background-50 dark:bg-background-900 hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 transition-all shadow-md hover:shadow-lg flex-shrink-0 z-20"
                               >
-                                <ArrowLeftRight className="w-4 h-4 text-static-text-900 dark:text-static-text-50" />
+                                <ArrowLeftRight className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                               </button>
                             </div>
 
@@ -361,16 +336,13 @@ export default function Home() {
                     </div>
                   ) : (
                     <>
-                  {/* Desktop: Single row with swap overlap */}
-                  <div className="hidden lg:flex items-end gap-2">
+                  {/* Desktop: Single row with swap overlap - Google Flights Style */}
+                  <div className="hidden lg:flex items-center gap-2">
                     {/* Leaving From */}
-                    <div className="flex-[1.7]">
-                      <label className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 mb-2 uppercase tracking-wide">
-                        Leaving from
-                      </label>
+                    <div className="flex-1">
                       <div className="relative">
-                        <div className="flex items-center h-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
-                          <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-3" />
+                        <div className="flex items-center h-14 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
+                          <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" />
                           <AirportAutocomplete
                             id="origin-home"
                             label=""
@@ -387,19 +359,16 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={handleSwap}
-                      className="mb-1 -mx-3 h-10 w-10 flex items-center justify-center border border-gray-300 dark:border-gray-600 rounded-full bg-transparent dark:bg-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-background-50 dark:ring-background-900"
+                      className="-mx-6 h-10 w-10 flex items-center justify-center border border-gray-300 dark:border-gray-600 rounded-full bg-static-bg-900 hover:bg-static-bg-800 hover:border-gray-400 dark:hover:border-gray-500 transition-colors shadow-sm flex-shrink-0 z-20"
                     >
-                      <ArrowLeftRight className="w-4 h-4 text-static-text-900 dark:text-static-text-50" />
+                      <ArrowLeftRight className="w-4 h-4 text-gray-400" />
                     </button>
 
                     {/* Going To */}
-                    <div className="flex-[1.7]">
-                      <label className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 mb-2 uppercase tracking-wide">
-                        Going to
-                      </label>
+                    <div className="flex-1">
                       <div className="relative">
-                        <div className="flex items-center h-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
-                          <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-3" />
+                        <div className="flex items-center h-14 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
+                          <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3" />
                           <AirportAutocomplete
                             id="destination-home"
                             label=""
@@ -413,10 +382,7 @@ export default function Home() {
                     </div>
 
                     {/* Dates */}
-                    <div className="flex-[1.6]">
-                      <label className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 mb-2 uppercase tracking-wide">
-                        {tripType === 'one-way' ? 'Date' : 'Dates'}
-                      </label>
+                    <div className="flex-1">
                       <AirlineDatePicker
                         startDate={departureDate}
                         endDate={tripType === 'round-trip' ? returnDate : undefined}
@@ -426,19 +392,10 @@ export default function Home() {
                       />
                     </div>
 
-                    {/* Travelers */}
-                    <div className="flex-[1.4]">
-                      <label className="block text-xs font-semibold text-static-text-900 dark:text-static-text-50 mb-2 uppercase tracking-wide">
-                        Travelers
-                      </label>
-                      <TravelersSelector value={travelers} onChange={setTravelers} />
-                    </div>
-
                     {/* Search Button */}
                     <button
                       type="submit"
-                      className="btn btn-primary btn-md mb-1 ml-6"
-                      style={{ height: '3rem', width: 'auto', flexShrink: 0 }}
+                      className="btn btn-primary btn-md h-14 px-8 flex-shrink-0"
                     >
                       Search
                     </button>
@@ -463,14 +420,14 @@ export default function Home() {
                         </div>
                       </div>
                       
-                      {/* Swap Button - Vertically centered between fields, right aligned like Expedia */}
+                      {/* Swap Button - Google Flights Style */}
                       <div className="absolute bottom-0 right-3 translate-y-1/2 z-10">
                         <button
                           type="button"
                           onClick={handleSwap}
-                          className="h-9 w-9 flex items-center justify-center border border-primary-300 rounded-full bg-transparent dark:bg-transparent hover:bg-transparent dark:bg-transparent transition-colors shadow-md"
+                          className="h-9 w-9 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600 rounded-full bg-background-50 dark:bg-background-900 hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 transition-all shadow-md hover:shadow-lg"
                         >
-                          <ArrowLeftRight className="w-4 h-4 text-primary-600" />
+                          <ArrowLeftRight className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                         </button>
                       </div>
                     </div>
