@@ -36,8 +36,14 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
   const { theme } = useTheme();
   const lastStyleRef = useRef<string | null>(null);
 
-  const getMapStyle = (mode: 'light' | 'dark') =>
-    mode === 'dark' ? 'mapbox://styles/mapbox/navigation-night-v1' : 'mapbox://styles/mapbox/streets-v12';
+  const getMapStyle = (_mode: 'light' | 'dark') => 'mapbox://styles/mapbox/standard';
+
+  const applyLightPreset = (map: mapboxgl.Map, mode: 'light' | 'dark') => {
+    const preset = mode === 'dark' ? 'dusk' : 'day';
+    try {
+      (map as any).setConfigProperty?.('basemap', 'lightPreset', preset);
+    } catch {}
+  };
 
   // Save visibility preference to localStorage and handle map resize  
   const toggleVisibility = () => {
@@ -159,6 +165,7 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
         try { mapRef.current?.scrollZoom?.enable(); } catch {}
         setStatus('loaded');
         lastStyleRef.current = getMapStyle(theme);
+        if (mapRef.current) applyLightPreset(mapRef.current, theme);
       });
     };
 
@@ -170,18 +177,11 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
     };
   }, []); // Only run once on mount
 
-  // Switch basemap when theme changes
+  // Switch Mapbox Standard light preset when theme changes
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    const desired = getMapStyle(theme);
-    if (lastStyleRef.current === desired) return;
-    setStatus('init');
-    map.setStyle(desired);
-    map.once('style.load', () => {
-      lastStyleRef.current = desired;
-      setStatus('loaded');
-    });
+    applyLightPreset(map, theme);
   }, [theme]);
 
   // Add markers (numbered by visit order) with visible labels and fit bounds when destinations change

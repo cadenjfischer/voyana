@@ -27,11 +27,16 @@ export default function TripMap({ trip, isExpanded, onToggleExpand, embedded = f
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const { theme } = useTheme();
 
-  const getMapStyle = (mode: 'light' | 'dark') => {
-    // Dusk style (not full black) for dark mode; outdoors for light
-    return mode === 'dark'
-      ? 'mapbox://styles/mapbox/navigation-night-v1'
-      : 'mapbox://styles/mapbox/outdoors-v12';
+  const getMapStyle = (_mode: 'light' | 'dark') => {
+    // Always use Mapbox Standard; we'll switch presets at runtime
+    return 'mapbox://styles/mapbox/standard';
+  };
+
+  const applyLightPreset = (map: mapboxgl.Map, mode: 'light' | 'dark') => {
+    const preset = mode === 'dark' ? 'dusk' : 'day';
+    try {
+      (map as any).setConfigProperty?.('basemap', 'lightPreset', preset);
+    } catch {}
   };
 
   // Load visibility preference from localStorage on mount
@@ -69,6 +74,7 @@ export default function TripMap({ trip, isExpanded, onToggleExpand, embedded = f
       mapRef.current.on('load', () => {
         setIsMapLoaded(true);
         lastStyleRef.current = getMapStyle(theme);
+        applyLightPreset(mapRef.current as mapboxgl.Map, theme);
       });
     } else {
       // swap DOM container instantly
@@ -76,18 +82,11 @@ export default function TripMap({ trip, isExpanded, onToggleExpand, embedded = f
     }
   }, [isExpanded, embedded, theme]);
 
-  // Switch style when theme changes
+  // Switch Mapbox Standard light preset when theme changes
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    const desiredStyle = getMapStyle(theme);
-    if (lastStyleRef.current === desiredStyle) return;
-    setIsMapLoaded(false);
-    map.setStyle(desiredStyle);
-    map.once('style.load', () => {
-      lastStyleRef.current = desiredStyle;
-      setIsMapLoaded(true);
-    });
+    applyLightPreset(map, theme);
   }, [theme]);
 
   // Markers + fitBounds (instant)

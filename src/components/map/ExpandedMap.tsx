@@ -26,8 +26,14 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
   const { theme } = useTheme();
   const lastStyleRef = useRef<string | null>(null);
 
-  const getMapStyle = (mode: 'light' | 'dark') =>
-    mode === 'dark' ? 'mapbox://styles/mapbox/navigation-night-v1' : 'mapbox://styles/mapbox/streets-v12';
+  const getMapStyle = (_mode: 'light' | 'dark') => 'mapbox://styles/mapbox/standard';
+
+  const applyLightPreset = (map: mapboxgl.Map, mode: 'light' | 'dark') => {
+    const preset = mode === 'dark' ? 'dusk' : 'day';
+    try {
+      (map as any).setConfigProperty?.('basemap', 'lightPreset', preset);
+    } catch {}
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -61,6 +67,7 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
       lastStyleRef.current = getMapStyle(theme);
       // Extra resize to ensure canvas picks up final layout
       requestAnimationFrame(() => mapRef.current?.resize());
+      if (mapRef.current) applyLightPreset(mapRef.current, theme);
     });
 
     // Keep map sized with window
@@ -75,19 +82,11 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
     };
   }, []);
 
-  // React to theme changes by switching basemap
+  // React to theme changes by switching Mapbox Standard light preset
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    const desired = getMapStyle(theme);
-    if (lastStyleRef.current === desired) return;
-    setStatus('init');
-    map.setStyle(desired);
-    map.once('style.load', () => {
-      lastStyleRef.current = desired;
-      setStatus('loaded');
-      map.resize();
-    });
+    applyLightPreset(map, theme);
   }, [theme]);
 
   // Markers/fitBounds
