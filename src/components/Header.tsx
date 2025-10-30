@@ -48,65 +48,45 @@ export default function Header() {
   const isSignedIn = !!user;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[10000] bg-static-bg-100 dark:bg-static-bg-900 backdrop-blur-md border-b border-primary-200/50 transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+    <header className="fixed top-0 left-0 right-0 z-[10000] pt-4 px-4 lg:px-8 transition-all duration-300">
+      <div className="bg-white/25 dark:bg-black/25 border-[1.5px] border-static-gray-50/70 dark:border-static-gray-100/90 rounded-xl max-w-7xl mx-auto shadow-2xl" style={{ backdropFilter: 'blur(2.5px)', WebkitBackdropFilter: 'blur(2.5px)', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1)' }}>
+        <div className="flex justify-between items-center h-14 px-6 lg:px-8">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/">
               <Image
                 src="/VoyanaLogo.svg"
                 alt="Voyana Logo"
-                width={160}
-                height={40}
+                width={140}
+                height={36}
                 priority
-                className="h-10 w-auto cursor-pointer"
+                className="h-9 w-auto cursor-pointer"
               />
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-8">
+          <nav className="hidden lg:flex items-center space-x-10">
             <Link 
-              href="/" 
-              className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
+              href="/flights" 
+              className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-200 font-medium text-sm"
             >
-              Home
+              Flights
             </Link>
             {isSignedIn && (
-              <>
-                <Link 
-                  href="/itinerary" 
-                  className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
-                >
-                  My Trips
-                </Link>
-                <Link 
-                  href="/flights" 
-                  className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
-                >
-                  Flights
-                </Link>
-              </>
+              <Link 
+                href="/itinerary" 
+                className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-200 font-medium text-sm"
+              >
+                My Trips
+              </Link>
             )}
-            <a 
-              href="#services" 
-              className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
+            <Link 
+              href="/remember" 
+              className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-200 font-medium text-sm"
             >
-              Services
-            </a>
-            <a 
-              href="#about" 
-              className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
-            >
-              About
-            </a>
-            <a 
-              href="#contact" 
-              className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide"
-            >
-              Contact
-            </a>
+              Remember
+            </Link>
           </nav>
 
           {/* Authentication Section */}
@@ -114,7 +94,7 @@ export default function Header() {
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-primary-100 transition-colors duration-300"
+              className="p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-200"
               aria-label="Toggle theme"
             >
               {theme === 'light' ? (
@@ -122,61 +102,53 @@ export default function Header() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
               ) : (
-                <svg className="w-5 h-5 text-static-text-900 dark:text-static-text-100300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-static-text-100" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               )}
             </button>
             
             {isSignedIn ? (
-              <div className="flex items-center space-x-4">
-                <Link 
-                  href="/dashboard"
-                  className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium"
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center space-x-2 text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-200 p-1"
                 >
-                  Dashboard
-                </Link>
-                <div className="relative">
-                  <button
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center space-x-2 text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-accent-600 flex items-center justify-center text-white font-semibold">
-                      {user?.email?.[0]?.toUpperCase() || 'U'}
+                  <div className="w-9 h-9 rounded-full bg-accent-600 flex items-center justify-center text-white font-semibold text-sm">
+                    {user?.email?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                </button>
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-3 w-52 bg-white/90 dark:bg-black/90 backdrop-blur-xl rounded-xl shadow-xl border border-white/20 dark:border-white/10 py-2 z-50">
+                    <div className="px-4 py-3 border-b border-white/20 dark:border-white/10">
+                      <p className="text-xs font-medium text-static-text-900 dark:text-static-text-100 truncate">{user?.email}</p>
                     </div>
-                  </button>
-                  {isUserMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-primary-50 rounded-lg shadow-xl border border-primary-200 py-1 z-50">
-                      <div className="px-4 py-2 border-b border-primary-200">
-                        <p className="text-sm font-medium text-static-text-900 dark:text-static-text-100900 truncate">{user?.email}</p>
-                      </div>
-                      <Link
-                        href="/user-profile"
-                        className="block px-4 py-2 text-sm text-static-text-900 dark:text-static-text-100 hover:bg-accent-50"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        Profile Settings
-                      </Link>
-                      <button
-                        onClick={handleSignOut}
-                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                      >
-                        Sign Out
-                      </button>
-                    </div>
-                  )}
-                </div>
+                    <Link
+                      href="/user-profile"
+                      className="block px-4 py-2.5 text-sm text-static-text-900 dark:text-static-text-100 hover:bg-black/5 dark:hover:bg-white/10"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-black/5 dark:hover:bg-white/10"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center space-x-3">
                 <Link href="/sign-in">
-                  <button className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 font-medium tracking-wide transition-colors duration-300">
+                  <button className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 font-medium text-sm transition-colors duration-200 px-5 py-2">
                     Sign In
                   </button>
                 </Link>
                 <Link href="/sign-up">
-                  <button className="bg-accent-600 hover:bg-accent-700 text-white px-6 py-2.5 rounded-full font-semibold tracking-wide transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
-                    Get Started
+                  <button className="bg-accent-600 hover:bg-accent-700 text-white px-6 py-2.5 rounded-full font-medium text-sm transition-all duration-200 shadow-sm">
+                    Sign Up
                   </button>
                 </Link>
               </div>
@@ -187,7 +159,7 @@ export default function Header() {
           <div className="lg:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 focus:outline-none focus:text-accent-600 transition-colors duration-300"
+              className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 focus:outline-none transition-colors duration-200 p-2"
             >
               <svg
                 className="h-6 w-6"
@@ -210,59 +182,37 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-primary-200/50">
-            <div className="flex flex-col space-y-4">
+          <div className="lg:hidden py-6 border-t border-white/20 dark:border-white/10">
+            <div className="flex flex-col space-y-2">
               <Link 
-                href="/" 
-                className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+                href="/flights" 
+                className="text-static-text-900 dark:text-static-text-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-200 font-medium text-sm px-4 py-3 rounded-lg"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Home
+                Flights
               </Link>
               {isSignedIn && (
-                <>
-                  <Link 
-                    href="/itinerary" 
-                    className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    My Trips
-                  </Link>
-                  <Link 
-                    href="/flights" 
-                    className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Flights
-                  </Link>
-                </>
+                <Link 
+                  href="/itinerary" 
+                  className="text-static-text-900 dark:text-static-text-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-200 font-medium text-sm px-4 py-3 rounded-lg"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  My Trips
+                </Link>
               )}
-              <a 
-                href="#services" 
-                className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+              <Link 
+                href="/remember" 
+                className="text-static-text-900 dark:text-static-text-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-200 font-medium text-sm px-4 py-3 rounded-lg"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Services
-              </a>
-              <a 
-                href="#about" 
-                className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                About
-              </a>
-              <a 
-                href="#contact" 
-                className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Contact
-              </a>
-              <div className="px-4 pt-4 border-t border-primary-200">
+                Remember
+              </Link>
+              
+              <div className="pt-6 mt-4 border-t border-white/20 dark:border-white/10">
                 {/* Theme Toggle - Mobile */}
                 <button
                   onClick={toggleTheme}
-                  className="flex items-center space-x-2 w-full text-left text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2 mb-3"
+                  className="flex items-center space-x-3 w-full text-left text-static-text-900 dark:text-static-text-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-200 font-medium text-sm px-4 py-3 mb-2 rounded-lg"
                 >
                   {theme === 'light' ? (
                     <>
@@ -282,27 +232,20 @@ export default function Header() {
                 </button>
                 
                 {isSignedIn ? (
-                  <div className="flex flex-col space-y-3">
-                    <Link 
-                      href="/dashboard"
-                      className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Dashboard
-                    </Link>
+                  <div className="flex flex-col space-y-2">
                     <Link
                       href="/user-profile"
-                      className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+                      className="text-static-text-900 dark:text-static-text-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-200 font-medium text-sm px-4 py-3 rounded-lg"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      Profile Settings
+                      Profile
                     </Link>
                     <button
                       onClick={() => {
                         handleSignOut();
                         setIsMenuOpen(false);
                       }}
-                      className="text-left text-red-600 hover:text-red-700 transition-colors duration-300 font-medium tracking-wide px-4 py-2"
+                      className="text-left text-red-600 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-200 font-medium text-sm px-4 py-3 rounded-lg"
                     >
                       Sign Out
                     </button>
@@ -311,7 +254,7 @@ export default function Header() {
                   <div className="flex flex-col space-y-3">
                     <Link href="/sign-in">
                       <button 
-                        className="w-full text-center text-static-text-900 dark:text-static-text-100 hover:text-accent-600 font-medium tracking-wide py-2 transition-colors duration-300"
+                        className="w-full text-center text-static-text-900 dark:text-static-text-100 hover:bg-black/5 dark:hover:bg-white/10 font-medium text-sm py-3 rounded-lg transition-colors duration-200"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Sign In
@@ -319,10 +262,10 @@ export default function Header() {
                     </Link>
                     <Link href="/sign-up">
                       <button 
-                        className="w-full bg-accent-600 hover:bg-accent-700 text-white px-8 py-3 rounded-full font-semibold tracking-wide transition-all duration-300 shadow-lg"
+                        className="w-full bg-accent-600 hover:bg-accent-700 text-white px-6 py-3 rounded-full font-medium text-sm transition-all duration-200 shadow-sm"
                         onClick={() => setIsMenuOpen(false)}
                       >
-                        Get Started
+                        Sign Up
                       </button>
                     </Link>
                   </div>

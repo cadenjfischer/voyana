@@ -129,7 +129,7 @@ export default function FlightsPage() {
       <Header />
       
       {/* Condensed Search Bar */}
-      <div className="mt-16">
+      <div className="mt-24">
         <CondensedFlightSearch
           initialOrigin={searchParams.get('origin') || ''}
           initialDestination={searchParams.get('destination') || ''}
