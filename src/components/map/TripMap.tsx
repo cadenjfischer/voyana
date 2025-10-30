@@ -6,6 +6,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Trip } from '@/types/itinerary';
 import { X, Map } from 'lucide-react';
 import { getDestinationColors, resolveColorHex } from '@/utils/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface TripMapProps {
   trip: Trip;
@@ -20,9 +21,18 @@ export default function TripMap({ trip, isExpanded, onToggleExpand, embedded = f
   const fullRef = useRef<HTMLDivElement>(null);
   const embeddedRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
+  const lastStyleRef = useRef<string | null>(null);
   const currentContainerRef = embedded ? embeddedRef : (isExpanded ? fullRef : miniRef);
   const [isVisible, setIsVisible] = useState(true);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const { theme } = useTheme();
+
+  const getMapStyle = (mode: 'light' | 'dark') => {
+    // Dusk style (not full black) for dark mode; outdoors for light
+    return mode === 'dark'
+      ? 'mapbox://styles/mapbox/navigation-night-v1'
+      : 'mapbox://styles/mapbox/outdoors-v12';
+  };
 
   // Load visibility preference from localStorage on mount
   useEffect(() => {
@@ -50,7 +60,7 @@ export default function TripMap({ trip, isExpanded, onToggleExpand, embedded = f
 
       mapRef.current = new mapboxgl.Map({
         container: currentContainerRef.current,
-        style: 'mapbox://styles/mapbox/outdoors-v12',
+        style: getMapStyle(theme),
         center: [-98, 38.5],
         zoom: 3,
         projection: 'mercator', // Explicitly set 2D projection
@@ -58,12 +68,27 @@ export default function TripMap({ trip, isExpanded, onToggleExpand, embedded = f
 
       mapRef.current.on('load', () => {
         setIsMapLoaded(true);
+        lastStyleRef.current = getMapStyle(theme);
       });
     } else {
       // swap DOM container instantly
       mapRef.current.resize();
     }
-  }, [isExpanded, embedded]);
+  }, [isExpanded, embedded, theme]);
+
+  // Switch style when theme changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const desiredStyle = getMapStyle(theme);
+    if (lastStyleRef.current === desiredStyle) return;
+    setIsMapLoaded(false);
+    map.setStyle(desiredStyle);
+    map.once('style.load', () => {
+      lastStyleRef.current = desiredStyle;
+      setIsMapLoaded(true);
+    });
+  }, [theme]);
 
   // Markers + fitBounds (instant)
   useEffect(() => {

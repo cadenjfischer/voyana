@@ -60,7 +60,7 @@ export default function TripSideHeader({ trip, user, onEditTrip, onSignOut }: Tr
       {/* Logo/Back Button */}
       <Link 
         href="/itinerary" 
-        className="w-12 h-12 mt-6 mb-8 flex items-center justify-center rounded-lg bg-accent-600 hover:bg-accent-700 transition-colors group shadow-sm"
+        className="w-12 h-12 mt-6 mb-8 flex items-center justify-center rounded-lg bg-static-accent-600 hover:bg-static-accent-700 transition-colors group shadow-sm"
         title="Back to trips"
       >
         <ChevronLeft className="w-5 h-5 text-white" />
@@ -77,12 +77,12 @@ export default function TripSideHeader({ trip, user, onEditTrip, onSignOut }: Tr
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex flex-col items-center justify-center gap-1 py-3 rounded-lg transition-all ${
                 isActive
-                  ? 'bg-static-accent-600'
+                  ? 'tab-strip-gradient'
                   : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
               }`}
             >
-              <Icon className={`w-5 h-5 ${isActive ? 'text-static-text-900 dark:text-static-text-50' : 'text-static-text-900 dark:text-static-text-50'}`} />
-              <span className={`text-xs font-medium ${isActive ? 'text-static-text-900 dark:text-static-text-50' : 'text-static-text-900 dark:text-static-text-50'}`}>
+              <Icon className={`w-5 h-5 ${isActive ? 'text-static-text-50' : 'text-static-text-900 dark:text-static-text-50'}`} />
+              <span className={`text-xs font-medium ${isActive ? 'text-static-text-50' : 'text-static-text-900 dark:text-static-text-50'}`}>
                 {tab.label}
               </span>
             </button>
@@ -112,7 +112,7 @@ export default function TripSideHeader({ trip, user, onEditTrip, onSignOut }: Tr
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               className="w-full flex flex-col items-center justify-center gap-1 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <div className="w-8 h-8 rounded-full bg-accent-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-static-accent-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
                 {user.email?.[0]?.toUpperCase() || 'U'}
               </div>
             </button>

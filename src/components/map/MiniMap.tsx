@@ -8,6 +8,7 @@ import type { Trip } from '@/types/itinerary';
 import { getDestinationColors, resolveColorHex } from '@/utils/colors';
 import { useItineraryUI } from '@/contexts/ItineraryUIContext';
 import { X, Map as MapIcon } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface MiniMapProps {
   trip: Trip;
@@ -32,6 +33,11 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
   const [mapKey, setMapKey] = useState(0); // Force remount when needed
   const hasToggledRef = useRef(false); // Track if we've toggled at least once
   const isTogglingRef = useRef(false); // Prevent double-toggle
+  const { theme } = useTheme();
+  const lastStyleRef = useRef<string | null>(null);
+
+  const getMapStyle = (mode: 'light' | 'dark') =>
+    mode === 'dark' ? 'mapbox://styles/mapbox/navigation-night-v1' : 'mapbox://styles/mapbox/streets-v12';
 
   // Save visibility preference to localStorage and handle map resize  
   const toggleVisibility = () => {
@@ -131,7 +137,7 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
       setStatus('init');
       mapRef.current = new mapboxgl.Map({
         container: containerRef.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
+        style: getMapStyle(theme),
         center: [-98, 38.5],
         zoom: 2.8,
         attributionControl: false,
@@ -152,6 +158,7 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
         // Ensure normal scroll-to-zoom behavior (no Cmd key requirement)
         try { mapRef.current?.scrollZoom?.enable(); } catch {}
         setStatus('loaded');
+        lastStyleRef.current = getMapStyle(theme);
       });
     };
 
@@ -162,6 +169,20 @@ export default function MiniMap({ trip, width = 320, height = 200, className = '
       // Don't remove map, we'll do that in the main cleanup effect
     };
   }, []); // Only run once on mount
+
+  // Switch basemap when theme changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const desired = getMapStyle(theme);
+    if (lastStyleRef.current === desired) return;
+    setStatus('init');
+    map.setStyle(desired);
+    map.once('style.load', () => {
+      lastStyleRef.current = desired;
+      setStatus('loaded');
+    });
+  }, [theme]);
 
   // Add markers (numbered by visit order) with visible labels and fit bounds when destinations change
   useEffect(() => {

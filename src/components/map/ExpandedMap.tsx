@@ -9,6 +9,7 @@ import TabbedDestinationRail from '@/components/itinerary/TabbedDestinationRail'
 import CalendarStrip from '@/components/itinerary/CalendarStrip';
 import TimelineView from '@/components/itinerary/TimelineView';
 import { getDestinationColors, resolveColorHex } from '@/utils/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface ExpandedMapProps {
   trip: Trip;
@@ -22,6 +23,11 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const [status, setStatus] = useState<'mount' | 'no-token' | 'init' | 'loaded'>('mount');
   const { setIsExpanded, selectedDay, setSelectedDay, selectedDestinationId, setSelectedDestinationId } = useItineraryUI();
+  const { theme } = useTheme();
+  const lastStyleRef = useRef<string | null>(null);
+
+  const getMapStyle = (mode: 'light' | 'dark') =>
+    mode === 'dark' ? 'mapbox://styles/mapbox/navigation-night-v1' : 'mapbox://styles/mapbox/streets-v12';
 
   useEffect(() => {
     let cancelled = false;
@@ -36,7 +42,7 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
     setStatus('init');
     mapRef.current = new mapboxgl.Map({
       container: containerRef.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
+      style: getMapStyle(theme),
       center: [-30, 30],
       zoom: 2.2,
       projection: 'mercator',
@@ -52,6 +58,7 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
       try { mapRef.current?.touchZoomRotate?.disableRotation(); } catch {}
       try { mapRef.current?.scrollZoom?.enable(); } catch {}
       setStatus('loaded');
+      lastStyleRef.current = getMapStyle(theme);
       // Extra resize to ensure canvas picks up final layout
       requestAnimationFrame(() => mapRef.current?.resize());
     });
@@ -67,6 +74,21 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
       mapRef.current = null;
     };
   }, []);
+
+  // React to theme changes by switching basemap
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const desired = getMapStyle(theme);
+    if (lastStyleRef.current === desired) return;
+    setStatus('init');
+    map.setStyle(desired);
+    map.once('style.load', () => {
+      lastStyleRef.current = desired;
+      setStatus('loaded');
+      map.resize();
+    });
+  }, [theme]);
 
   // Markers/fitBounds
   useEffect(() => {
