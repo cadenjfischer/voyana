@@ -236,9 +236,9 @@ export default function TabbedDestinationRail({
 
 
   return (
-    <div className="flex flex-col h-full relative" style={{ backgroundColor: 'var(--color-background-50)' }}>
+    <div className="flex flex-col h-full bg-static-bg-50 dark:bg-static-bg-900 relative">
       {/* Search Bar */}
-      <div className="px-4 py-3 border-b border-gray-100" style={{ backgroundColor: 'var(--color-background-100)' }}>
+      <div className="px-4 py-3 border-b border-gray-100 bg-static-bg-100 dark:bg-static-bg-800">
         <div className="flex items-center justify-between text-xs">
           <span className="text-gray-600">Nights allocated:</span>
           <span className={`font-medium ${getRemainingNights() === 0 ? 'text-green-600' : getRemainingNights() < 0 ? 'text-red-600' : 'text-gray-900'}`}>

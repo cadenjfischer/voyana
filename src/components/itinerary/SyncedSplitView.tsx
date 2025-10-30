@@ -515,14 +515,14 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
 
   // Desktop tabbed layout with full map
   return (
-    <div className="flex h-full" style={{ backgroundColor: 'var(--color-background-50)' }}>
+    <div className="flex h-full bg-static-bg-50 dark:bg-static-bg-900">
       {/* Screen reader live region for desktop */}
       <div aria-live="polite" aria-atomic="true" className="sr-only" />
       
       {/* Left Pane - Trip Header + Tabbed Interface (40%) */}
-      <div className="w-[40%] border-r border-gray-200 flex flex-col" style={{ backgroundColor: 'var(--color-background-50)' }}>
+      <div className="w-[40%] border-r border-gray-200 flex flex-col bg-static-bg-50 dark:bg-static-bg-900">
         {/* Trip Header */}
-        <div className="border-b border-gray-200 px-6 py-4 flex-shrink-0" style={{ backgroundColor: 'var(--color-background-50)' }}>
+        <div className="bg-static-bg-50 dark:bg-static-bg-900 border-b border-gray-200 px-6 py-4 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900">{trip.title}</h1>
@@ -598,17 +598,16 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
           
           {/* Day by Day Overlay Panel - Full height to match left pane */}
           <div 
-            className={`absolute top-0 bottom-0 left-0 shadow-2xl transition-transform duration-300 ease-in-out z-[1100] border-r border-gray-200 ${
+            className={`absolute top-0 bottom-0 left-0 bg-static-bg-50 dark:bg-static-bg-900 shadow-2xl transition-transform duration-300 ease-in-out z-[1100] border-r border-gray-200 ${
               isSplitViewExpanded ? 'translate-x-0' : '-translate-x-full'
             }`}
-            style={{ width: 'calc(30vw)', backgroundColor: 'var(--color-background-50)' }}
+            style={{ width: 'calc(30vw)' }}
           >
             {/* Toggle Button - Attached to right edge of panel */}
             {activeTab === 'destinations' && (
               <button
                 onClick={() => setIsSplitViewExpanded(!isSplitViewExpanded)}
-                className="absolute top-1/2 -right-6 -translate-y-1/2 z-[1000] rounded-r-lg shadow-lg w-6 h-20 flex items-center justify-center hover:bg-blue-50 transition-colors group border-r border-t border-b border-gray-200"
-                style={{ backgroundColor: 'var(--color-background-50)' }}
+                className="absolute top-1/2 -right-6 -translate-y-1/2 z-[1000] bg-static-bg-50 dark:bg-static-bg-900 rounded-r-lg shadow-lg w-6 h-20 flex items-center justify-center hover:bg-blue-50 transition-colors group border-r border-t border-b border-gray-200"
                 title={isSplitViewExpanded ? "Hide Day by Day" : "Show Day by Day"}
               >
                 <svg 
@@ -627,7 +626,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
             
             <div className="h-full flex flex-col">
               {/* Header */}
-              <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0" style={{ backgroundColor: 'var(--color-background-50)' }}>
+              <div className="bg-static-bg-50 dark:bg-static-bg-900 border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
                 <h2 className="text-xl font-semibold text-gray-900">Day by Day</h2>
                 <button
                   onClick={() => setIsSplitViewExpanded(false)}

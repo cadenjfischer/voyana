@@ -52,7 +52,7 @@ export default function TabbedLayout({
   };
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--color-background-50)' }}>
+    <div className="flex flex-col h-full bg-static-bg-50 dark:bg-static-bg-900">
       {/* Tab Navigation */}
       <div className="flex border-b border-gray-200">
         <button

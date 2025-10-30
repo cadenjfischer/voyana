@@ -202,9 +202,9 @@ export default function TimelineView({
   }, {} as { [key: string]: { destination: Destination | null; days: Day[] } });
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col" style={{ backgroundColor: 'var(--color-background-50)' }}>
+    <div className="flex-1 min-h-0 flex flex-col bg-static-bg-50 dark:bg-static-bg-900">
       {/* Header with View Toggle and Expand/Collapse */}
-      <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 border-b border-gray-200" style={{ backgroundColor: 'var(--color-background-50)' }}>
+      <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-static-bg-50 dark:bg-static-bg-900">
         {/* Minimal Segmented Control */}
         <div className="inline-flex items-center bg-gray-100 rounded-md p-0.5">
           <button
@@ -265,7 +265,7 @@ export default function TimelineView({
           return (
             <div key={destinationId}>
               {/* Days Table */}
-              <div className="border-t border-b border-gray-200" style={{ backgroundColor: 'var(--color-background-50)' }}>
+              <div className="bg-static-bg-50 dark:bg-static-bg-900 border-t border-b border-gray-200">
                 {days.map((day, dayIndex) => {
                   const isActiveDay = day.id === activeDay;
                   const dayIndexInTrip = trip.days.findIndex(d => d.id === day.id);
@@ -649,7 +649,7 @@ export default function TimelineView({
         const daysWithActivities = trip.days.filter(day => day.activities.length > 0);
         
         return (
-          <div className="rounded-xl p-8 shadow-sm border" style={{ backgroundColor: 'var(--color-background-50)' }}>
+          <div className="bg-static-bg-50 dark:bg-static-bg-900 rounded-xl p-8 shadow-sm border">
             {daysWithActivities.length === 0 ? (
               <div className="text-center py-12">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">

@@ -16,7 +16,7 @@ interface TripLayoutProps {
 
 export default function TripLayout({ trip, user, onEditTrip, onSignOut, children }: TripLayoutProps) {
   return (
-    <div className="flex h-screen" style={{ backgroundColor: 'var(--color-background-50)' }}>
+    <div className="flex h-screen bg-static-bg-50 dark:bg-static-bg-900">
       {/* Side Header - Single sidebar with icons and labels (112px) */}
       <TripSideHeader 
         trip={trip} 
