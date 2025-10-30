@@ -54,33 +54,23 @@ export default function TabbedLayout({
   return (
     <div className="flex flex-col h-full bg-static-bg-50 dark:bg-static-bg-900">
       {/* Tab Navigation */}
-      <div className="flex border-b border-gray-200">
-        <button
-          onClick={() => handleTabChange('destinations')}
-          className={`flex-1 px-6 py-3 text-sm font-medium transition-colors relative ${
-            activeTab === 'destinations'
-              ? 'text-blue-600 bg-blue-50'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-          }`}
-        >
-          Destinations
-          {activeTab === 'destinations' && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
-          )}
-        </button>
-        <button
-          onClick={() => handleTabChange('day-by-day')}
-          className={`flex-1 px-6 py-3 text-sm font-medium transition-colors relative ${
-            activeTab === 'day-by-day'
-              ? 'text-blue-600 bg-blue-50'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-          }`}
-        >
-          Day by Day
-          {activeTab === 'day-by-day' && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
-          )}
-        </button>
+      <div className="flex border-b border-static-gray-700 gap-2">
+          <button
+            onClick={() => handleTabChange('destinations')}
+            className={`px-6 py-2 rounded-t-md font-medium text-sm transition-all border-b-2 bg-static-accent-600 text-static-text-50 ${
+              activeTab === 'destinations' ? 'border-static-accent-700' : 'border-transparent'
+            }`}
+          >
+            Destinations
+          </button>
+          <button
+            onClick={() => handleTabChange('day-by-day')}
+            className={`px-6 py-2 rounded-t-md font-medium text-sm transition-all border-b-2 bg-static-accent-600 text-static-text-50 ${
+              activeTab === 'day-by-day' ? 'border-static-accent-700' : 'border-transparent'
+            }`}
+          >
+            Day by Day
+          </button>
       </div>
 
       {/* Tab Content */}

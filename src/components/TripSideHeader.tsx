@@ -55,12 +55,12 @@ export default function TripSideHeader({ trip, user, onEditTrip, onSignOut }: Tr
 
   return (
     <aside 
-      className="fixed left-0 top-0 bottom-0 w-28 bg-static-bg-50 dark:bg-static-bg-900 flex flex-col items-center z-[9999] border-r border-gray-200 dark:border-gray-300"
+      className="fixed left-0 top-0 bottom-0 w-28 bg-white dark:bg-gray-800 flex flex-col items-center z-[9999] border-r border-gray-200 dark:border-gray-700 shadow-sm"
     >
       {/* Logo/Back Button */}
       <Link 
         href="/itinerary" 
-        className="w-12 h-12 mt-6 mb-8 flex items-center justify-center rounded-lg bg-accent-600 hover:bg-accent-700 transition-colors group"
+        className="w-12 h-12 mt-6 mb-8 flex items-center justify-center rounded-lg bg-accent-600 hover:bg-accent-700 transition-colors group shadow-sm"
         title="Back to trips"
       >
         <ChevronLeft className="w-5 h-5 text-white" />
@@ -75,14 +75,14 @@ export default function TripSideHeader({ trip, user, onEditTrip, onSignOut }: Tr
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-col items-center justify-center gap-1 py-3 rounded-lg transition-all ${
-                isActive 
-                  ? 'bg-accent-50 dark:bg-accent-100' 
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-200'
+              className={`w-full flex flex-col items-center justify-center gap-1 py-3 rounded-lg transition-all ${
+                isActive
+                  ? 'bg-static-accent-600'
+                  : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
               }`}
             >
-              <Icon className={`w-5 h-5 ${isActive ? 'text-accent-600' : 'text-gray-500 dark:text-gray-600'}`} />
-              <span className={`text-xs font-medium ${isActive ? 'text-accent-600' : 'text-gray-600 dark:text-gray-700'}`}>
+              <Icon className={`w-5 h-5 ${isActive ? 'text-static-text-900 dark:text-static-text-50' : 'text-static-text-900 dark:text-static-text-50'}`} />
+              <span className={`text-xs font-medium ${isActive ? 'text-static-text-900 dark:text-static-text-50' : 'text-static-text-900 dark:text-static-text-50'}`}>
                 {tab.label}
               </span>
             </button>
@@ -95,13 +95,13 @@ export default function TripSideHeader({ trip, user, onEditTrip, onSignOut }: Tr
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="flex flex-col items-center justify-center gap-1 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-200 transition-colors"
+          className="flex flex-col items-center justify-center gap-1 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
           aria-label="Toggle theme"
         >
           {theme === 'light' ? (
-            <Moon className="w-5 h-5 text-gray-500 dark:text-gray-600" />
+            <Moon className="w-5 h-5 text-static-text-900 dark:text-static-text-50" />
           ) : (
-            <Sun className="w-5 h-5 text-gray-500 dark:text-gray-600" />
+            <Sun className="w-5 h-5 text-static-text-900 dark:text-static-text-50" />
           )}
         </button>
 
@@ -110,9 +110,9 @@ export default function TripSideHeader({ trip, user, onEditTrip, onSignOut }: Tr
           <div className="relative">
             <button
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              className="w-full flex flex-col items-center justify-center gap-1 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-200 transition-colors"
+              className="w-full flex flex-col items-center justify-center gap-1 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <div className="w-8 h-8 rounded-full bg-accent-600 flex items-center justify-center text-white font-semibold text-sm">
+              <div className="w-8 h-8 rounded-full bg-accent-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm">
                 {user.email?.[0]?.toUpperCase() || 'U'}
               </div>
             </button>
@@ -120,13 +120,13 @@ export default function TripSideHeader({ trip, user, onEditTrip, onSignOut }: Tr
             {isUserMenuOpen && (
               <div className="absolute bottom-full left-full ml-2 mb-2 w-52 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50">
                 <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                  <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
+                  <p className="text-xs font-medium text-static-text-900 dark:text-static-text-50 truncate">
                     {user.email}
                   </p>
                 </div>
                 <Link
                   href="/user-profile"
-                  className="block px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="block px-4 py-2.5 text-sm text-static-text-700 dark:text-static-text-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
                   Profile
@@ -136,7 +136,7 @@ export default function TripSideHeader({ trip, user, onEditTrip, onSignOut }: Tr
                     onSignOut?.();
                     setIsUserMenuOpen(false);
                   }}
-                  className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="block w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   Sign Out
                 </button>

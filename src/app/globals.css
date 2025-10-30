@@ -56,7 +56,7 @@
   --static-text-100: oklch(92.72% 0.010 72.66);
   --static-text-200: oklch(85.05% 0.018 67.59);
   --static-text-300: oklch(77.50% 0.028 69.20);
-  --static-text-400: oklch(69.51% 0.037 67.15);
+  --static-text-400: oklch(81.093% 0.00009 271.152);
   --static-text-500: oklch(61.63% 0.048 67.84);
   --static-text-600: oklch(52.41% 0.039 66.79);
   --static-text-700: oklch(43.08% 0.032 68.62);
@@ -524,4 +524,23 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-auto {
   width: auto;
+}
+
+/* Tab strip gradient (for Itinerary tabs bar) */
+.tab-strip-gradient {
+  background: linear-gradient(
+    to right,
+    var(--color-static-secondary-500),
+    var(--color-static-secondary-300),
+    var(--color-static-secondary-500)
+  );
+}
+
+.dark .tab-strip-gradient {
+  background: linear-gradient(
+    to right,
+    var(--color-static-secondary-500),
+    var(--color-static-secondary-300),
+    var(--color-static-secondary-500)
+  );
 }

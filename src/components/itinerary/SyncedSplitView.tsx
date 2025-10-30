@@ -520,13 +520,13 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
       <div aria-live="polite" aria-atomic="true" className="sr-only" />
       
       {/* Left Pane - Trip Header + Tabbed Interface (40%) */}
-      <div className="w-[40%] border-r border-gray-200 flex flex-col bg-static-bg-50 dark:bg-static-bg-900">
+      <div className="w-[40%] border-r border-gray-200 dark:border-gray-700 flex flex-col bg-static-bg-50 dark:bg-static-bg-900">
         {/* Trip Header */}
-        <div className="bg-static-bg-50 dark:bg-static-bg-900 border-b border-gray-200 px-6 py-4 flex-shrink-0">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">{trip.title}</h1>
-              <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
+              <h1 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50">{trip.title}</h1>
+              <div className="flex items-center gap-4 mt-1 text-sm text-static-text-900 dark:text-static-text-50">
                 <span>{trip.destinations?.map(d => d.name).join(', ')}</span>
                 <span>•</span>
                 <span>{new Date(trip.startDate).toLocaleDateString()} - {new Date(trip.endDate).toLocaleDateString()}</span>
@@ -534,7 +534,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
             </div>
             <button
               onClick={() => setEditTripModalOpen(true)}
-              className="ml-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="ml-4 p-2 text-static-text-900 dark:text-static-text-50 hover:text-accent-600 dark:hover:text-accent-500 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors"
               title="Edit trip details"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -598,7 +598,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
           
           {/* Day by Day Overlay Panel - Full height to match left pane */}
           <div 
-            className={`absolute top-0 bottom-0 left-0 bg-static-bg-50 dark:bg-static-bg-900 shadow-2xl transition-transform duration-300 ease-in-out z-[1100] border-r border-gray-200 ${
+            className={`absolute top-0 bottom-0 left-0 bg-white dark:bg-gray-800 shadow-2xl transition-transform duration-300 ease-in-out z-[1100] border-r border-gray-200 dark:border-gray-700 ${
               isSplitViewExpanded ? 'translate-x-0' : '-translate-x-full'
             }`}
             style={{ width: 'calc(30vw)' }}
@@ -607,11 +607,11 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
             {activeTab === 'destinations' && (
               <button
                 onClick={() => setIsSplitViewExpanded(!isSplitViewExpanded)}
-                className="absolute top-1/2 -right-6 -translate-y-1/2 z-[1000] bg-static-bg-50 dark:bg-static-bg-900 rounded-r-lg shadow-lg w-6 h-20 flex items-center justify-center hover:bg-blue-50 transition-colors group border-r border-t border-b border-gray-200"
+                className="absolute top-1/2 -right-6 -translate-y-1/2 z-[1000] bg-white dark:bg-gray-800 rounded-r-lg shadow-lg w-6 h-20 flex items-center justify-center hover:bg-accent-50 dark:hover:bg-accent-900/30 transition-colors group border-r border-t border-b border-gray-200 dark:border-gray-700"
                 title={isSplitViewExpanded ? "Hide Day by Day" : "Show Day by Day"}
               >
                 <svg 
-                  className={`w-4 h-4 text-gray-700 group-hover:text-blue-600 transition-transform ${
+                  className={`w-4 h-4 text-static-text-900 dark:text-static-text-50 group-hover:text-accent-600 transition-transform ${
                     isSplitViewExpanded ? 'rotate-180' : ''
                   }`} 
                   fill="none" 
@@ -626,11 +626,11 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
             
             <div className="h-full flex flex-col">
               {/* Header */}
-              <div className="bg-static-bg-50 dark:bg-static-bg-900 border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
-                <h2 className="text-xl font-semibold text-gray-900">Day by Day</h2>
+              <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between flex-shrink-0">
+                <h2 className="text-xl font-semibold text-static-text-900 dark:text-static-text-50">Day by Day</h2>
                 <button
                   onClick={() => setIsSplitViewExpanded(false)}
-                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-1.5 text-static-text-900 dark:text-static-text-50 hover:text-accent-600 dark:hover:text-accent-500 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

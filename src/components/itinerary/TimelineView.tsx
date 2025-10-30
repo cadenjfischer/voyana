@@ -388,13 +388,13 @@ export default function TimelineView({
                             {/* Left: Day Info */}
                             <div className="flex items-center gap-3">
                               <div>
-                                <h3 className={`font-semibold ${isActiveDay ? 'text-blue-900' : 'text-gray-900'}`}>
+                                <h3 className={`font-semibold ${isActiveDay ? 'text-accent-900 dark:text-accent-100' : 'text-static-text-900 dark:text-static-text-50'}`}>
                                   Day {dayIndexInTrip + 1} • {formatDate(day.date)}
                                 </h3>
-                                <p className="text-sm text-gray-500 mt-1">
+                                <p className="text-sm text-static-text-900 dark:text-static-text-50 mt-1">
                                   {day.activities.length} activities • {formatCurrency(day.totalCost)}
                                   {!destination && (
-                                    <span className="ml-2 text-orange-600">• Unassigned</span>
+                                    <span className="ml-2 text-orange-600 dark:text-orange-400">• Unassigned</span>
                                   )}
                                 </p>
                               </div>
@@ -404,7 +404,7 @@ export default function TimelineView({
                           <div className="text-center">
                             {isTransfer ? (
                               <div className="flex items-center justify-center gap-2">
-                                <span className="text-sm text-orange-600 font-medium">Transfer Day</span>
+                                <span className="text-sm text-orange-600 dark:text-orange-400 font-medium">Transfer Day</span>
                                 <div className="flex items-center gap-1">
                                   {(() => {
                                     const prevDayIndex = dayIndexInTrip - 1;
@@ -415,13 +415,13 @@ export default function TimelineView({
                                     
                                     return (
                                       <>
-                                        <span className="text-xs text-gray-600">
+                                        <span className="text-xs text-static-text-900 dark:text-static-text-50">
                                           {prevDestination?.name || 'Unknown'}
                                         </span>
-                                        <svg className="w-3 h-3 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg className="w-3 h-3 text-orange-500 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20">
                                           <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
                                         </svg>
-                                        <span className="text-xs text-gray-600">
+                                        <span className="text-xs text-static-text-900 dark:text-static-text-50">
                                           {destination?.name || 'Unknown'}
                                         </span>
                                       </>
@@ -430,7 +430,7 @@ export default function TimelineView({
                                 </div>
                               </div>
                             ) : destination ? (
-                              <p className="text-base font-medium text-gray-700">
+                              <p className="text-base font-medium text-static-text-700 dark:text-static-text-300">
                                 {destination.name}
                               </p>
                             ) : null}
@@ -567,15 +567,15 @@ export default function TimelineView({
                                           <div className="flex-1 min-w-0">
                                             <div className="flex items-start justify-between">
                                               <div className="flex-1">
-                                                <h4 className="font-medium text-gray-900 text-sm">
+                                                <h4 className="font-medium text-static-text-900 dark:text-static-text-50 text-sm">
                                                   {activity.title}
                                                 </h4>
                                                 {activity.description && (
-                                                  <p className="text-xs text-gray-600 mt-1">
+                                                  <p className="text-xs text-static-text-900 dark:text-static-text-50 mt-1">
                                                     {activity.description}
                                                   </p>
                                                 )}
-                                                <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                                                <div className="flex items-center gap-3 mt-2 text-xs text-static-text-900 dark:text-static-text-50">
                                                   {activity.time && (
                                                     <span>{activity.time}</span>
                                                   )}
