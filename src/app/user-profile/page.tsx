@@ -93,22 +93,22 @@ export default function UserProfilePage() {
                 <button
                   type="submit"
                   disabled={updating || email === user?.email}
-                  className="w-full bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-accent-600 hover:bg-accent-700 text-white px-4 py-2 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {updating ? 'Updating...' : 'Update Email'}
                 </button>
               </form>
 
-              <div className="pt-6 border-t border-gray-200">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Account Information</h2>
+              <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Account Information</h2>
                 <dl className="space-y-2">
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">User ID</dt>
-                    <dd className="text-sm text-gray-900 font-mono">{user?.id}</dd>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">User ID</dt>
+                    <dd className="text-sm text-gray-900 dark:text-gray-100 font-mono">{user?.id}</dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Created</dt>
-                    <dd className="text-sm text-gray-900">
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Created</dt>
+                    <dd className="text-sm text-gray-900 dark:text-gray-100">
                       {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                     </dd>
                   </div>

@@ -93,7 +93,7 @@ export default function SignUpPage() {
             </div>
           </div>
           <div className="text-center">
-            <Link href="/sign-in" className="font-medium text-primary-600 hover:text-primary-700">
+            <Link href="/sign-in" className="font-medium text-accent-600 hover:text-accent-700 dark:hover:text-accent-500">
               Go to sign in
             </Link>
           </div>
@@ -103,23 +103,23 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-gray-100">
             Create your Voyana account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
             Or{' '}
-            <Link href="/sign-in" className="font-medium text-primary-600 hover:text-primary-700">
+            <Link href="/sign-in" className="font-medium text-accent-600 hover:text-accent-700 dark:hover:text-accent-500">
               sign in to your existing account
             </Link>
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSignUp}>
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-800">{error}</div>
+            <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
+              <div className="text-sm text-red-800 dark:text-red-200">{error}</div>
             </div>
           )}
           <div className="rounded-md shadow-sm -space-y-px">

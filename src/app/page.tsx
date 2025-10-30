@@ -129,10 +129,10 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background-50">
+    <div className="min-h-screen bg-static-bg-50 dark:bg-static-bg-900">
       {/* Hero Section with Search */}
       <div 
-        className="relative bg-gradient-to-r from-background-600 via-background-700 to-background-800 text-white"
+        className="relative text-white"
         style={{
           backgroundImage: 'url(/homepage.jpg)',
           backgroundSize: 'cover',
@@ -162,7 +162,7 @@ export default function Home() {
                 <Plane className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Flights</span>
                 {activeTab === 'flights' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600"></div>
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent-600"></div>
                 )}
               </button>
               
@@ -342,7 +342,7 @@ export default function Home() {
                                   setTimeout(() => setIsSwapping(false), 300);
                                 }}
                                 disabled={!flight.origin || !flight.destination}
-                                className={`absolute -right-5 bottom-1 h-10 w-10 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600 rounded-full bg-background-50 dark:bg-background-900 transition-all duration-300 shadow-md flex-shrink-0 z-20 relative overflow-hidden ${
+                                className={`absolute -right-5 bottom-1 h-10 w-10 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600 rounded-full bg-static-bg-50 dark:bg-static-bg-900 transition-all duration-300 shadow-md flex-shrink-0 z-20 relative overflow-hidden ${
                                   isSwapping ? 'animate-swap' : ''
                                 } ${!flight.origin || !flight.destination ? '' : 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 hover:shadow-lg'}`}
                               >
@@ -394,7 +394,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={addMultiCityFlight}
-                        className="flex items-center gap-2 text-primary-600 hover:text-static-text-900 dark:text-static-text-50 font-medium text-sm"
+                        className="flex items-center gap-2 text-accent-600 hover:text-accent-700 dark:hover:text-accent-500 font-medium text-sm"
                       >
                         <span className="text-xl">+</span> Add another flight
                       </button>
@@ -487,10 +487,10 @@ export default function Home() {
                   <div className="lg:hidden">
                     {/* Row 1: Leaving From */}
                     <div className="relative mb-2">
-                      <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-transparent dark:bg-transparent px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
-                        <MapPin className="w-5 h-5 text-primary-400 mr-3 flex-shrink-0" />
+                      <div className="flex items-center h-14 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-accent-500 focus-within:border-accent-500 transition-colors">
+                        <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs text-primary-600 font-medium mb-0.5">Leaving from</div>
+                          <div className="text-xs text-static-text-600 dark:text-static-text-400 font-medium mb-0.5">Leaving from</div>
                           <AirportAutocomplete
                             id="origin-home-mobile"
                             label=""
@@ -508,7 +508,7 @@ export default function Home() {
                           type="button"
                           onClick={handleSwap}
                           disabled={!origin || !destination}
-                          className={`h-9 w-9 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600 rounded-full bg-background-50 dark:bg-background-900 transition-all duration-300 shadow-md relative overflow-hidden ${
+                          className={`h-9 w-9 flex items-center justify-center border-2 border-gray-300 dark:border-gray-600 rounded-full bg-static-bg-50 dark:bg-static-bg-900 transition-all duration-300 shadow-md relative overflow-hidden ${
                             isSwapping ? 'animate-swap' : ''
                           } ${!origin || !destination ? '' : 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 hover:shadow-lg'}`}
                         >
@@ -524,10 +524,10 @@ export default function Home() {
 
                     {/* Row 2: Going To */}
                     <div className="relative mb-2">
-                      <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-transparent dark:bg-transparent px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
-                        <MapPin className="w-5 h-5 text-primary-400 mr-3 flex-shrink-0" />
+                      <div className="flex items-center h-14 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-accent-500 focus-within:border-accent-500 transition-colors">
+                        <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs text-primary-600 font-medium mb-0.5">Going to</div>
+                          <div className="text-xs text-static-text-600 dark:text-static-text-400 font-medium mb-0.5">Going to</div>
                           <AirportAutocomplete
                             id="destination-home-mobile"
                             label=""
@@ -594,10 +594,10 @@ export default function Home() {
 
                           {/* Leaving From */}
                           <div className="relative">
-                            <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-transparent dark:bg-transparent px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
-                              <MapPin className="w-5 h-5 text-primary-400 mr-3 flex-shrink-0" />
+                            <div className="flex items-center h-14 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-accent-500 focus-within:border-accent-500 transition-colors">
+                              <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
                               <div className="flex-1 min-w-0">
-                                <div className="text-xs text-primary-600 font-medium mb-0.5">Leaving from</div>
+                                <div className="text-xs text-static-text-600 dark:text-static-text-400 font-medium mb-0.5">Leaving from</div>
                                 <AirportAutocomplete
                                   id={`multi-origin-mobile-${flight.id}`}
                                   label=""
@@ -623,14 +623,14 @@ export default function Home() {
                                   setTimeout(() => setIsSwapping(false), 300);
                                 }}
                                 disabled={!flight.origin || !flight.destination}
-                                className={`h-9 w-9 flex items-center justify-center border border-primary-300 rounded-full bg-transparent dark:bg-transparent transition-all duration-300 shadow-md relative overflow-hidden ${
+                                className={`h-9 w-9 flex items-center justify-center border border-gray-300 dark:border-gray-600 rounded-full bg-transparent dark:bg-transparent transition-all duration-300 shadow-md relative overflow-hidden ${
                                   isSwapping ? 'animate-swap' : ''
                                 } ${!flight.origin || !flight.destination ? '' : 'cursor-pointer'}`}
                               >
                                 {isSwapping && (
                                   <span className="absolute inset-0 bg-white/30 dark:bg-white/20 rounded-full animate-ripple" />
                                 )}
-                                <ArrowLeftRight className={`w-4 h-4 text-primary-600 transition-transform duration-300 ${
+                                <ArrowLeftRight className={`w-4 h-4 text-accent-600 transition-transform duration-300 ${
                                   isRotated ? 'rotate-180' : ''
                                 }`} />
                               </button>
@@ -639,10 +639,10 @@ export default function Home() {
 
                           {/* Going To */}
                           <div className="relative">
-                            <div className="flex items-center h-14 border border-primary-300 rounded-lg bg-transparent dark:bg-transparent px-4 hover:border-primary-400 focus-within:border-primary-500 transition-colors">
-                              <MapPin className="w-5 h-5 text-primary-400 mr-3 flex-shrink-0" />
+                            <div className="flex items-center h-14 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent px-4 hover:border-gray-400 dark:hover:border-gray-500 focus-within:ring-2 focus-within:ring-accent-500 focus-within:border-accent-500 transition-colors">
+                              <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500 mr-3 flex-shrink-0" />
                               <div className="flex-1 min-w-0">
-                                <div className="text-xs text-primary-600 font-medium mb-0.5">Going to</div>
+                                <div className="text-xs text-static-text-600 dark:text-static-text-400 font-medium mb-0.5">Going to</div>
                                 <AirportAutocomplete
                                   id={`multi-destination-mobile-${flight.id}`}
                                   label=""
@@ -673,7 +673,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={addMultiCityFlight}
-                        className="flex items-center gap-2 text-primary-600 hover:text-static-text-900 dark:text-static-text-50 font-medium text-sm"
+                        className="flex items-center gap-2 text-accent-600 hover:text-accent-700 dark:hover:text-accent-500 font-medium text-sm"
                       >
                         <span className="text-xl">+</span> Add another flight
                       </button>
@@ -700,29 +700,29 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
-                <Plane className="w-8 h-8 text-primary-600" />
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-100 dark:bg-accent-900 rounded-full mb-4">
+                <Plane className="w-8 h-8 text-accent-600" />
               </div>
-              <h3 className="text-xl font-bold text-primary-900 mb-2">Best Prices</h3>
-              <p className="text-primary-600">
+              <h3 className="text-xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">Best Prices</h3>
+              <p className="text-static-text-600 dark:text-static-text-400">
                 Compare flights from multiple airlines to find the best deals
               </p>
             </div>
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
-                <Package className="w-8 h-8 text-primary-600" />
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-100 dark:bg-accent-900 rounded-full mb-4">
+                <Package className="w-8 h-8 text-accent-600" />
               </div>
-              <h3 className="text-xl font-bold text-primary-900 mb-2">All-in-One</h3>
-              <p className="text-primary-600">
+              <h3 className="text-xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">All-in-One</h3>
+              <p className="text-static-text-600 dark:text-static-text-400">
                 Book flights, hotels, cars, and activities in one place
               </p>
             </div>
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
-                <MapPin className="w-8 h-8 text-primary-600" />
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-100 dark:bg-accent-900 rounded-full mb-4">
+                <MapPin className="w-8 h-8 text-accent-600" />
               </div>
-              <h3 className="text-xl font-bold text-primary-900 mb-2">Travel Planning</h3>
-              <p className="text-primary-600">
+              <h3 className="text-xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">Travel Planning</h3>
+              <p className="text-static-text-600 dark:text-static-text-400">
                 Plan your entire trip with our comprehensive itinerary tools
               </p>
             </div>
