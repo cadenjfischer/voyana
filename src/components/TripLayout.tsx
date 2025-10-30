@@ -1,0 +1,34 @@
+'use client';
+
+import { ReactNode } from 'react';
+import TripSideHeader from './TripSideHeader';
+import { Trip } from '@/types/itinerary';
+
+interface TripLayoutProps {
+  trip: Trip;
+  user?: {
+    email?: string | null;
+  } | null;
+  onEditTrip?: () => void;
+  onSignOut?: () => void;
+  children: ReactNode;
+}
+
+export default function TripLayout({ trip, user, onEditTrip, onSignOut, children }: TripLayoutProps) {
+  return (
+    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+      {/* Side Header - Single sidebar with icons and labels (112px) */}
+      <TripSideHeader 
+        trip={trip} 
+        user={user}
+        onEditTrip={onEditTrip}
+        onSignOut={onSignOut}
+      />
+      
+      {/* Main Content - offset by sidebar (112px = w-28) */}
+      <main className="flex-1 ml-28 overflow-hidden">
+        {children}
+      </main>
+    </div>
+  );
+}

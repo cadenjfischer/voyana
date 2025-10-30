@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { useParams } from 'next/navigation';
-import Header from '@/components/Header';
+import { useParams, useRouter } from 'next/navigation';
+import TripLayout from '@/components/TripLayout';
 import ItineraryLayout from '@/components/itinerary/ItineraryLayout';
 import AddDestinationModal from '@/components/itinerary/AddDestinationModal';
 import AddActivityModal from '@/components/itinerary/AddActivityModal';
@@ -20,6 +20,7 @@ export const dynamic = 'force-dynamic';
 export default function TripDetailPage() {
   const [user, setUser] = useState<User | null>(null);
   const params = useParams();
+  const router = useRouter();
   const tripId = params.id as string;
   
   const [trip, setTrip] = useState<Trip | null>(null);
@@ -29,15 +30,15 @@ export default function TripDetailPage() {
   const [showEditTripModal, setShowEditTripModal] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string>('');
 
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   console.log('🚀 PAGE COMPONENT RENDER - trip exists?', !!trip, 'loading?', loading);
 
   // Get user on mount
   useEffect(() => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-
     const getUserData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
@@ -45,6 +46,12 @@ export default function TripDetailPage() {
 
     getUserData();
   }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/');
+    router.refresh();
+  };
 
   const handleUpdateTrip = (updatedTrip: Trip) => {
     if (user) {
@@ -490,13 +497,10 @@ export default function TripDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
-        <Header />
-        <div className="pt-20 flex items-center justify-center min-h-[50vh]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading trip details...</p>
-          </div>
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading trip details...</p>
         </div>
       </div>
     );
@@ -504,18 +508,15 @@ export default function TripDetailPage() {
 
   if (!trip) {
     return (
-      <div className="min-h-screen bg-white">
-        <Header />
-        <div className="pt-20 flex items-center justify-center min-h-[50vh]">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Trip not found</h1>
-            <Link 
-              href="/itinerary"
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              ← Back to Trips
-            </Link>
-          </div>
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Trip not found</h1>
+          <Link 
+            href="/itinerary"
+            className="text-blue-600 hover:text-blue-700 font-medium"
+          >
+            ← Back to Trips
+          </Link>
         </div>
       </div>
     );
@@ -527,18 +528,24 @@ export default function TripDetailPage() {
 
   return (
     <ItineraryUIProvider>
-      <Header />
-      <div className="h-screen pt-20 overflow-hidden">
-        <ItineraryLayout
-          trip={trip}
-          onUpdateTrip={handleUpdateTrip}
-          onRemoveDestination={handleRemoveDestination}
-          onAddDestination={(dest) => {
-            console.log('🎯 INLINE HANDLER CALLED:', dest);
-            handleAddDestination(dest);
-          }}
-        />
-      </div>
+      <TripLayout 
+        trip={trip}
+        user={user}
+        onEditTrip={() => setShowEditTripModal(true)}
+        onSignOut={handleSignOut}
+      >
+        <div className="h-screen overflow-hidden">
+          <ItineraryLayout
+            trip={trip}
+            onUpdateTrip={handleUpdateTrip}
+            onRemoveDestination={handleRemoveDestination}
+            onAddDestination={(dest) => {
+              console.log('🎯 INLINE HANDLER CALLED:', dest);
+              handleAddDestination(dest);
+            }}
+          />
+        </div>
+      </TripLayout>
 
       {/* Add Destination Modal */}
       <AddDestinationModal
