@@ -202,9 +202,9 @@ export default function TimelineView({
   }, {} as { [key: string]: { destination: Destination | null; days: Day[] } });
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col bg-white">
+    <div className="flex-1 min-h-0 flex flex-col" style={{ backgroundColor: 'var(--color-background-50)' }}>
       {/* Header with View Toggle and Expand/Collapse */}
-      <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-white">
+      <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 border-b border-gray-200" style={{ backgroundColor: 'var(--color-background-50)' }}>
         {/* Minimal Segmented Control */}
         <div className="inline-flex items-center bg-gray-100 rounded-md p-0.5">
           <button
@@ -265,7 +265,7 @@ export default function TimelineView({
           return (
             <div key={destinationId}>
               {/* Days Table */}
-              <div className="bg-white border-t border-b border-gray-200">
+              <div className="border-t border-b border-gray-200" style={{ backgroundColor: 'var(--color-background-50)' }}>
                 {days.map((day, dayIndex) => {
                   const isActiveDay = day.id === activeDay;
                   const dayIndexInTrip = trip.days.findIndex(d => d.id === day.id);
@@ -649,7 +649,7 @@ export default function TimelineView({
         const daysWithActivities = trip.days.filter(day => day.activities.length > 0);
         
         return (
-          <div className="bg-white rounded-xl p-8 shadow-sm border">
+          <div className="rounded-xl p-8 shadow-sm border" style={{ backgroundColor: 'var(--color-background-50)' }}>
             {daysWithActivities.length === 0 ? (
               <div className="text-center py-12">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">

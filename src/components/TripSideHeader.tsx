@@ -54,7 +54,10 @@ export default function TripSideHeader({ trip, user, onEditTrip, onSignOut }: Tr
   ];
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-28 bg-white dark:bg-gray-50 flex flex-col items-center z-[9999] border-r border-gray-200 dark:border-gray-300">
+    <aside 
+      className="fixed left-0 top-0 bottom-0 w-28 flex flex-col items-center z-[9999] border-r border-gray-200 dark:border-gray-300"
+      style={{ backgroundColor: 'var(--color-background-50)' }}
+    >
       {/* Logo/Back Button */}
       <Link 
         href="/itinerary" 
