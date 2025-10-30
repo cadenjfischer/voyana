@@ -24,7 +24,7 @@ export default function ItineraryLayout(props: ItineraryLayoutProps) {
   console.log('🔥 ItineraryLayout V3 - onAddDestination:', !!onAddDestination, typeof onAddDestination);
   
   return (
-    <>
+    <div className="h-full flex flex-col">
       {!isExpanded && (
         <SyncedSplitView
           trip={trip}
@@ -50,6 +50,6 @@ export default function ItineraryLayout(props: ItineraryLayoutProps) {
           }}
         />
       )}
-    </>
+    </div>
   );
 }

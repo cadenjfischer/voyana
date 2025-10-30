@@ -545,7 +545,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
         </div>
         
         {/* Tabbed Content */}
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0">
           <TabbedLayout
           trip={trip}
           expandedDestinationIds={expandedDestinationIds}
@@ -624,7 +624,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
               </button>
             )}
             
-            <div className="h-full flex flex-col scale-90 origin-top-left" style={{ width: '111.11%' }}>
+            <div className="h-full flex flex-col">
               {/* Header */}
               <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
                 <h2 className="text-xl font-semibold text-gray-900">Day by Day</h2>
@@ -639,7 +639,7 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
               </div>
               
               {/* Day by Day Content */}
-              <div className="flex-1 overflow-y-auto scrollbar-hide">
+              <div className="flex-1 min-h-0 overflow-y-auto pb-20 scrollbar-hide">
                 <TimelineView
                   trip={trip}
                   activeDestinationId={selectedDestinationId || ''}

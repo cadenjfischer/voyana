@@ -84,7 +84,7 @@ export default function TabbedLayout({
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0">
         {activeTab === 'destinations' ? (
           <TabbedDestinationRail
             destinations={trip.destinations}
@@ -98,17 +98,15 @@ export default function TabbedLayout({
             trip={trip}
           />
         ) : (
-          <div className="h-full overflow-y-auto scrollbar-hide">
-            <TimelineView
-              trip={trip}
-              activeDestinationId={selectedDestinationId || ''}
-              activeDay={activeDay}
-              destinationRefs={destinationRefs}
-              onDaysUpdate={onDaysUpdate}
-              onDaySelect={onDaySelect}
-              onOpenActivityModal={onOpenActivityModal}
-            />
-          </div>
+          <TimelineView
+            trip={trip}
+            activeDestinationId={selectedDestinationId || ''}
+            activeDay={activeDay}
+            destinationRefs={destinationRefs}
+            onDaysUpdate={onDaysUpdate}
+            onDaySelect={onDaySelect}
+            onOpenActivityModal={onOpenActivityModal}
+          />
         )}
       </div>
     </div>

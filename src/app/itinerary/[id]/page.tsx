@@ -534,17 +534,15 @@ export default function TripDetailPage() {
         onEditTrip={() => setShowEditTripModal(true)}
         onSignOut={handleSignOut}
       >
-        <div className="h-screen overflow-hidden">
-          <ItineraryLayout
-            trip={trip}
-            onUpdateTrip={handleUpdateTrip}
-            onRemoveDestination={handleRemoveDestination}
-            onAddDestination={(dest) => {
-              console.log('🎯 INLINE HANDLER CALLED:', dest);
-              handleAddDestination(dest);
-            }}
-          />
-        </div>
+        <ItineraryLayout
+          trip={trip}
+          onUpdateTrip={handleUpdateTrip}
+          onRemoveDestination={handleRemoveDestination}
+          onAddDestination={(dest) => {
+            console.log('🎯 INLINE HANDLER CALLED:', dest);
+            handleAddDestination(dest);
+          }}
+        />
       </TripLayout>
 
       {/* Add Destination Modal */}

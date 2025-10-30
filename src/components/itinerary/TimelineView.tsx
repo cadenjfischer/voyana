@@ -202,9 +202,9 @@ export default function TimelineView({
   }, {} as { [key: string]: { destination: Destination | null; days: Day[] } });
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex-1 min-h-0 flex flex-col bg-white">
       {/* Header with View Toggle and Expand/Collapse */}
-      <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-white">
+      <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-white">
         {/* Minimal Segmented Control */}
         <div className="inline-flex items-center bg-gray-100 rounded-md p-0.5">
           <button
@@ -254,11 +254,13 @@ export default function TimelineView({
         )}
       </div>
 
-      {/* Day View (Planning Mode) */}
-      {viewMode === 'day' && (
-        <DragDropContext onDragEnd={handleActivityDragEnd}>
-        {Object.entries(groupedDays).map(([destinationId, { destination, days }]) => {
-          const colors = getDestinationColors(destinationId, trip.destinations, true);
+      {/* Scrollable Content Container */}
+      <div className="flex-1 overflow-y-auto pb-20">
+        {/* Day View (Planning Mode) */}
+        {viewMode === 'day' && (
+          <DragDropContext onDragEnd={handleActivityDragEnd}>
+          {Object.entries(groupedDays).map(([destinationId, { destination, days }]) => {
+            const colors = getDestinationColors(destinationId, trip.destinations, true);
           
           return (
             <div key={destinationId}>
@@ -784,6 +786,7 @@ export default function TimelineView({
           </div>
         );
       })()}
+      </div>
     </div>
   );
 }
