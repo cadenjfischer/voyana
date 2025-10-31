@@ -51,26 +51,26 @@ export default function ColorPicker({
   return (
     <div
       ref={dropdownRef}
-      className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50 min-w-[280px]"
+      className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 z-50 w-[200px]"
       role="dialog"
       aria-label="Select destination color"
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-gray-900">Choose Color</h3>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-sm font-medium text-gray-900 dark:text-static-text-100">Choose Color</h3>
         <button
           onClick={onClose}
-          className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+          className="p-1 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
           aria-label="Close color picker"
         >
-          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-gray-500 dark:text-static-text-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
-      {/* Color Grid */}
-      <div className="grid grid-cols-4 gap-2">
+      {/* Color Grid - 3x3 */}
+      <div className="grid grid-cols-3 gap-2.5">
         {PREMIUM_COLOR_PALETTE.map((color) => (
           <button
             key={color.id}
@@ -78,10 +78,10 @@ export default function ColorPicker({
               onColorSelect(color.id);
               onClose();
             }}
-            className={`relative w-12 h-12 rounded-lg border-2 transition-all duration-200 hover:scale-110 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+            className={`relative aspect-square rounded-lg border-2 transition-all duration-200 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white/20 ${
               currentColor === color.id 
-                ? 'border-gray-800 ring-2 ring-offset-2 ring-gray-400' 
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'border-white/60 ring-2 ring-offset-2 ring-white/30 scale-105' 
+                : 'border-white/20 hover:border-white/40'
             }`}
             style={{ backgroundColor: color.hex }}
             aria-label={`Select ${color.name}`}
@@ -91,7 +91,7 @@ export default function ColorPicker({
             {currentColor === color.id && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <svg 
-                  className="w-5 h-5 text-white drop-shadow-sm" 
+                  className="w-5 h-5 text-white drop-shadow-md" 
                   fill="currentColor" 
                   viewBox="0 0 20 20"
                 >
@@ -105,16 +105,6 @@ export default function ColorPicker({
             )}
           </button>
         ))}
-      </div>
-
-      {/* Color Names (for accessibility) */}
-      <div className="mt-3 pt-3 border-t border-gray-100">
-        <p className="text-xs text-gray-500 text-center">
-          {currentColor 
-            ? PREMIUM_COLOR_PALETTE.find(c => c.id === currentColor)?.name || 'Auto Color'
-            : 'Auto Color'
-          }
-        </p>
       </div>
     </div>
   );

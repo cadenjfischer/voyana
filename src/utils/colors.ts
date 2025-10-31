@@ -12,183 +12,106 @@ export interface CalendarColors {
   text: string;
 }
 
-// Premium but fun color palette - carefully chosen for travel vibes and accessibility
+// Premium color palette - 9 carefully chosen colors that blend with dark map backgrounds
 export const PREMIUM_COLOR_PALETTE = [
   { 
-    id: 'ocean-blue',
-    name: 'Ocean Blue', 
-    hex: 'oklch(68.47% 0.1479 237.32)', 
-    bg: 'bg-sky-500', 
-    text: 'text-sky-700', 
-    light: 'bg-sky-50', 
-    border: 'border-sky-300',
-    calendarBg: 'oklch(90.14% 0.0555 230.9)',
-    calendarText: 'oklch(50.00% 0.1193 242.75)'
+    id: 'slate-blue',
+    name: 'Slate Blue', 
+    hex: 'oklch(42% 0.06 250)', // Muted slate blue
+    bg: 'bg-slate-600', 
+    text: 'text-slate-100', 
+    light: 'bg-slate-50', 
+    border: 'border-slate-300',
+    calendarBg: 'oklch(42% 0.06 250)',
+    calendarText: 'oklch(95% 0.01 250)'
   },
   { 
-    id: 'tropical-green',
-    name: 'Tropical Green', 
-    hex: 'oklch(72.27% 0.192 149.58)', 
-    bg: 'bg-green-500', 
-    text: 'text-green-700', 
+    id: 'forest-green',
+    name: 'Forest Green', 
+    hex: 'oklch(40% 0.06 150)', // Deep forest green
+    bg: 'bg-green-700', 
+    text: 'text-green-100', 
     light: 'bg-green-50', 
     border: 'border-green-300',
-    calendarBg: 'oklch(92.50% 0.0806 155.99)',
-    calendarText: 'oklch(44.79% 0.1083 151.33)'
+    calendarBg: 'oklch(40% 0.06 150)',
+    calendarText: 'oklch(95% 0.01 150)'
   },
   { 
-    id: 'sunset-purple',
-    name: 'Sunset Purple', 
-    hex: 'oklch(62.68% 0.2325 303.9)', 
-    bg: 'bg-purple-500', 
-    text: 'text-purple-700', 
+    id: 'deep-purple',
+    name: 'Deep Purple', 
+    hex: 'oklch(38% 0.07 290)', // Rich deep purple
+    bg: 'bg-purple-700', 
+    text: 'text-purple-100', 
     light: 'bg-purple-50', 
     border: 'border-purple-300',
-    calendarBg: 'oklch(90.24% 0.0604 306.7)',
-    calendarText: 'oklch(54.13% 0.2466 293.01)'
+    calendarBg: 'oklch(38% 0.07 290)',
+    calendarText: 'oklch(95% 0.01 290)'
   },
   { 
-    id: 'adventure-orange',
-    name: 'Adventure Orange', 
-    hex: 'oklch(70.49% 0.1867 47.6)', 
-    bg: 'bg-orange-500', 
-    text: 'text-orange-700', 
+    id: 'terracotta',
+    name: 'Terracotta', 
+    hex: 'oklch(44% 0.07 40)', // Earthy terracotta
+    bg: 'bg-orange-700', 
+    text: 'text-orange-100', 
     light: 'bg-orange-50', 
     border: 'border-orange-300',
-    calendarBg: 'oklch(90.15% 0.0729 70.7)',
-    calendarText: 'oklch(64.61% 0.1943 41.12)'
+    calendarBg: 'oklch(44% 0.07 40)',
+    calendarText: 'oklch(95% 0.01 40)'
   },
   { 
-    id: 'cherry-pink',
-    name: 'Cherry Pink', 
-    hex: 'oklch(65.59% 0.2118 354.31)', 
-    bg: 'bg-pink-500', 
-    text: 'text-pink-700', 
-    light: 'bg-pink-50', 
-    border: 'border-pink-300',
-    calendarBg: 'oklch(82.28% 0.1095 346.02)',
-    calendarText: 'oklch(52.46% 0.199 3.96)'
-  },
-  { 
-    id: 'deep-indigo',
-    name: 'Deep Indigo', 
-    hex: 'oklch(58.54% 0.2041 277.12)', 
-    bg: 'bg-indigo-500', 
-    text: 'text-indigo-700', 
-    light: 'bg-indigo-50', 
-    border: 'border-indigo-300',
-    calendarBg: 'oklch(86.99% 0.0622 274.04)',
-    calendarText: 'oklch(45.68% 0.2146 277.02)'
-  },
-  { 
-    id: 'ruby-red',
-    name: 'Ruby Red', 
-    hex: 'oklch(63.68% 0.2078 25.33)', 
-    bg: 'bg-red-500', 
-    text: 'text-red-700', 
-    light: 'bg-red-50', 
-    border: 'border-red-300',
-    calendarBg: 'oklch(88.45% 0.0593 18.33)',
-    calendarText: 'oklch(57.71% 0.2152 27.33)'
-  },
-  { 
-    id: 'emerald-teal',
-    name: 'Emerald Teal', 
-    hex: 'oklch(70.38% 0.123 182.5)', 
-    bg: 'bg-teal-500', 
-    text: 'text-teal-700', 
-    light: 'bg-teal-50', 
-    border: 'border-teal-300',
-    calendarBg: 'oklch(91.00% 0.0927 180.43)',
-    calendarText: 'oklch(51.09% 0.0861 186.39)'
-  },
-  { 
-    id: 'golden-yellow',
-    name: 'Golden Yellow', 
-    hex: 'oklch(79.52% 0.1617 86.05)', 
-    bg: 'bg-yellow-500', 
-    text: 'text-yellow-800', 
-    light: 'bg-yellow-50', 
-    border: 'border-yellow-300',
-    calendarBg: 'oklch(90.52% 0.1657 98.11)',
-    calendarText: 'oklch(55.38% 0.1207 66.44)'
-  },
-  { 
-    id: 'wine-burgundy',
-    name: 'Wine Burgundy', 
-    hex: 'oklch(44.37% 0.1613 26.9)', 
+    id: 'burgundy',
+    name: 'Burgundy', 
+    hex: 'oklch(36% 0.07 15)', // Deep burgundy wine
     bg: 'bg-red-800', 
     text: 'text-red-100', 
     light: 'bg-red-50', 
-    border: 'border-red-400',
-    calendarBg: 'oklch(80.77% 0.1035 19.57)',
-    calendarText: 'oklch(39.58% 0.1331 25.72)'
+    border: 'border-red-300',
+    calendarBg: 'oklch(36% 0.07 15)',
+    calendarText: 'oklch(95% 0.01 15)'
   },
   { 
-    id: 'bronze-gold',
-    name: 'Bronze Gold', 
-    hex: 'oklch(68.06% 0.1423 75.83)', 
-    bg: 'bg-yellow-600', 
-    text: 'text-yellow-800', 
-    light: 'bg-yellow-50', 
-    border: 'border-yellow-400',
-    calendarBg: 'oklch(86.06% 0.1731 91.94)',
-    calendarText: 'oklch(55.38% 0.1207 66.44)'
+    id: 'navy-blue',
+    name: 'Navy Blue', 
+    hex: 'oklch(35% 0.06 265)', // Classic navy
+    bg: 'bg-blue-900', 
+    text: 'text-blue-100', 
+    light: 'bg-blue-50', 
+    border: 'border-blue-300',
+    calendarBg: 'oklch(35% 0.06 265)',
+    calendarText: 'oklch(95% 0.01 265)'
   },
   { 
-    id: 'navy-midnight',
-    name: 'Navy Midnight', 
-    hex: 'oklch(27.95% 0.0368 260.03)', 
-    bg: 'bg-slate-800', 
-    text: 'text-slate-100', 
-    light: 'bg-slate-100', 
-    border: 'border-slate-400',
-    calendarBg: 'oklch(86.90% 0.0198 252.89)',
-    calendarText: 'oklch(37.17% 0.0392 257.29)'
+    id: 'deep-teal',
+    name: 'Deep Teal', 
+    hex: 'oklch(38% 0.06 195)', // Ocean teal
+    bg: 'bg-teal-700', 
+    text: 'text-teal-100', 
+    light: 'bg-teal-50', 
+    border: 'border-teal-300',
+    calendarBg: 'oklch(38% 0.06 195)',
+    calendarText: 'oklch(95% 0.01 195)'
   },
   { 
-    id: 'mint-fresh',
-    name: 'Mint Fresh', 
-    hex: 'oklch(69.59% 0.1491 162.48)', 
-    bg: 'bg-emerald-500', 
-    text: 'text-emerald-700', 
-    light: 'bg-emerald-50', 
-    border: 'border-emerald-300',
-    calendarBg: 'oklch(90.49% 0.0895 164.15)',
-    calendarText: 'oklch(50.81% 0.1049 165.61)'
+    id: 'olive-brown',
+    name: 'Olive Brown', 
+    hex: 'oklch(42% 0.05 90)', // Subdued olive brown
+    bg: 'bg-amber-800', 
+    text: 'text-amber-100', 
+    light: 'bg-amber-50', 
+    border: 'border-amber-300',
+    calendarBg: 'oklch(42% 0.05 90)',
+    calendarText: 'oklch(95% 0.01 90)'
   },
   { 
-    id: 'sunset-coral',
-    name: 'Sunset Coral', 
-    hex: 'oklch(70.45% 0.1926 39.23)', 
-    bg: 'bg-orange-600', 
-    text: 'text-orange-800', 
-    light: 'bg-orange-50', 
-    border: 'border-orange-400',
-    calendarBg: 'oklch(83.66% 0.1165 66.29)',
-    calendarText: 'oklch(55.34% 0.1739 38.4)'
-  },
-  { 
-    id: 'arctic-cyan',
-    name: 'Arctic Cyan', 
-    hex: 'oklch(71.48% 0.1257 215.22)', 
-    bg: 'bg-cyan-500', 
-    text: 'text-cyan-700', 
-    light: 'bg-cyan-50', 
-    border: 'border-cyan-300',
-    calendarBg: 'oklch(91.67% 0.0772 205.04)',
-    calendarText: 'oklch(60.89% 0.1109 221.72)'
-  },
-  { 
-    id: 'magenta-fuchsia',
-    name: 'Magenta Fuchsia', 
-    hex: 'oklch(66.68% 0.2591 322.15)', 
-    bg: 'bg-fuchsia-500', 
-    text: 'text-fuchsia-700', 
+    id: 'plum',
+    name: 'Plum', 
+    hex: 'oklch(37% 0.07 320)', // Deep plum
+    bg: 'bg-fuchsia-800', 
+    text: 'text-fuchsia-100', 
     light: 'bg-fuchsia-50', 
     border: 'border-fuchsia-300',
-    calendarBg: 'oklch(74.77% 0.207 322.16)',
-    calendarText: 'oklch(51.80% 0.2258 323.95)'
+    calendarBg: 'oklch(37% 0.07 320)',
+    calendarText: 'oklch(95% 0.01 320)'
   }
 ];
 

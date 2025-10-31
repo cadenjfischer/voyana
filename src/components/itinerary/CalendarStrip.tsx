@@ -247,65 +247,17 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
           
           const dynamicColors = getDayColors();
           
-          // Apply alpha to a color string (supports oklch(), hex, CSS vars, and falls back safely)
-          const colorWithAlpha = (color: string, alpha: number) => {
-            // Already a gradient? Return as-is
-            if (color.startsWith('linear-gradient(') || color.startsWith('radial-gradient(')) {
-              return color;
-            }
-            // OKLCH color e.g. oklch(L C H)
-            if (color.startsWith('oklch(')) {
-              // If it already has an alpha, replace it; otherwise append
-              if (color.includes('/')) {
-                return color.replace(/\/(.*)\)/, `/ ${alpha})`);
-              }
-              return color.replace(/\)$/, ` / ${alpha})`);
-            }
-            // CSS variable: use color-mix to apply alpha in OKLab
-            if (color.startsWith('var(')) {
-              const pct = Math.round(alpha * 100);
-              return `color-mix(in oklab, ${color} ${pct}%, transparent)`;
-            }
-            // Hex fallback: #rrggbb or #rgb
-            if (color.startsWith('#')) {
-              const pct = Math.round(alpha * 100);
-              return `color-mix(in oklab, ${color} ${pct}%, transparent)`;
-            }
-            // As a last resort, try color-mix
-            const pct = Math.round(alpha * 100);
-            return `color-mix(in oklab, ${color} ${pct}%, transparent)`;
-          };
-          
-          // Create layered background: white base with colored overlay
-          const getLayeredBackground = () => {
-            if (typeof dynamicColors.bg === 'string') {
-              // If background is a gradient, return as-is (transfer day)
-              if (dynamicColors.bg.startsWith('linear-gradient(') || dynamicColors.bg.startsWith('radial-gradient(')) {
-                return dynamicColors.bg;
-              }
-              // Otherwise layer a translucent color over white for subtle tint
-              const overlay = colorWithAlpha(dynamicColors.bg, 0.4);
-              return `linear-gradient(${overlay}, ${overlay}), white`;
-            }
-            return dynamicColors.bg;
-          };
-          
           return (
             <button
               key={day.id}
               onClick={() => onDaySelect(day.id)}
               className={`calendar-day-button flex-shrink-0 w-16 p-1 rounded-lg border-2 text-center transition-all duration-300 relative overflow-hidden transform hover:scale-105 active:scale-95 ${
-                isActive ? 'border-gray-800 shadow-lg scale-105' : 'border-gray-300 hover:shadow-md hover:border-gray-400'
+                isActive ? 'border-white/60 shadow-lg scale-105' : 'border-white/20 hover:shadow-md hover:border-white/40'
               } ${dynamicColors.isTransfer ? 'ring-2 ring-orange-400' : ''}`}
               style={{
-                background: getLayeredBackground(),
-                color: dynamicColors.text,
-                '--hover-bg': typeof dynamicColors.bg === 'string'
-                  ? (dynamicColors.bg.startsWith('linear-gradient(') || dynamicColors.bg.startsWith('radial-gradient(')
-                      ? dynamicColors.bg
-                      : `linear-gradient(${colorWithAlpha(dynamicColors.bg, 0.7)}, ${colorWithAlpha(dynamicColors.bg, 0.7)}), white`)
-                  : dynamicColors.bg
-              } as React.CSSProperties & { '--hover-bg': string }}
+                background: dynamicColors.bg,
+                color: dynamicColors.text
+              } as React.CSSProperties}
             >
               {/* Transfer day indicator */}
               {dynamicColors.isTransfer && (
