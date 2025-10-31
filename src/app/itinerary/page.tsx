@@ -230,8 +230,6 @@ export default function ItineraryPage() {
         <StarryBackground />
       </div>
       
-      <Header />
-      
       <main className="pt-20 relative z-10">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
           {/* Header Section */}

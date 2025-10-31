@@ -49,7 +49,7 @@ export default function Header() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[10000] pt-4 px-4 lg:px-8 transition-all duration-300">
-      <div className="bg-white/25 dark:bg-black/25 border-[1.5px] border-static-gray-50/70 dark:border-static-gray-100/90 rounded-xl max-w-7xl mx-auto shadow-2xl" style={{ backdropFilter: 'blur(2.5px)', WebkitBackdropFilter: 'blur(2.5px)', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1)' }}>
+      <div className="bg-white/25 dark:bg-black/25 backdrop-blur-md border-[1.5px] border-white/10 rounded-xl max-w-7xl mx-auto shadow-lg">
         <div className="flex justify-between items-center h-14 px-6 lg:px-8">
           {/* Logo */}
           <div className="flex-shrink-0">
