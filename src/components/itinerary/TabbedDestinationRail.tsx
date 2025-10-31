@@ -284,12 +284,12 @@ export default function TabbedDestinationRail({
                             }`}
                           >
                             {/* Card Header */}
-                            <div
+                              <div
                               className={`p-4 transition-all duration-200 flex items-center gap-3 ${
                                 snapshot.isDragging 
-                                  ? `${colors.light} border-l-4 ${colors.border} ${colors.text}`
+                                  ? `${colors.light} border-l-4 ${colors.border}`
                                   : isActive
-                                  ? `${colors.light} border-l-4 ${colors.border} ${colors.text}`
+                                  ? `${colors.light} border-l-4 ${colors.border}`
                                   : 'hover:bg-gray-50 border-l-4 border-transparent'
                               }`}
                             >
@@ -337,7 +337,7 @@ export default function TabbedDestinationRail({
                               >
                                 {/* Destination info */}
                                 <div className="flex-1 min-w-0">
-                                  <div className="font-medium text-gray-900 truncate">{destination.name}</div>
+                                  <div className="font-medium truncate text-static-text-900 dark:text-static-text-50">{destination.name}</div>
                                   <div className="text-xs text-gray-500 mt-1">
                                     {getDestinationDateRange(destination)}
                                   </div>
