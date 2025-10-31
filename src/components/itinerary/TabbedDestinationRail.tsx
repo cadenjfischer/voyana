@@ -237,25 +237,7 @@ export default function TabbedDestinationRail({
 
   return (
     <div className="flex flex-col h-full bg-static-bg-50 dark:bg-static-bg-900 relative">
-      {/* Search Bar */}
-      <div className="px-4 py-3 border-b border-gray-100 bg-static-bg-100 dark:bg-static-bg-800">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-static-text-50">Nights allocated:</span>
-          <span className="font-medium text-static-accent-600">
-            {getTotalNightsAllocated()} / {getMaxNightsForTrip()}
-          </span>
-        </div>
-        {getRemainingNights() > 0 && (
-          <div className="text-xs text-blue-600 mt-1">
-            {getRemainingNights()} nights remaining
-          </div>
-        )}
-        {getRemainingNights() < 0 && (
-          <div className="text-xs text-red-600 mt-1">
-            Over-allocated by {Math.abs(getRemainingNights())} nights
-          </div>
-        )}
-      </div>
+      {/* Nights summary moved into Tab header; keeping area minimal */}
 
       {/* Inline Search Bar */}
       <InlineDestinationSearch

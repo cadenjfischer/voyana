@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Trip, Activity, Destination, Day } from '@/types/itinerary';
+import { Trip, Activity, Destination, Day, calculateNights } from '@/types/itinerary';
 import TabbedDestinationRail from './TabbedDestinationRail';
 import TimelineView from './TimelineView';
 
@@ -51,10 +51,16 @@ export default function TabbedLayout({
     onActiveTabChange?.(tab);
   };
 
+  const getTotalNightsAllocated = () =>
+    trip.destinations.reduce((sum, d) => sum + (d.nights || 0), 0);
+  const getMaxNightsForTrip = () =>
+    trip.startDate && trip.endDate ? calculateNights(trip.startDate, trip.endDate) : 0;
+
   return (
     <div className="flex flex-col h-full bg-static-bg-50 dark:bg-static-bg-900">
       {/* Tab Navigation */}
-      <div className="flex border-b border-static-gray-700 gap-2">
+      <div className="flex items-center justify-between border-b border-static-gray-700 px-2">
+        <div className="flex gap-2">
           <button
             onClick={() => handleTabChange('destinations')}
             className={`px-6 py-2 rounded-t-md font-medium text-sm transition-all border-b-2 bg-static-accent-600 text-static-text-50 ${
@@ -71,6 +77,13 @@ export default function TabbedLayout({
           >
             Day by Day
           </button>
+        </div>
+        <div className="hidden md:flex items-center gap-2 text-xs pr-2">
+          <span className="text-static-text-50">Nights allocated:</span>
+          <span className="font-medium text-static-accent-600">
+            {getTotalNightsAllocated()} / {getMaxNightsForTrip()}
+          </span>
+        </div>
       </div>
 
       {/* Tab Content */}
