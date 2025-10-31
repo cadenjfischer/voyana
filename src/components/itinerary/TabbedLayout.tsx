@@ -59,20 +59,24 @@ export default function TabbedLayout({
   return (
     <div className="flex flex-col h-full bg-static-bg-50 dark:bg-static-bg-900">
       {/* Tab Navigation */}
-      <div className="flex items-center justify-between border-b border-static-gray-700 px-2">
+      <div className="flex items-center justify-between border-b border-static-gray-700 px-2 mt-2">
         <div className="flex gap-2">
           <button
             onClick={() => handleTabChange('destinations')}
-            className={`px-6 py-2 rounded-t-md font-medium text-sm transition-all border-b-2 bg-static-accent-600 text-static-text-50 ${
-              activeTab === 'destinations' ? 'border-static-accent-700' : 'border-transparent'
+            className={`px-6 py-2 rounded-t-md font-medium text-sm transition-all border-b-2 text-static-text-50 ${
+              activeTab === 'destinations'
+                ? 'bg-static-accent-600 border-static-accent-700'
+                : 'bg-static-accent-800 hover:bg-static-accent-700 border-transparent'
             }`}
           >
             Destinations
           </button>
           <button
             onClick={() => handleTabChange('day-by-day')}
-            className={`px-6 py-2 rounded-t-md font-medium text-sm transition-all border-b-2 bg-static-accent-600 text-static-text-50 ${
-              activeTab === 'day-by-day' ? 'border-static-accent-700' : 'border-transparent'
+            className={`px-6 py-2 rounded-t-md font-medium text-sm transition-all border-b-2 text-static-text-50 ${
+              activeTab === 'day-by-day'
+                ? 'bg-static-accent-600 border-static-accent-700'
+                : 'bg-static-accent-800 hover:bg-static-accent-700 border-transparent'
             }`}
           >
             Day by Day

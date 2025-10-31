@@ -290,7 +290,7 @@ export default function TabbedDestinationRail({
                                   ? `${colors.light} border-l-4 ${colors.border}`
                                   : isActive
                                   ? `${colors.light} border-l-4 ${colors.border}`
-                                  : 'hover:bg-gray-50 border-l-4 border-transparent'
+                                  : 'hover:bg-static-bg-50 dark:hover:bg-static-bg-800 border-l-4 border-transparent'
                               }`}
                             >
                               {/* Dedicated drag handle */}
@@ -346,7 +346,7 @@ export default function TabbedDestinationRail({
 
                               {/* Night counter */}
                               <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <div className="flex items-center gap-1 text-xs text-static-text-600 dark:text-static-text-200">
                                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                                   </svg>
@@ -359,12 +359,12 @@ export default function TabbedDestinationRail({
                                         e.stopPropagation();
                                         updateNights(destination, -1);
                                       }}
-                                      className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all duration-200"
+                                      className="w-6 h-6 rounded-full border border-static-gray-300 flex items-center justify-center text-static-text-700 dark:text-static-text-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-static-bg-100 dark:hover:bg-static-bg-800 hover:border-static-accent-300 hover:text-static-accent-600 transition-all duration-200"
                                       disabled={destination.nights <= 0 || isUpdating}
                                     >
                                       −
                                     </button>
-                                    <span className="min-w-[24px] text-center font-medium text-gray-900">
+                                    <span className="min-w-[24px] text-center text-xs font-semibold text-static-accent-600">
                                       {destination.nights}
                                     </span>
                                     <button
@@ -372,7 +372,7 @@ export default function TabbedDestinationRail({
                                         e.stopPropagation();
                                         updateNights(destination, 1);
                                       }}
-                                      className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-50 hover:border-green-300 hover:text-green-600 transition-all duration-200"
+                                      className="w-6 h-6 rounded-full border border-static-gray-300 flex items-center justify-center text-static-text-700 dark:text-static-text-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-static-bg-100 dark:hover:bg-static-bg-800 hover:border-static-accent-300 hover:text-static-accent-600 transition-all duration-200"
                                       disabled={isUpdating || getRemainingNights() <= 0}
                                       title={getRemainingNights() <= 0 ? 'No more nights available for this trip' : 'Add one night'}
                                     >
@@ -380,7 +380,7 @@ export default function TabbedDestinationRail({
                                     </button>
                                   </div>
                                 ) : (
-                                  <span className="min-w-[24px] text-center font-medium text-gray-900">
+                                  <span className="min-w-[24px] text-center text-xs font-semibold text-static-accent-600">
                                     {destination.nights}
                                   </span>
                                 )}
@@ -397,7 +397,7 @@ export default function TabbedDestinationRail({
                                     onDestinationSelect(destination.id);
                                   }
                                 }}
-                                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-static-bg-100 dark:hover:bg-static-bg-800 rounded-lg transition-all duration-200"
                                 title={isActive ? 'Collapse' : 'Expand'}
                               >
                                 <svg 

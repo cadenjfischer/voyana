@@ -204,15 +204,15 @@ export default function TimelineView({
   return (
     <div className="flex-1 min-h-0 flex flex-col bg-static-bg-50 dark:bg-static-bg-900">
       {/* Header with View Toggle and Expand/Collapse */}
-      <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-static-bg-50 dark:bg-static-bg-900">
+  <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 border-b border-static-gray-700 bg-static-bg-50 dark:bg-static-bg-900">
         {/* Minimal Segmented Control */}
-        <div className="inline-flex items-center bg-gray-100 rounded-md p-0.5">
+        <div className="inline-flex items-center rounded-md p-0.5 border border-static-gray-700 bg-static-bg-100 dark:bg-static-bg-800">
           <button
             onClick={() => setViewMode('day')}
             className={`px-3 py-1.5 text-xs font-medium rounded transition-all ${
               viewMode === 'day'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'tab-strip-gradient text-static-text-50 shadow-sm'
+                : 'text-static-text-700 hover:text-static-text-900 dark:text-static-text-300 dark:hover:text-static-text-50 hover:bg-static-bg-100 dark:hover:bg-static-bg-700'
             }`}
           >
             Planning
@@ -221,8 +221,8 @@ export default function TimelineView({
             onClick={() => setViewMode('timeline')}
             className={`px-3 py-1.5 text-xs font-medium rounded transition-all ${
               viewMode === 'timeline'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'tab-strip-gradient text-static-text-50 shadow-sm'
+                : 'text-static-text-700 hover:text-static-text-900 dark:text-static-text-300 dark:hover:text-static-text-50 hover:bg-static-bg-100 dark:hover:bg-static-bg-700'
             }`}
           >
             Timeline
@@ -233,7 +233,7 @@ export default function TimelineView({
         {viewMode === 'day' && (
           <button
             onClick={toggleAll}
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors duration-200 flex items-center gap-1.5"
+            className="text-sm font-medium text-static-text-700 dark:text-static-text-300 hover:text-static-text-900 dark:hover:text-static-text-50 px-3 py-1.5 rounded-lg hover:bg-static-bg-100 dark:hover:bg-static-bg-800 transition-colors duration-200 flex items-center gap-1.5"
           >
             {allCollapsed ? (
               <>
@@ -265,7 +265,7 @@ export default function TimelineView({
           return (
             <div key={destinationId}>
               {/* Days Table */}
-              <div className="bg-static-bg-50 dark:bg-static-bg-900 border-t border-b border-gray-200">
+              <div className="bg-static-bg-50 dark:bg-static-bg-900 border-t border-b border-static-gray-700">
                 {days.map((day, dayIndex) => {
                   const isActiveDay = day.id === activeDay;
                   const dayIndexInTrip = trip.days.findIndex(d => d.id === day.id);
@@ -371,8 +371,7 @@ export default function TimelineView({
                       ref={(el) => {
                         if (el) destinationRefs.current[day.id] = el;
                       }}
-                      style={getBackgroundStyle()}
-                      className="border-b border-gray-300 last:border-b-0 transition-all hover:shadow-sm"
+                      className="border-b border-static-gray-700 last:border-b-0 transition-all bg-static-bg-50 dark:bg-static-bg-900"
                       onMouseEnter={() => setHoveredDay(day.id)}
                       onMouseLeave={() => setHoveredDay(null)}
                     >
@@ -388,7 +387,7 @@ export default function TimelineView({
                             {/* Left: Day Info */}
                             <div className="flex items-center gap-3">
                               <div>
-                                <h3 className={`font-semibold ${isActiveDay ? 'text-accent-900 dark:text-accent-100' : 'text-static-text-900 dark:text-static-text-50'}`}>
+                                <h3 className="font-semibold text-static-text-900 dark:text-static-text-50">
                                   Day {dayIndexInTrip + 1} • {formatDate(day.date)}
                                 </h3>
                                 <p className="text-sm text-static-text-900 dark:text-static-text-50 mt-1">
@@ -430,7 +429,7 @@ export default function TimelineView({
                                 </div>
                               </div>
                             ) : destination ? (
-                              <p className="text-base font-medium text-static-text-700 dark:text-static-text-300">
+                              <p className="text-base font-medium text-static-text-900 dark:text-static-text-50">
                                 {destination.name}
                               </p>
                             ) : null}
@@ -445,7 +444,7 @@ export default function TimelineView({
                                   e.stopPropagation();
                                   toggleDropdown(day.id);
                                 }}
-                                className={`flex items-center gap-1 px-3 py-1.5 text-sm font-medium ${colors.text} hover:bg-white rounded-lg transition-colors duration-200`}
+                                className={`flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-static-text-900 dark:text-static-text-50 hover:bg-static-bg-100 dark:hover:bg-static-bg-800 rounded-lg transition-colors duration-200`}
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -466,13 +465,16 @@ export default function TimelineView({
                                   />
                                   
                                   {/* Dropdown */}
-                                  <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-80">
+                                  <div className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 w-80">
                                     <div className="grid grid-cols-2">
                                       {Object.entries(ACTIVITY_TYPES)
                                         .filter(([type]) => !['flight', 'lodging', 'map', 'directions'].includes(type))
                                         .map(([type, config], index, array) => {
                                           const isLastRow = index >= array.length - 2;
                                           const isRightColumn = index % 2 === 1;
+                                          // Borders: remove middle divider for bottom-left, ensure bottom line under bottom-right
+                                          const addRightDivider = !isRightColumn && !isLastRow;
+                                          const addBottomDivider = !isLastRow || (isLastRow && isRightColumn);
                                           return (
                                             <button
                                               key={type}
@@ -480,14 +482,14 @@ export default function TimelineView({
                                                 e.stopPropagation();
                                                 handleAddActivityType(day.id, type as Activity['type']);
                                               }}
-                                              className={`flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left ${
-                                                !isLastRow ? 'border-b' : ''
-                                              } ${!isRightColumn ? 'border-r' : ''} border-gray-100`}
+                                              className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-left ${
+                                                addBottomDivider ? 'border-b' : ''
+                                              } ${addRightDivider ? 'border-r' : ''} border-gray-200 dark:border-gray-700`}
                                             >
-                                              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                                                <ActivityIcon iconName={config.icon} className="text-white" size={16} />
+                                              <div className="w-8 h-8 rounded-full bg-static-accent-600 flex items-center justify-center flex-shrink-0">
+                                                <ActivityIcon iconName={config.icon} className="text-static-text-50" size={16} />
                                               </div>
-                                              <span className="text-sm text-gray-700 font-normal">{config.label}</span>
+                                              <span className="text-sm text-static-text-900 dark:text-static-text-50 font-normal">{config.label}</span>
                                             </button>
                                           );
                                         })}
@@ -503,7 +505,7 @@ export default function TimelineView({
                                 e.stopPropagation();
                                 toggleDay(day.id);
                               }}
-                              className="p-1.5 hover:bg-white/50 rounded transition-colors duration-200"
+                              className="p-1.5 hover:bg-static-bg-100 dark:hover:bg-static-bg-800 rounded transition-colors duration-200"
                             >
                               {isCollapsed ? (
                                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -530,7 +532,7 @@ export default function TimelineView({
                             ref={provided.innerRef}
                             className={`p-4 min-h-[120px] transition-all duration-200 ${
                               snapshot.isDraggingOver 
-                                ? 'bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg' 
+                                ? 'bg-static-bg-100 dark:bg-static-bg-800 border-2 border-dashed border-static-accent-300 dark:border-static-accent-700 rounded-lg' 
                                 : ''
                             }`}
                           >
@@ -547,18 +549,18 @@ export default function TimelineView({
                                         ref={provided.innerRef}
                                         {...provided.draggableProps}
                                         {...provided.dragHandleProps}
-                                        className={`bg-white border border-gray-200 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all duration-200 ${
+                                        className={`bg-white dark:bg-static-bg-800 border border-static-gray-300 dark:border-static-gray-700 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all duration-200 ${
                                           snapshot.isDragging 
-                                            ? 'rotate-2 scale-105 shadow-2xl border-blue-300 bg-blue-50 z-50' 
-                                            : 'hover:shadow-md hover:border-gray-300'
+                                            ? 'rotate-2 scale-105 shadow-2xl border-static-accent-300 dark:border-static-accent-700 bg-static-bg-100 dark:bg-static-bg-700 z-50' 
+                                            : 'hover:shadow-md hover:border-static-gray-400 dark:hover:border-static-gray-600'
                                         }`}
                                       >
                                         <div className="flex items-start gap-3">
                                           {/* Activity Icon */}
-                                          <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
+                                          <div className="w-8 h-8 bg-static-accent-600 rounded-full flex items-center justify-center flex-shrink-0">
                                             <ActivityIcon 
                                               iconName={getActivityIcon(activity)} 
-                                              className="text-blue-600" 
+                                              className="text-static-text-50" 
                                               size={16}
                                             />
                                           </div>
@@ -594,7 +596,7 @@ export default function TimelineView({
                                               </div>
                                               
                                               {/* More Options */}
-                                              <button className="text-gray-400 hover:text-gray-600 p-1">
+                                              <button className="text-static-text-600 hover:text-static-text-900 dark:text-static-text-400 dark:hover:text-static-text-50 p-1">
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                                                 </svg>
@@ -608,14 +610,14 @@ export default function TimelineView({
                                 ))}
                               </div>
                             ) : (
-                              <div className="flex flex-col items-center justify-center h-24 text-gray-400">
+                              <div className="flex flex-col items-center justify-center h-24 text-static-text-600 dark:text-static-text-400">
                                 <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                 </svg>
                                 <p className="text-sm">No activities planned</p>
                                 <button 
                                   onClick={() => toggleDropdown(day.id)}
-                                  className={`text-xs ${colors.text} hover:underline mt-1`}
+                                  className={`text-xs text-static-text-700 dark:text-static-text-300 hover:underline mt-1`}
                                 >
                                   Add your first activity
                                 </button>
@@ -649,17 +651,17 @@ export default function TimelineView({
         const daysWithActivities = trip.days.filter(day => day.activities.length > 0);
         
         return (
-          <div className="bg-static-bg-50 dark:bg-static-bg-900 rounded-xl p-8 shadow-sm border">
+          <div className="bg-static-bg-50 dark:bg-static-bg-900 rounded-xl p-8 shadow-sm border border-static-gray-700">
             {daysWithActivities.length === 0 ? (
               <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-static-bg-100 dark:bg-static-bg-800">
                   <span className="text-3xl">📜</span>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Activities Yet</h3>
-                <p className="text-gray-600 mb-6">Switch to Day View to start planning your trip</p>
+                <h3 className="text-lg font-medium text-static-text-900 dark:text-static-text-50 mb-2">No Activities Yet</h3>
+                <p className="text-static-text-700 dark:text-static-text-300 mb-6">Switch to Day View to start planning your trip</p>
                 <button
                   onClick={() => setViewMode('day')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                  className="bg-static-accent-600 hover:bg-static-accent-700 text-static-text-50 px-6 py-2 rounded-lg font-medium transition-colors"
                 >
                   Go to Day View
                 </button>
@@ -678,29 +680,29 @@ export default function TimelineView({
                     <div key={day.id} className="relative">
                       {/* Timeline Connector */}
                       {dayIndex < daysWithActivities.length - 1 && (
-                        <div className="absolute left-[19px] top-12 bottom-0 w-0.5 bg-gradient-to-b from-blue-200 to-transparent" />
+                        <div className="absolute left-[19px] top-12 bottom-0 w-0.5 bg-gradient-to-b from-static-accent-300 dark:from-static-accent-700 to-transparent" />
                       )}
                       
                       {/* Day Header */}
                       <div className="flex items-center gap-4 mb-4">
-                        <div className={`flex-shrink-0 w-10 h-10 ${colors.bg} ${colors.text} rounded-full flex items-center justify-center font-semibold shadow-md`}>
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-semibold shadow-md bg-static-accent-700 text-static-text-50">
                           {dayIndexInTrip + 1}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-baseline gap-3">
-                            <h3 className="text-xl font-semibold text-gray-900">{formatDate(day.date)}</h3>
+                            <h3 className="text-xl font-semibold text-static-text-900 dark:text-static-text-50">{formatDate(day.date)}</h3>
                             {destination && (
-                              <span className={`text-sm ${colors.text} font-medium`}>
+                              <span className="text-sm text-static-text-700 dark:text-static-text-300 font-medium">
                                 {destination.name}
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                          <div className="flex items-center gap-4 text-sm text-static-text-700 dark:text-static-text-300 mt-1">
                             <span>{day.activities.length} {day.activities.length === 1 ? 'activity' : 'activities'}</span>
                             {day.totalCost > 0 && (
                               <>
                                 <span>•</span>
-                                <span className="text-green-600 font-medium">{formatCurrency(day.totalCost)}</span>
+                                <span className="text-static-accent-600 font-medium">{formatCurrency(day.totalCost)}</span>
                               </>
                             )}
                           </div>
@@ -714,12 +716,12 @@ export default function TimelineView({
                           .map((activity) => (
                             <div
                               key={activity.id}
-                              className="flex gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100"
+                              className="flex gap-3 p-4 bg-white dark:bg-static-bg-800 rounded-lg border border-static-gray-300 dark:border-static-gray-700"
                             >
                               {/* Activity Icon */}
                               <div className="flex-shrink-0">
-                                <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-base shadow-sm border border-gray-200">
-                                  {ACTIVITY_TYPES[activity.type].icon}
+                                <div className="w-9 h-9 rounded-full flex items-center justify-center text-base shadow-sm bg-static-accent-600 text-static-text-50">
+                                  <ActivityIcon iconName={ACTIVITY_TYPES[activity.type].icon} className="text-static-text-50" size={16} />
                                 </div>
                               </div>
 
@@ -727,10 +729,10 @@ export default function TimelineView({
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between">
                                   <div className="flex-1">
-                                    <h4 className="font-medium text-gray-900">{activity.title}</h4>
+                                    <h4 className="font-medium text-static-text-900 dark:text-static-text-50">{activity.title}</h4>
                                     
                                     {/* Time and Location */}
-                                    <div className="flex items-center gap-3 mt-1 text-sm text-gray-600">
+                                    <div className="flex items-center gap-3 mt-1 text-sm text-static-text-700 dark:text-static-text-300">
                                       {activity.time && (
                                         <span className="flex items-center gap-1">
                                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -747,19 +749,19 @@ export default function TimelineView({
                                           {activity.location}
                                         </span>
                                       )}
-                                      <span className="text-gray-400">•</span>
-                                      <span className="text-gray-500">{ACTIVITY_TYPES[activity.type].label}</span>
+                                      <span className="text-static-text-600 dark:text-static-text-400">•</span>
+                                      <span className="text-static-text-700 dark:text-static-text-300">{ACTIVITY_TYPES[activity.type].label}</span>
                                     </div>
 
                                     {/* Description */}
                                     {activity.description && (
-                                      <p className="text-sm text-gray-600 mt-2 line-clamp-2">{activity.description}</p>
+                                      <p className="text-sm text-static-text-700 dark:text-static-text-300 mt-2 line-clamp-2">{activity.description}</p>
                                     )}
                                   </div>
 
                                   {/* Cost */}
                                   {activity.cost > 0 && (
-                                    <span className="text-sm font-medium text-green-600 ml-4">
+                                    <span className="text-sm font-medium text-static-accent-600 ml-4">
                                       {formatCurrency(activity.cost)}
                                     </span>
                                   )}
@@ -771,10 +773,10 @@ export default function TimelineView({
 
                       {/* Day Notes */}
                       {day.notes && (
-                        <div className="ml-14 mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <div className="ml-14 mt-3 p-3 bg-static-bg-100 dark:bg-static-bg-800 border border-static-gray-300 dark:border-static-gray-700 rounded-lg">
                           <div className="flex items-start gap-2">
                             <span className="text-sm">📝</span>
-                            <p className="text-sm text-gray-700 flex-1">{day.notes}</p>
+                            <p className="text-sm text-static-text-700 dark:text-static-text-300 flex-1">{day.notes}</p>
                           </div>
                         </div>
                       )}
