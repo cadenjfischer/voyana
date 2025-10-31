@@ -20,6 +20,7 @@ interface ShootingStar {
   startX: number;
   startY: number;
   size: number;
+  initialSize: number; // Store initial size for consistent shrinking
   opacity: number;
   speed: number;
   angle: number;
@@ -130,12 +131,14 @@ export default function StarryBackground() {
       // Update last spawn position
       lastSpawnPositionRef.current = { x: startX, y: startY };
       
+      const initialSize = Math.random() * 2 + 4; // 4-6px initially
       shootingStarsRef.current.push({
         x: startX,
         y: startY,
         startX,
         startY,
-        size: Math.random() * 2 + 4, // 4-6px initially (consistent size, no pulse)
+        size: initialSize,
+        initialSize, // Store for consistent shrinking
         opacity: 1,
         speed: Math.random() * 2 + 5, // 5-7 pixels per frame
         angle,
@@ -162,8 +165,8 @@ export default function StarryBackground() {
         
         // Fade out and shrink as it gets further (perspective effect)
         star.opacity = 1 - progress;
-        const baseSize = (Math.random() * 2 + 4); // Keep consistent base size
-        star.size = (1 - progress * 0.7) * baseSize; // Shrink to 30% of original size
+        // Use stored initial size for consistent shrinking (no pulsing)
+        star.size = (1 - progress * 0.7) * star.initialSize; // Shrink to 30% of original size
         
         // Deactivate if too far or faded
         if (progress >= 1 || star.opacity <= 0) {
@@ -280,6 +283,16 @@ export default function StarryBackground() {
         
         ctx.restore();
       });
+
+      // Draw subtle gradient overlay to mimic skyline fade (lighter at top)
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      skyGradient.addColorStop(0, 'rgba(255, 255, 255, 0.08)'); // Subtle white at top
+      skyGradient.addColorStop(0.25, 'rgba(255, 255, 255, 0.03)'); // Fade to less
+      skyGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.01)'); // Almost nothing
+      skyGradient.addColorStop(1, 'rgba(0, 0, 0, 0)'); // Completely transparent at bottom
+      
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       animationRef.current = requestAnimationFrame(animate);
     };
