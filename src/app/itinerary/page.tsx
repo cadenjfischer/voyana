@@ -43,6 +43,7 @@ export default function ItineraryPage() {
   const [isEditTripOpen, setIsEditTripOpen] = useState(false);
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tripToDelete, setTripToDelete] = useState<LocalTrip | null>(null);
 
   // Get user on mount
   useEffect(() => {
@@ -301,13 +302,39 @@ export default function ItineraryPage() {
                         </svg>
                       </button>
                       <button
-                        onClick={() => deleteTrip(trip.id)}
+                        onClick={() => setTripToDelete(trip)}
                         className="w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors duration-200 opacity-75 hover:opacity-100"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </button>
+      {/* Delete Trip Confirmation Modal */}
+      {tripToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white dark:bg-static-bg-800 rounded-2xl shadow-xl p-8 max-w-sm w-full">
+            <h2 className="text-lg font-bold text-static-text-900 dark:text-static-text-50 mb-2">Delete Trip?</h2>
+            <p className="text-static-text-700 dark:text-static-text-300 mb-6">Are you sure you want to delete <span className="font-semibold">{tripToDelete.title}</span>? This action cannot be undone.</p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 rounded-lg bg-static-gray-200 dark:bg-static-bg-700 text-static-text-900 dark:text-static-text-50 hover:bg-static-gray-300 dark:hover:bg-static-bg-600 transition"
+                onClick={() => setTripToDelete(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold transition"
+                onClick={() => {
+                  deleteTrip(tripToDelete.id);
+                  setTripToDelete(null);
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
                     </div>
                   </div>
 
@@ -315,7 +342,7 @@ export default function ItineraryPage() {
                   <div className="p-6 flex flex-col flex-grow">
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="text-xl font-bold text-static-text-900 dark:text-static-text-50 truncate">{trip.title}</h3>
-                      <span className="text-sm text-accent-600 font-medium bg-accent-50 dark:bg-accent-900 px-2 py-1 rounded-lg ml-2">
+                      <span className="text-sm text-static-text-600 dark:text-static-text-400 font-medium ml-2">
                         {getDaysCount(trip.startDate, trip.endDate)} days
                       </span>
                     </div>

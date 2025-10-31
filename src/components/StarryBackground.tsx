@@ -53,17 +53,37 @@ export default function StarryBackground() {
 
     // Initialize stars with varied properties
     const initStars = () => {
-      starsRef.current = Array.from({ length: 200 }, () => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * (canvas.height * 0.7), // Upper 70% of screen
-        size: Math.random() * 1.5 + 0.8, // 0.8px to 2.3px
-        opacity: Math.random() * 0.5 + 0.3, // 0.3 to 0.8 (more visible)
-        blur: Math.random() * 0.8, // 0 to 0.8px blur (reduced from 1.5)
-        driftSpeed: Math.random() * 0.04 + 0.02, // More noticeable drift
-        driftOffset: Math.random() * Math.PI * 2,
-        pulseSpeed: Math.random() * 1.0 + 0.5, // Faster pulse speeds (1.5x speed)
-        pulseOffset: Math.random() * Math.PI * 2, // Random pulse start
-      }));
+      const stars: Star[] = [];
+      
+      for (let i = 0; i < 200; i++) {
+        // Generate y position across full height
+        let y = Math.random() * canvas.height;
+        
+        // Calculate probability of keeping this star based on vertical position
+        // Stars are more likely near top, gradually fade out toward bottom
+        const verticalPosition = y / canvas.height; // 0 at top, 1 at bottom
+        const keepProbability = 1 - Math.pow(verticalPosition, 2); // Quadratic falloff
+        
+        // Randomly decide to keep or regenerate based on probability
+        if (Math.random() > keepProbability) {
+          // Regenerate in upper portion for better distribution
+          y = Math.random() * canvas.height * 0.6;
+        }
+        
+        stars.push({
+          x: Math.random() * canvas.width,
+          y,
+          size: Math.random() * 1.5 + 0.8, // 0.8px to 2.3px
+          opacity: Math.random() * 0.5 + 0.3, // 0.3 to 0.8 (more visible)
+          blur: Math.random() * 0.8, // 0 to 0.8px blur (reduced from 1.5)
+          driftSpeed: Math.random() * 0.04 + 0.02, // More noticeable drift
+          driftOffset: Math.random() * Math.PI * 2,
+          pulseSpeed: Math.random() * 1.0 + 0.5, // Faster pulse speeds (1.5x speed)
+          pulseOffset: Math.random() * Math.PI * 2, // Random pulse start
+        });
+      }
+      
+      starsRef.current = stars;
     };
 
     // Create a new shooting star
