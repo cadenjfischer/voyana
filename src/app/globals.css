@@ -462,6 +462,8 @@ h1, h2, h3, h4, h5, h6 {
   );
   color: rgb(0, 0, 0);
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  position: relative;
+  overflow: visible;
 }
 
 .btn-primary:hover {
@@ -525,6 +527,8 @@ h1, h2, h3, h4, h5, h6 {
 .btn-auto {
   width: auto;
 }
+
+/* Sparkle effect removed */
 
 /* Tab strip gradient (for Itinerary tabs bar) */
 .tab-strip-gradient {

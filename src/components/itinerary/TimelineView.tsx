@@ -206,7 +206,7 @@ export default function TimelineView({
       {/* Header with View Toggle and Expand/Collapse */}
   <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 border-b border-static-gray-700 bg-static-bg-50 dark:bg-static-bg-900">
         {/* Minimal Segmented Control */}
-        <div className="inline-flex items-center rounded-md p-0.5 border border-static-gray-700 bg-static-bg-100 dark:bg-static-bg-800">
+  <div className="inline-flex items-center rounded-md p-0.5 gap-1 border border-static-gray-700 bg-static-bg-100 dark:bg-static-bg-800">
           <button
             onClick={() => setViewMode('day')}
             className={`px-3 py-1.5 text-xs font-medium rounded transition-all ${
