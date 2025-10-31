@@ -51,19 +51,19 @@ export default function ColorPicker({
   return (
     <div
       ref={dropdownRef}
-      className="absolute top-full left-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 z-50 w-[200px]"
+      className="absolute top-full left-0 mt-2 bg-static-gray-50 dark:bg-static-bg-800 rounded-lg shadow-xl border border-static-gray-300 dark:border-static-bg-700 p-3 z-50 w-[200px]"
       role="dialog"
       aria-label="Select destination color"
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium text-gray-900 dark:text-static-text-100">Choose Color</h3>
+        <h3 className="text-sm font-medium text-static-text-900 dark:text-static-text-100">Choose Color</h3>
         <button
           onClick={onClose}
-          className="p-1 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+          className="p-1 rounded-full hover:bg-static-gray-100 dark:hover:bg-static-bg-700 transition-colors"
           aria-label="Close color picker"
         >
-          <svg className="w-4 h-4 text-gray-500 dark:text-static-text-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-static-text-500 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>

@@ -318,6 +318,11 @@ export default function ExpandedMap({ trip, onUpdateTrip, onRemoveDestination, o
           </button>
         </div>
 
+        {/* Mapbox Attribution - Top Right */}
+        <div className="absolute top-2 right-2 z-10 text-[10px] text-gray-600 dark:text-gray-400 bg-white/90 dark:bg-gray-800/90 px-2 py-1 rounded shadow-sm pointer-events-none">
+          © <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener noreferrer" className="underline pointer-events-auto">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline pointer-events-auto">OpenStreetMap</a>
+        </div>
+
         {/* Calendar overlay: centered at bottom within map area */}
         <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center px-4">
           <div className="pointer-events-auto bg-transparent w-full max-w-full overflow-x-auto">
