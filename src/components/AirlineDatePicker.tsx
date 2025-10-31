@@ -216,7 +216,7 @@ export default function AirlineDatePicker({
         </div>
 
         {/* Calendar grid - Only actual month dates */}
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7">
           {days.map((date, index) => {
             const isToday = isSameDay(date, today);
             const isStartDate = selectedStartDate && isSameDay(date, selectedStartDate);
@@ -225,14 +225,37 @@ export default function AirlineDatePicker({
             const isInHoverRange = isDateInHoverRange(date);
             const isPastDate = date < today;
             
-            // Check if this is the first or last day in a range for rounded corners
-            const isRangeStart = isStartDate || (isInRange && days[index - 1] && !isDateInRange(days[index - 1]) && !isSameDay(days[index - 1], selectedStartDate || new Date()));
-            const isRangeEnd = isEndDate || (isInRange && days[index + 1] && !isDateInRange(days[index + 1]) && !isSameDay(days[index + 1], selectedEndDate || new Date()));
+            // Check if adjacent dates are in range
+            const prevInRange = index > 0 && (isDateInRange(days[index - 1]) || isDateInHoverRange(days[index - 1]) || (selectedStartDate && isSameDay(days[index - 1], selectedStartDate)));
+            const nextInRange = index < days.length - 1 && (isDateInRange(days[index + 1]) || isDateInHoverRange(days[index + 1]) || (selectedEndDate && isSameDay(days[index + 1], selectedEndDate)));
             
-            // Wrapper div for range background
-            let wrapperClass = 'relative';
-            if ((isInRange || isInHoverRange) && !isStartDate && !isEndDate) {
-              wrapperClass += ' before:absolute before:inset-0 before:bg-static-accent-200 dark:before:bg-static-accent-800/60';
+            // Determine if this is the end of a hover range
+            const isHoverEnd = isInHoverRange && hoveredDate && isSameDay(date, hoveredDate) && selectedStartDate && !selectedEndDate;
+            
+            const showRangeBackground = (isInRange || isInHoverRange) && !isPastDate && !isStartDate && !isEndDate && !isHoverEnd;
+            
+            // Wrapper div for range background - full width cell
+            let wrapperClass = 'relative h-8 flex items-center justify-center';
+            if (showRangeBackground) {
+              wrapperClass += ' bg-static-accent-200 dark:bg-static-accent-800/60';
+              
+              // Add rounded corners at the start/end of ranges
+              if (!prevInRange) {
+                wrapperClass += ' rounded-l-full';
+              }
+              if (!nextInRange) {
+                wrapperClass += ' rounded-r-full';
+              }
+            }
+            
+            // For start/end dates, add half backgrounds
+            if ((isStartDate || isEndDate || isHoverEnd) && !isPastDate) {
+              if (isStartDate && nextInRange) {
+                wrapperClass += ' after:absolute after:right-0 after:top-0 after:bottom-0 after:left-1/2 after:bg-static-accent-200 dark:after:bg-static-accent-800/60';
+              }
+              if ((isEndDate && prevInRange) || (isHoverEnd && prevInRange)) {
+                wrapperClass += ' before:absolute before:left-0 before:top-0 before:bottom-0 before:right-1/2 before:bg-static-accent-200 dark:before:bg-static-accent-800/60';
+              }
             }
             
             // Button class for the date number
@@ -242,6 +265,8 @@ export default function AirlineDatePicker({
               buttonClass += ' text-static-text-900 dark:text-static-text-50 opacity-20 cursor-not-allowed';
             } else if (isStartDate || isEndDate) {
               buttonClass += ' bg-static-accent-500 dark:bg-static-accent-400 text-white font-semibold';
+            } else if (isHoverEnd) {
+              buttonClass += ' bg-static-accent-400 dark:bg-static-accent-500 text-white font-semibold';
             } else if (isInRange || isInHoverRange) {
               buttonClass += ' text-static-accent-700 dark:text-static-accent-200';
             } else if (isToday) {
