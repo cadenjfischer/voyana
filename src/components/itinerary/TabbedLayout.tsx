@@ -63,20 +63,20 @@ export default function TabbedLayout({
         <div className="flex gap-2">
           <button
             onClick={() => handleTabChange('destinations')}
-            className={`px-6 py-2 rounded-t-md font-medium text-sm transition-all border-b-2 text-static-text-50 ${
+            className={`px-6 py-2 rounded-t-md font-medium text-sm transition-all ${
               activeTab === 'destinations'
-                ? 'bg-static-accent-600 border-static-accent-700 ring-2 ring-static-accent-500 ring-offset-1 ring-offset-static-bg-50 dark:ring-offset-static-bg-900'
-                : 'bg-static-accent-800 hover:bg-static-accent-700 border-transparent'
+                ? 'bg-static-accent-600 border-t border-l border-r border-white/40 text-static-text-50'
+                : 'bg-static-accent-800 hover:bg-static-accent-700 text-static-text-400'
             }`}
           >
             Destinations
           </button>
           <button
             onClick={() => handleTabChange('day-by-day')}
-            className={`px-6 py-2 rounded-t-md font-medium text-sm transition-all border-b-2 text-static-text-50 ${
+            className={`px-6 py-2 rounded-t-md font-medium text-sm transition-all ${
               activeTab === 'day-by-day'
-                ? 'bg-static-accent-600 border-static-accent-700 ring-2 ring-static-accent-500 ring-offset-1 ring-offset-static-bg-50 dark:ring-offset-static-bg-900'
-                : 'bg-static-accent-800 hover:bg-static-accent-700 border-transparent'
+                ? 'bg-static-accent-600 border-t border-l border-r border-white/40 text-static-text-50'
+                : 'bg-static-accent-800 hover:bg-static-accent-700 text-static-text-400'
             }`}
           >
             Day by Day
