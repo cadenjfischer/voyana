@@ -353,6 +353,28 @@ body {
   }
 }
 
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes shooting {
+  0% {
+    transform: translateX(-100px) translateY(-100px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(1000px) translateY(1000px);
+    opacity: 0;
+  }
+}
+
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
@@ -367,6 +389,14 @@ body {
 
 .animate-ripple {
   animation: ripple 0.3s ease-out forwards;
+}
+
+.animate-twinkle {
+  animation: twinkle infinite ease-in-out;
+}
+
+.animate-shooting {
+  animation: shooting 3s linear infinite;
 }
 
 /* Custom Scrollbar */

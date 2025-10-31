@@ -5,6 +5,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import Header from '@/components/Header';
 import AddTripModal from '@/components/AddTripModal';
 import EditTripModal from '@/components/itinerary/EditTripModal';
+import StarryBackground from '@/components/StarryBackground';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Trip } from '@/types/itinerary';
@@ -223,10 +224,15 @@ export default function ItineraryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-static-bg-50 dark:bg-static-bg-900">
+    <div className="min-h-screen bg-static-bg-50 dark:bg-static-bg-900 relative">
+      {/* Starry night background - only in dark mode */}
+      <div className="hidden dark:block">
+        <StarryBackground />
+      </div>
+      
       <Header />
       
-      <main className="pt-20">
+      <main className="pt-20 relative z-10">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
           {/* Header Section */}
           <div className="flex justify-between items-center mb-8">
