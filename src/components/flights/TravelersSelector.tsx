@@ -184,7 +184,8 @@ export default function TravelersSelector({ value, onChange, mobile = false }: T
                   <select
                     value={value.cabin}
                     onChange={(e) => change({ cabin: e.target.value as CabinCode })}
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 pr-9 text-static-text-900 dark:text-static-text-50 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-transparent dark:bg-transparent"
+                    className="w-full border rounded-xl px-3 py-2.5 pr-9 text-static-text-900 dark:text-static-text-50 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 \
+                    border-static-gray-700 bg-static-bg-50 dark:bg-static-bg-900"
                   >
                     <option value="ECONOMY">Economy</option>
                     <option value="PREMIUM_ECONOMY">Premium economy</option>

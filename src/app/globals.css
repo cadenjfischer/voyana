@@ -388,14 +388,26 @@ body {
 }
 
 /* Selection Styles */
+/* Light mode: keep dark text on accent selection for contrast */
 ::selection {
   background: var(--color-primary-600);
-  color: white;
+  color: var(--color-static-text-900);
 }
 
 ::-moz-selection {
   background: var(--color-primary-600);
-  color: white;
+  color: var(--color-static-text-900);
+}
+
+/* Dark mode: slightly deeper accent and light text */
+.dark ::selection {
+  background: var(--color-primary-700);
+  color: var(--color-static-text-50);
+}
+
+.dark ::-moz-selection {
+  background: var(--color-primary-700);
+  color: var(--color-static-text-50);
 }
 
 /* Focus Styles */
@@ -411,6 +423,31 @@ body {
 ):focus-visible {
   outline: 2px solid var(--color-primary-600);
   outline-offset: 2px;
+}
+
+/* Native <select> theming so dropdowns aren’t bright in dark mode */
+select {
+  background-color: var(--color-static-bg-50);
+  color: var(--color-static-text-900);
+  border-color: var(--color-static-gray-700);
+}
+
+.dark select {
+  background-color: var(--color-static-bg-900);
+  color: var(--color-static-text-50);
+  border-color: var(--color-static-gray-700);
+  color-scheme: dark;
+}
+
+/* Many browsers honor option colors; this helps avoid white highlight */
+option {
+  background-color: var(--color-static-bg-50);
+  color: var(--color-static-text-900);
+}
+
+.dark option {
+  background-color: var(--color-static-bg-900);
+  color: var(--color-static-text-50);
 }
 
 input[type="text"]:focus-visible,

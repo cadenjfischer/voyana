@@ -239,7 +239,8 @@ export default function FlightSearch({ onSearch, onSearching }: FlightSearchProp
                 id="passengers"
                 value={passengers}
                 onChange={(e) => setPassengers(parseInt(e.target.value))}
-                className="w-full pl-9 pr-2 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium text-sm appearance-none bg-white cursor-pointer transition-all"
+                className="w-full pl-9 pr-2 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium text-sm appearance-none cursor-pointer transition-all \
+                border-static-gray-700 text-static-text-900 dark:text-static-text-50 bg-static-bg-50 dark:bg-static-bg-900"
               >
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                   <option key={num} value={num}>

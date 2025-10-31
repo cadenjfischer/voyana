@@ -287,9 +287,9 @@ export default function TabbedDestinationRail({
                               <div
                               className={`p-4 transition-all duration-200 flex items-center gap-3 ${
                                 snapshot.isDragging 
-                                  ? `${colors.light} border-l-4 ${colors.border}`
+                                  ? `bg-static-bg-50 dark:bg-static-bg-800 border-l-4 ${colors.border}`
                                   : isActive
-                                  ? `${colors.light} border-l-4 ${colors.border}`
+                                  ? `bg-static-bg-50 dark:bg-static-bg-800 border-l-4 ${colors.border}`
                                   : 'hover:bg-static-bg-50 dark:hover:bg-static-bg-800 border-l-4 border-transparent'
                               }`}
                             >
@@ -430,7 +430,7 @@ export default function TabbedDestinationRail({
 
                             {/* Expandable Content */}
                             <div 
-                              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                              className={`overflow-hidden transition-all duration-300 ease-in-out bg-static-bg-50 dark:bg-static-bg-900 ${
                                 isActive ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                               }`}
                             >

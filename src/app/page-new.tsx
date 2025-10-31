@@ -231,7 +231,8 @@ export default function Home() {
                       <select
                         value={passengers}
                         onChange={(e) => setPassengers(parseInt(e.target.value))}
-                        className="w-full h-full min-h-[60px] px-4 pt-8 pb-3 border-2 border-gray-300 rounded-xl hover:border-blue-500 focus:border-blue-500 transition-colors bg-white text-base font-medium text-gray-900 cursor-pointer focus:ring-0 focus:outline-none"
+                        className="w-full h-full min-h[60px] px-4 pt-8 pb-3 border-2 rounded-xl hover:border-blue-500 focus:border-blue-500 transition-colors text-base font-medium cursor-pointer focus:ring-0 focus:outline-none \
+                        border-static-gray-700 bg-static-bg-50 dark:bg-static-bg-900 text-static-text-900 dark:text-static-text-50"
                       >
                         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                           <option key={num} value={num}>

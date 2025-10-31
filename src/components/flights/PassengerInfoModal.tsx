@@ -132,7 +132,8 @@ export default function PassengerInfoModal({
                   <select
                     value={passenger.title}
                     onChange={(e) => handlePassengerChange(index, 'title', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium \
+                    border-static-gray-700 text-static-text-900 dark:text-static-text-50 bg-static-bg-50 dark:bg-static-bg-900"
                   >
                     <option value="mr">Mr.</option>
                     <option value="ms">Ms.</option>
@@ -150,7 +151,8 @@ export default function PassengerInfoModal({
                   <select
                     value={passenger.gender}
                     onChange={(e) => handlePassengerChange(index, 'gender', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium \
+                    border-static-gray-700 text-static-text-900 dark:text-static-text-50 bg-static-bg-50 dark:bg-static-bg-900"
                   >
                     <option value="m">Male</option>
                     <option value="f">Female</option>
