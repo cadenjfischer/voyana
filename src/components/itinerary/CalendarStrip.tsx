@@ -251,8 +251,8 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
             <button
               key={day.id}
               onClick={() => onDaySelect(day.id)}
-              className={`calendar-day-button flex-shrink-0 w-16 p-1 rounded-lg border-2 text-center transition-all duration-300 relative overflow-hidden transform hover:scale-105 active:scale-95 ${
-                isActive ? 'border-white/60 shadow-lg scale-105' : 'border-white/20 hover:shadow-md hover:border-white/40'
+              className={`calendar-day-button flex-shrink-0 w-16 h-[68px] p-1 rounded-lg border-2 text-center transition-all duration-300 relative overflow-hidden ${
+                isActive ? 'border-white/60 shadow-lg' : 'border-white/20 hover:shadow-md hover:border-white/40'
               } ${dynamicColors.isTransfer ? 'ring-2 ring-orange-400' : ''}`}
               style={{
                 background: dynamicColors.bg,
@@ -294,15 +294,6 @@ export default function CalendarStrip({ days, activeDay, onDaySelect, trip, tran
               {/* Today indicator */}
               {info.isToday && (
                 <div className="w-1.5 h-1.5 bg-red-500 rounded-full mx-auto mt-0.5" />
-              )}
-              
-              {/* Activity indicator */}
-              {hasActivities && !isActive && (
-                <div className="flex justify-center gap-0.5 mt-0.5">
-                                    {Array.from({ length: 3 }, (_, i) => (
-                    <div key={i} className="w-0.5 h-0.5 rounded-full bg-gray-400" />
-                  ))}
-                </div>
               )}
             </button>
           );

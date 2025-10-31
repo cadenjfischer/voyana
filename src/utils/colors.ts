@@ -48,15 +48,15 @@ export const PREMIUM_COLOR_PALETTE = [
     calendarText: 'oklch(95% 0.01 290)'
   },
   { 
-    id: 'terracotta',
-    name: 'Terracotta', 
-    hex: 'oklch(44% 0.07 40)', // Earthy terracotta
-    bg: 'bg-orange-700', 
-    text: 'text-orange-100', 
-    light: 'bg-orange-50', 
-    border: 'border-orange-300',
-    calendarBg: 'oklch(44% 0.07 40)',
-    calendarText: 'oklch(95% 0.01 40)'
+    id: 'coral-pink',
+    name: 'Coral Pink', 
+    hex: 'oklch(42% 0.08 20)', // Dark coral pink
+    bg: 'bg-pink-700', 
+    text: 'text-pink-100', 
+    light: 'bg-pink-50', 
+    border: 'border-pink-300',
+    calendarBg: 'oklch(42% 0.08 20)',
+    calendarText: 'oklch(95% 0.01 20)'
   },
   { 
     id: 'burgundy',
