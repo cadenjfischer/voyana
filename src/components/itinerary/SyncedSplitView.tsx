@@ -607,11 +607,11 @@ export default function SyncedSplitView({ trip, onUpdateTrip, onRemoveDestinatio
             {activeTab === 'destinations' && (
               <button
                 onClick={() => setIsSplitViewExpanded(!isSplitViewExpanded)}
-                className="absolute top-1/2 -right-6 -translate-y-1/2 z-[1000] bg-white dark:bg-gray-800 rounded-r-lg shadow-lg w-6 h-20 flex items-center justify-center hover:bg-accent-50 dark:hover:bg-accent-900/30 transition-colors group border-r border-t border-b border-gray-200 dark:border-gray-700"
+                className="absolute top-1/2 -right-6 -translate-y-1/2 z-[1000] bg-white dark:bg-gray-800 rounded-r-lg shadow-lg w-6 h-20 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group border-r border-t border-b border-gray-200 dark:border-gray-700"
                 title={isSplitViewExpanded ? "Hide Day by Day" : "Show Day by Day"}
               >
                 <svg 
-                  className={`w-4 h-4 text-static-text-900 dark:text-static-text-50 group-hover:text-accent-600 transition-transform ${
+                  className={`w-4 h-4 text-static-text-900 dark:text-static-text-50 group-hover:text-accent-600 dark:group-hover:text-accent-400 transition-all ${
                     isSplitViewExpanded ? 'rotate-180' : ''
                   }`} 
                   fill="none" 

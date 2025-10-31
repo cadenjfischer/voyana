@@ -252,7 +252,7 @@ export default function TripMap({ trip, isExpanded, onToggleExpand, embedded = f
         {trip.destinations.length > 0 && (
           <button
             onClick={resetMapView}
-            className="absolute top-4 right-4 z-[999] bg-white dark:bg-static-bg-800 hover:bg-gray-100 dark:hover:bg-static-bg-700 shadow-lg rounded-lg px-3 py-2 transition-all duration-200 flex items-center gap-2 text-sm font-medium text-static-text-900 dark:text-static-text-100 border border-static-gray-300 dark:border-static-bg-700"
+            className="absolute top-4 right-4 z-[999] bg-white/80 dark:bg-static-bg-800/80 backdrop-blur-md hover:bg-white/90 dark:hover:bg-static-bg-700/90 shadow-lg rounded-lg px-3 py-2 transition-all duration-200 flex items-center gap-2 text-sm font-medium text-static-text-900 dark:text-static-text-100 border border-white/20 dark:border-static-bg-700/50"
             title="Reset map view"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
