@@ -449,7 +449,7 @@ export default function TabbedDestinationRail({
                                         e.stopPropagation();
                                         setAddLodgingModalOpen(destination.id);
                                       }}
-                                      className="px-2.5 py-1 text-xs font-semibold rounded-md transition-all duration-200 flex items-center gap-1 text-blue-700 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 dark:text-blue-300 dark:hover:text-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/40"
+                                      className="px-2.5 py-1 text-xs font-semibold rounded-md transition-all duration-200 flex items-center gap-1 text-black bg-gradient-to-r from-static-secondary-500 via-static-secondary-300 to-static-secondary-500 hover:from-static-secondary-600 hover:via-static-secondary-400 hover:to-static-secondary-600 shadow-md hover:shadow-lg active:scale-[0.98]"
                                     >
                                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
