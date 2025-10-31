@@ -12,6 +12,15 @@ interface Star {
   driftOffset: number;
   pulseSpeed: number;
   pulseOffset: number;
+  // Twinkle state
+  isTwinkle?: boolean;
+  twinkleTarget?: { x: number; y: number };
+  twinkleProgress?: number; // 0 to 1
+  twinklePulsePhase?: number;
+  twinkleStartTime?: number;
+  lastPulse?: number;
+  twinklePulseDuration?: number;
+  twinklePhaseOffset?: number;
 }
 
 interface ShootingStar {
@@ -33,6 +42,9 @@ interface ShootingStar {
 export default function StarryBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const starsRef = useRef<Star[]>([]);
+  const twinkleStarsRef = useRef<number[]>([]); // Store indices of twinkle stars
+  const staticStarsCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const staticStarsCtxRef = useRef<CanvasRenderingContext2D | null>(null);
   const shootingStarsRef = useRef<ShootingStar[]>([]);
   const animationRef = useRef<number | undefined>(undefined);
   const lastSpawnPositionRef = useRef<{ x: number; y: number } | null>(null);
@@ -48,42 +60,105 @@ export default function StarryBackground() {
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      // Setup offscreen canvas for static stars
+      if (!staticStarsCanvasRef.current) {
+        staticStarsCanvasRef.current = document.createElement('canvas');
+      }
+      const offscreen = staticStarsCanvasRef.current;
+      offscreen.width = window.innerWidth;
+      offscreen.height = window.innerHeight;
+      staticStarsCtxRef.current = offscreen.getContext('2d');
       initStars();
+      // Pick 10 random twinkle stars
+      const count = starsRef.current.length;
+      const indices = Array.from({ length: count }, (_, i) => i);
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+      const twinkleIndices = indices.slice(0, 10);
+      twinkleStarsRef.current = twinkleIndices;
+      // Mark twinkle stars and set initial targets
+      twinkleIndices.forEach(idx => {
+        const star = starsRef.current[idx];
+        if (star) {
+          star.isTwinkle = true;
+          star.twinkleTarget = randomTwinkleTarget(canvas.width, canvas.height);
+          star.twinkleProgress = 1; // Start at target
+          star.twinklePulsePhase = Math.random() * Math.PI * 2;
+          star.twinkleStartTime = 0;
+          star.lastPulse = -1;
+          star.twinklePulseDuration = 1.5 + Math.random() * 2.5; // 1.5 to 4 seconds
+          star.twinklePhaseOffset = Math.random();
+        }
+      });
+
+      function randomTwinkleTarget(width: number, height: number) {
+        return {
+          x: Math.random() * width,
+          y: Math.random() * height * (0.7 + 0.3 * Math.random()), // favor upper 70% but allow full height
+        };
+      }
+      drawStaticStars();
     };
 
     // Initialize stars with varied properties
     const initStars = () => {
       const stars: Star[] = [];
-      
-      for (let i = 0; i < 200; i++) {
-        // Generate y position across full height
+      for (let i = 0; i < 140; i++) {
         let y = Math.random() * canvas.height;
-        
-        // Calculate probability of keeping this star based on vertical position
-        // Stars are more likely near top, gradually fade out toward bottom
-        const verticalPosition = y / canvas.height; // 0 at top, 1 at bottom
-        const keepProbability = 1 - Math.pow(verticalPosition, 2); // Quadratic falloff
-        
-        // Randomly decide to keep or regenerate based on probability
+        const verticalPosition = y / canvas.height;
+        const keepProbability = 1 - Math.pow(verticalPosition, 2);
         if (Math.random() > keepProbability) {
-          // Regenerate in upper portion for better distribution
           y = Math.random() * canvas.height * 0.6;
         }
-        
         stars.push({
           x: Math.random() * canvas.width,
           y,
-          size: Math.random() * 1.5 + 0.8, // 0.8px to 2.3px
-          opacity: Math.random() * 0.5 + 0.3, // 0.3 to 0.8 (more visible)
-          blur: Math.random() * 0.8, // 0 to 0.8px blur (reduced from 1.5)
-          driftSpeed: Math.random() * 0.04 + 0.02, // More noticeable drift
+          size: Math.random() * 1.5 + 0.8,
+          opacity: Math.random() * 0.5 + 0.3,
+          blur: Math.random() * 0.8,
+          driftSpeed: Math.random() * 0.04 + 0.02,
           driftOffset: Math.random() * Math.PI * 2,
-          pulseSpeed: Math.random() * 1.0 + 0.5, // Faster pulse speeds (1.5x speed)
-          pulseOffset: Math.random() * Math.PI * 2, // Random pulse start
+          pulseSpeed: Math.random() * 1.0 + 0.5,
+          pulseOffset: Math.random() * Math.PI * 2,
         });
       }
-      
       starsRef.current = stars;
+    };
+
+    // Draw static stars to offscreen canvas
+    const drawStaticStars = () => {
+      const offscreen = staticStarsCanvasRef.current;
+      const offctx = staticStarsCtxRef.current;
+      if (!offscreen || !offctx) return;
+      offctx.clearRect(0, 0, offscreen.width, offscreen.height);
+      starsRef.current.forEach((star) => {
+        // Calculate vertical fade (stars fade toward bottom)
+        const verticalFade = 1 - (star.y / offscreen.height) * 0.7;
+        // More pronounced pulsing effect for glow (use pulse=1 for static layer)
+        const pulse = 1;
+        const finalOpacity = star.opacity * verticalFade * pulse;
+        const driftX = 0; // No drift for static layer
+        offctx.save();
+        offctx.filter = `blur(${star.blur}px)`;
+        const gradient = offctx.createRadialGradient(
+          star.x + driftX,
+          star.y,
+          0,
+          star.x + driftX,
+          star.y,
+          star.size * 2 * pulse
+        );
+        gradient.addColorStop(0, `rgba(245, 248, 255, ${finalOpacity})`);
+        gradient.addColorStop(0.5, `rgba(230, 240, 255, ${finalOpacity * 0.5})`);
+        gradient.addColorStop(1, `rgba(230, 240, 255, 0)`);
+        offctx.fillStyle = gradient;
+        offctx.beginPath();
+        offctx.arc(star.x + driftX, star.y, star.size * 2 * pulse, 0, Math.PI * 2);
+        offctx.fill();
+        offctx.restore();
+      });
     };
 
     // Create a new shooting star
@@ -240,18 +315,76 @@ export default function StarryBackground() {
 
     // Animate stars with subtle drift
     let time = 0;
-    let lastShootingStarTime = Date.now() + 3000; // Add 3 second delay on initial load
+  let shootingStarFirstDelay = 1500 + Math.random() * 3500; // 1.5s to 5s
+  let lastShootingStarTime = Date.now() + shootingStarFirstDelay;
+  let firstShootingStarDone = false;
     const animate = () => {
       if (!ctx || !canvas) return;
 
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // Draw cached static stars layer
+      const offscreen = staticStarsCanvasRef.current;
+      if (offscreen) {
+        ctx.drawImage(offscreen, 0, 0);
+      }
+
+      // Animate twinkle stars (draw over cached layer)
+      const twinkleIndices = twinkleStarsRef.current;
+      twinkleIndices.forEach(idx => {
+        const star = starsRef.current[idx];
+        if (!star) return;
+        // Each star has its own pulse duration and phase offset
+        const duration = star.twinklePulseDuration || 2.5;
+        if (!star.twinkleStartTime || isNaN(star.twinkleStartTime)) {
+          star.twinkleStartTime = time;
+        }
+        // Add phase offset so they don't all start together
+        const phaseOffset = star.twinklePhaseOffset || 0;
+        let pulseProgress = (((time - star.twinkleStartTime) / duration + phaseOffset) % 1);
+        // Pulse: ease in/out, less harsh
+        const twinkle = 0.5 + 0.5 * Math.sin(pulseProgress * Math.PI * 2 - Math.PI / 2); // 0 to 1
+        const twinkleOpacity = star.opacity * (0.3 + 0.7 * twinkle); // 0.3 to 1.0
+        const twinkleSize = star.size * (0.85 + 0.3 * twinkle);
+
+        // On each new pulse, jump to a new position
+        const pulseNum = Math.floor(((time - star.twinkleStartTime) / duration + phaseOffset));
+        if (star.lastPulse === undefined || pulseNum !== star.lastPulse) {
+          star.x = Math.random() * canvas.width;
+          star.y = Math.random() * canvas.height * (0.7 + 0.3 * Math.random());
+          star.lastPulse = pulseNum;
+        }
+
+        ctx.save();
+        ctx.filter = `blur(${star.blur}px)`;
+        const gradient = ctx.createRadialGradient(
+          star.x,
+          star.y,
+          0,
+          star.x,
+          star.y,
+          twinkleSize * 2
+        );
+        gradient.addColorStop(0, `rgba(245, 248, 255, ${twinkleOpacity})`);
+        gradient.addColorStop(0.5, `rgba(230, 240, 255, ${twinkleOpacity * 0.5})`);
+        gradient.addColorStop(1, `rgba(230, 240, 255, 0)`);
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, twinkleSize * 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+
       time += 0.01;
 
-      // Create shooting stars randomly (every 20-40 seconds - much less frequent)
+      // Create shooting stars: first one 1.5-5s after load, then 25-45s intervals
       const currentTime = Date.now();
-      if (currentTime - lastShootingStarTime > Math.random() * 20000 + 20000) {
+      if (!firstShootingStarDone && currentTime >= lastShootingStarTime) {
+        createShootingStar();
+        lastShootingStarTime = currentTime;
+        firstShootingStarDone = true;
+      } else if (firstShootingStarDone && currentTime - lastShootingStarTime > Math.random() * 20000 + 25000) {
         createShootingStar();
         lastShootingStarTime = currentTime;
       }
@@ -264,53 +397,12 @@ export default function StarryBackground() {
         }
       });
 
-      starsRef.current.forEach((star) => {
-        // Calculate vertical fade (stars fade toward bottom)
-        const verticalFade = 1 - (star.y / canvas.height) * 0.7; // 70% fade at bottom
-        
-        // More pronounced pulsing effect for glow
-        const pulse = Math.sin(time * star.pulseSpeed + star.pulseOffset) * 0.3 + 0.7; // 0.4 to 1.0 (more range)
-        const finalOpacity = star.opacity * verticalFade * pulse;
-
-        // More noticeable horizontal drift
-        const driftX = Math.sin(time * star.driftSpeed + star.driftOffset) * 2; // Increased from 0.5 to 2
-
-        // Draw star with blur effect
-        ctx.save();
-        
-        // Apply soft blur
-        ctx.filter = `blur(${star.blur}px)`;
-        
-        // Create soft glow gradient
-        const gradient = ctx.createRadialGradient(
-          star.x + driftX,
-          star.y,
-          0,
-          star.x + driftX,
-          star.y,
-          star.size * 2 * pulse // Pulsing glow radius
-        );
-        
-        // Desaturated white/blue
-        gradient.addColorStop(0, `rgba(245, 248, 255, ${finalOpacity})`);
-        gradient.addColorStop(0.5, `rgba(230, 240, 255, ${finalOpacity * 0.5})`);
-        gradient.addColorStop(1, `rgba(230, 240, 255, 0)`);
-
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(star.x + driftX, star.y, star.size * 2 * pulse, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.restore();
-      });
-
       // Draw subtle gradient overlay to mimic skyline fade (lighter at top)
       const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
       skyGradient.addColorStop(0, 'rgba(255, 255, 255, 0.08)'); // Subtle white at top
       skyGradient.addColorStop(0.25, 'rgba(255, 255, 255, 0.03)'); // Fade to less
       skyGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.01)'); // Almost nothing
       skyGradient.addColorStop(1, 'rgba(0, 0, 0, 0)'); // Completely transparent at bottom
-      
       ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
