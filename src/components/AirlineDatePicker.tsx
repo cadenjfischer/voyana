@@ -225,33 +225,44 @@ export default function AirlineDatePicker({
             const isInHoverRange = isDateInHoverRange(date);
             const isPastDate = date < today;
             
-            // Simple grid cell - all dates are current month now
-            let buttonClass = 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors';
+            // Check if this is the first or last day in a range for rounded corners
+            const isRangeStart = isStartDate || (isInRange && days[index - 1] && !isDateInRange(days[index - 1]) && !isSameDay(days[index - 1], selectedStartDate || new Date()));
+            const isRangeEnd = isEndDate || (isInRange && days[index + 1] && !isDateInRange(days[index + 1]) && !isSameDay(days[index + 1], selectedEndDate || new Date()));
+            
+            // Wrapper div for range background
+            let wrapperClass = 'relative';
+            if ((isInRange || isInHoverRange) && !isStartDate && !isEndDate) {
+              wrapperClass += ' before:absolute before:inset-0 before:bg-static-accent-200 dark:before:bg-static-accent-800/60';
+            }
+            
+            // Button class for the date number
+            let buttonClass = 'relative w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors z-10';
             
             if (isPastDate) {
               buttonClass += ' text-static-text-900 dark:text-static-text-50 opacity-20 cursor-not-allowed';
             } else if (isStartDate || isEndDate) {
-              buttonClass += ' bg-blue-500 text-white font-semibold';
+              buttonClass += ' bg-static-accent-500 dark:bg-static-accent-400 text-white font-semibold';
             } else if (isInRange || isInHoverRange) {
-              buttonClass += ' bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300';
+              buttonClass += ' text-static-accent-700 dark:text-static-accent-200';
             } else if (isToday) {
-              buttonClass += ' text-blue-700 dark:text-blue-400 font-semibold bg-transparent dark:bg-transparent';
+              buttonClass += ' text-static-accent-700 dark:text-static-accent-400 font-semibold bg-transparent dark:bg-transparent';
             } else {
-              buttonClass += ' text-static-text-900 dark:text-static-text-50 hover:bg-blue-50 dark:hover:bg-blue-900 cursor-pointer';
+              buttonClass += ' text-static-text-900 dark:text-static-text-50 hover:bg-static-accent-400 dark:hover:bg-static-accent-600 hover:text-white dark:hover:text-white cursor-pointer';
             }
 
             return (
-              <button
-                key={index}
-                type="button"
-                className={buttonClass}
-                onClick={() => !isPastDate && handleDateClick(date)}
-                onMouseEnter={() => !isPastDate && setHoveredDate(date)}
-                onMouseLeave={() => setHoveredDate(null)}
-                disabled={isPastDate}
-              >
-                {date.getDate()}
-              </button>
+              <div key={index} className={wrapperClass}>
+                <button
+                  type="button"
+                  className={buttonClass}
+                  onClick={() => !isPastDate && handleDateClick(date)}
+                  onMouseEnter={() => !isPastDate && setHoveredDate(date)}
+                  onMouseLeave={() => setHoveredDate(null)}
+                  disabled={isPastDate}
+                >
+                  {date.getDate()}
+                </button>
+              </div>
             );
           })}
         </div>
@@ -269,10 +280,10 @@ export default function AirlineDatePicker({
           onClick={() => setIsOpen(!isOpen)}
           className={
             mobile
-              ? "w-full h-14 px-4 flex items-center border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent dark:bg-transparent hover:border-gray-400 dark:hover:border-gray-500 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
+              ? "w-full h-14 px-4 flex items-center border border-static-gray-400 dark:border-static-bg-600 rounded-lg bg-white dark:bg-static-bg-800 hover:border-static-accent-500 dark:hover:border-static-accent-400 focus:ring-2 focus:ring-static-accent-500 focus:border-static-accent-500 transition-colors"
               : compact 
               ? "w-full h-14 px-4 flex flex-col justify-center text-left hover:bg-gray-50 dark:hover:bg-gray-800 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
-              : "w-full h-14 flex items-center justify-between px-4 border border-gray-300 dark:border-gray-600 rounded-xl bg-transparent dark:bg-transparent hover:border-gray-400 dark:hover:border-gray-500 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors duration-200"
+              : "w-full h-14 flex items-center justify-between px-4 border border-static-gray-400 dark:border-static-bg-600 rounded-xl bg-white dark:bg-static-bg-800 hover:border-static-accent-500 dark:hover:border-static-accent-400 focus:ring-2 focus:ring-static-accent-500 focus:border-static-accent-500 transition-colors duration-200"
           }
         >
           {mobile ? (
@@ -315,7 +326,7 @@ export default function AirlineDatePicker({
       {isOpen && typeof window !== 'undefined' && createPortal(
         <div 
           ref={pickerRef}
-          className="absolute bg-static-bg-50 dark:bg-static-bg-900 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-[9999] p-6"
+          className="absolute bg-static-bg-50 dark:bg-static-bg-900 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-[10002] p-6"
           style={{
             top: inputPosition.top + (compact ? 60 : inputPosition.height + 6),
             right: typeof window !== 'undefined' ? window.innerWidth - inputPosition.left - inputPosition.width : 'auto',

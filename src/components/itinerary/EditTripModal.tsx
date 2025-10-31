@@ -295,14 +295,14 @@ export default function EditTripModal({ isOpen, onClose, onUpdateTrip, trip }: E
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Edit Trip</h2>
+      <div className="bg-white dark:bg-static-bg-800 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative z-[10001]">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-static-bg-700">
+          <h2 className="text-xl font-bold text-static-text-900 dark:text-static-text-100">Edit Trip</h2>
           <button
             onClick={handleClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors duration-200"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-static-bg-700 transition-colors duration-200"
           >
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-static-text-500 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -315,8 +315,8 @@ export default function EditTripModal({ isOpen, onClose, onUpdateTrip, trip }: E
               <form onSubmit={handleSubmit} className="space-y-6">
             {/* Trip Name */}
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-900 mb-2">
-                Trip Name <span className="text-red-500">*</span>
+              <label htmlFor="title" className="block text-sm font-medium text-static-text-900 dark:text-static-text-100 mb-2">
+                Trip Name <span className="text-static-accent-500 dark:text-static-accent-400">*</span>
               </label>
               <input
                 type="text"
@@ -325,7 +325,7 @@ export default function EditTripModal({ isOpen, onClose, onUpdateTrip, trip }: E
                 value={formData.title}
                 onChange={handleInputChange}
                 placeholder="Enter trip name"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                className="w-full px-4 py-3 border border-static-gray-400 dark:border-static-bg-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-static-accent-500 dark:focus:ring-static-accent-400 focus:border-transparent bg-white dark:bg-static-bg-800 text-static-text-900 dark:text-static-text-100 placeholder-static-text-400 dark:placeholder-static-text-500"
                 required
               />
             </div>
@@ -333,11 +333,11 @@ export default function EditTripModal({ isOpen, onClose, onUpdateTrip, trip }: E
             {/* Destinations */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label htmlFor="destination" className="block text-sm font-medium text-gray-900">
-                  Destination <span className="text-red-500">*</span>
+                <label htmlFor="destination" className="block text-sm font-medium text-static-text-900 dark:text-static-text-100">
+                  Destination <span className="text-static-accent-500 dark:text-static-accent-400">*</span>
                 </label>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-600">Multiple Cities</span>
+                  <span className="text-xs text-static-text-600 dark:text-static-text-400">Multiple Cities</span>
                   <button
                     type="button"
                     onClick={() => {
@@ -357,7 +357,7 @@ export default function EditTripModal({ isOpen, onClose, onUpdateTrip, trip }: E
                       }
                     }}
                     className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ${
-                      multipleCities ? 'bg-blue-600' : 'bg-gray-300'
+                      multipleCities ? 'bg-static-accent-500 dark:bg-static-accent-400' : 'bg-static-gray-300 dark:bg-static-bg-700'
                     }`}
                   >
                     <span
@@ -382,25 +382,25 @@ export default function EditTripModal({ isOpen, onClose, onUpdateTrip, trip }: E
                   handleAddDestination(value);
                 }}
                 placeholder={multipleCities ? "Add another city..." : "Search for a city or ski resort..."}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition-colors duration-200 text-gray-900 placeholder-gray-500"
+                className="w-full px-4 py-3 border border-static-gray-400 dark:border-static-bg-600 rounded-lg focus:border-static-accent-500 dark:focus:border-static-accent-400 focus:outline-none transition-colors duration-200 bg-white dark:bg-static-bg-800 text-static-text-900 dark:text-static-text-100 placeholder-static-text-400 dark:placeholder-static-text-500"
                 required={!multipleCities}
               />
               
               {/* Multiple Cities List */}
               {multipleCities && destinations.length > 0 && (
                 <div className="mt-3">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Destinations</h4>
+                  <h4 className="text-sm font-medium text-static-text-700 dark:text-static-text-300 mb-2">Selected Destinations</h4>
                   <div className="flex flex-wrap gap-2">
                     {destinations.map((dest, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm border border-blue-200"
+                        className="flex items-center gap-2 bg-static-accent-50 dark:bg-static-accent-900/20 text-static-accent-700 dark:text-static-accent-300 px-3 py-1.5 rounded-full text-sm border border-static-accent-200 dark:border-static-accent-700"
                       >
                         <span className="text-sm font-medium">{dest}</span>
                         <button
                           type="button"
                           onClick={() => handleRemoveDestination(index)}
-                          className="ml-1 text-blue-500 hover:text-red-600 transition-colors duration-150"
+                          className="ml-1 text-static-accent-500 dark:text-static-accent-400 hover:text-static-accent-700 dark:hover:text-static-accent-300 transition-colors duration-150"
                           title="Remove destination"
                         >
                           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -416,8 +416,8 @@ export default function EditTripModal({ isOpen, onClose, onUpdateTrip, trip }: E
 
             {/* Dates */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Travel Dates <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-100 mb-2">
+                Travel Dates <span className="text-static-accent-500 dark:text-static-accent-400">*</span>
               </label>
               <AirlineDatePicker
                 startDate={formData.startDate}
@@ -429,7 +429,7 @@ export default function EditTripModal({ isOpen, onClose, onUpdateTrip, trip }: E
 
             {/* Description */}
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-900 mb-2">
+              <label htmlFor="description" className="block text-sm font-medium text-static-text-900 dark:text-static-text-100 mb-2">
                 Trip Description
               </label>
               <textarea
@@ -439,7 +439,7 @@ export default function EditTripModal({ isOpen, onClose, onUpdateTrip, trip }: E
                 onChange={handleInputChange}
                 placeholder="Enter Trip Description"
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900 placeholder-gray-500"
+                className="w-full px-4 py-3 border border-static-gray-400 dark:border-static-bg-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-static-accent-500 dark:focus:ring-static-accent-400 focus:border-transparent resize-none bg-white dark:bg-static-bg-800 text-static-text-900 dark:text-static-text-100 placeholder-static-text-400 dark:placeholder-static-text-500"
               />
             </div>
 
@@ -448,13 +448,13 @@ export default function EditTripModal({ isOpen, onClose, onUpdateTrip, trip }: E
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+                    className="flex-1 px-6 py-3 border border-static-gray-400 dark:border-static-bg-700 text-static-text-900 dark:text-static-text-100 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-static-bg-700 transition-colors duration-200"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200"
+                    className="flex-1 btn btn-primary btn-md"
                   >
                     Save Changes
                   </button>
@@ -465,14 +465,14 @@ export default function EditTripModal({ isOpen, onClose, onUpdateTrip, trip }: E
             {/* Photo Section */}
             <div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-900 mb-1">
+                <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-100 mb-1">
                   Trip Photo
                 </label>
                 <div className="relative">
-                  <div className="aspect-[3/2] bg-gray-50 rounded-xl overflow-hidden border border-gray-300 hover:border-blue-500 transition-colors duration-200 max-w-sm">
+                  <div className="aspect-[3/2] bg-static-bg-50 dark:bg-static-bg-900 rounded-xl overflow-hidden border border-static-gray-300 dark:border-static-bg-700 hover:border-static-accent-500 dark:hover:border-static-accent-400 transition-colors duration-200 max-w-sm">
                     {isLoadingPhoto ? (
-                      <div className="flex flex-col items-center justify-center h-full text-blue-600">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                      <div className="flex flex-col items-center justify-center h-full text-static-accent-500 dark:text-static-accent-400">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-static-accent-500 dark:border-static-accent-400 mb-4"></div>
                         <p className="text-sm font-medium">Loading photos for {formData.destination}...</p>
                       </div>
                     ) : photoPreview !== '/default-trip-image.svg' && photoPreview ? (
@@ -525,7 +525,7 @@ export default function EditTripModal({ isOpen, onClose, onUpdateTrip, trip }: E
                         )}
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-gray-600">
+                      <div className="flex flex-col items-center justify-center h-full text-static-text-600 dark:text-static-text-400">
                         <svg className="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
@@ -539,7 +539,7 @@ export default function EditTripModal({ isOpen, onClose, onUpdateTrip, trip }: E
 
                 {/* Upload Photo Button */}
                 <div className="mt-3">
-                  <label className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors duration-200 text-sm max-w-sm">
+                  <label className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-static-accent-50 dark:bg-static-accent-900/20 text-static-accent-600 dark:text-static-accent-400 rounded-lg cursor-pointer hover:bg-static-accent-100 dark:hover:bg-static-accent-900/30 transition-colors duration-200 text-sm max-w-sm">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
