@@ -87,6 +87,20 @@ export default function TripBudgetView({
     onUpdateTrip(updatedTrip);
   };
 
+  // Handle set budget goal
+  const handleSetBudgetGoal = () => {
+    const goal = parseFloat(budgetGoalInput);
+    if (isNaN(goal) || goal < 0) return;
+    
+    const updatedTrip = {
+      ...trip,
+      budgetGoal: goal,
+    } as any;
+    
+    onUpdateTrip(updatedTrip);
+    setShowBudgetGoalModal(false);
+  };
+
   // Create a mock expense group for calculations
   const expenseGroup = {
     id: trip.id,
@@ -105,16 +119,68 @@ export default function TripBudgetView({
   const myBalance = balances.find(b => b.memberId === currentUserId);
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.totalAmount, 0);
 
-  // Category breakdown
-  const categories = [
-    { name: 'Sleep', icon: '🛏️', color: 'bg-blue-500', total: 0 },
-    { name: 'Transport', icon: '🚗', color: 'bg-red-500', total: 0 },
-    { name: 'See & Do', icon: '📸', color: 'bg-yellow-500', total: 0 },
-    { name: 'Eat & Drink', icon: '🍽️', color: 'bg-purple-500', total: 0 },
-    { name: 'Other', icon: '⋯', color: 'bg-gray-500', total: totalExpenses },
-  ];
+  // Budget goal tracking
+  const budgetGoal = (trip as any).budgetGoal || 0;
+  const budgetUsedPercentage = budgetGoal > 0 ? (totalExpenses / budgetGoal) * 100 : 0;
 
-  // Calculate percentages for donut chart
+  // Calculate spending per person
+  const spendingByPerson = balances.map(b => ({
+    name: b.name,
+    amount: b.totalPaid,
+    percentage: totalExpenses > 0 ? (b.totalPaid / totalExpenses) * 100 : 0,
+  })).sort((a, b) => b.amount - a.amount);
+
+  // Category breakdown with actual data
+  const categoryData = expenses.reduce((acc, expense) => {
+    const cat = expense.category || 'Other';
+    if (!acc[cat]) {
+      acc[cat] = { total: 0, count: 0, expenses: [] };
+    }
+    acc[cat].total += expense.totalAmount;
+    acc[cat].count += 1;
+    acc[cat].expenses.push(expense);
+    return acc;
+  }, {} as Record<string, { total: number; count: number; expenses: Expense[] }>);
+
+  const getCategoryIcon = (name: string) => {
+    const icons: Record<string, string> = {
+      'Sleep': '�️',
+      'Transport': '🚗',
+      'See & Do': '📸',
+      'Eat & Drink': '🍽️',
+      'Food': '🍽️',
+      'Lodging': '🛏️',
+      'Activities': '📸',
+      'Shopping': '🛍️',
+      'Other': '⋯',
+    };
+    return icons[name] || '💰';
+  };
+
+  const categories = Object.entries(categoryData)
+    .map(([name, data]) => ({
+      name,
+      icon: getCategoryIcon(name),
+      total: data.total,
+      count: data.count,
+      percentage: totalExpenses > 0 ? (data.total / totalExpenses) * 100 : 0,
+      expenses: data.expenses,
+    }))
+    .sort((a, b) => b.total - a.total);
+
+  // Calculate trip insights
+  const tripDays = trip.endDate && trip.startDate
+    ? Math.ceil((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / (1000 * 60 * 60 * 24))
+    : 1;
+  const dailyAverage = totalExpenses / Math.max(tripDays, 1);
+  const biggestCategory = categories[0];
+  
+  // Expanded category state
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [showBudgetGoalModal, setShowBudgetGoalModal] = useState(false);
+  const [budgetGoalInput, setBudgetGoalInput] = useState(budgetGoal.toString());
+
+  // Calculate percentages for progress ring
   const totalPaid = totalExpenses;
   const totalPending = 0; // For now, all expenses are paid
 
@@ -429,10 +495,25 @@ export default function TripBudgetView({
 
         {/* Right Sidebar - Total Trip Cost & Categories */}
         <div className="fixed right-8 top-24 w-80">
-          {/* Total Trip Cost Donut */}
+          {/* Budget Goal Progress */}
           <div className="bg-white dark:bg-static-bg-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-static-text-900 dark:text-static-text-50">
+                {budgetGoal > 0 ? 'Budget Goal' : 'Trip Spending'}
+              </h3>
+              <button
+                onClick={() => {
+                  setBudgetGoalInput(budgetGoal > 0 ? budgetGoal.toString() : '');
+                  setShowBudgetGoalModal(true);
+                }}
+                className="text-xs text-orange-500 hover:text-orange-600 font-medium"
+              >
+                {budgetGoal > 0 ? 'Edit' : 'Set Goal'}
+              </button>
+            </div>
+
             <div className="flex flex-col items-center">
-              {/* Donut Chart */}
+              {/* Progress Ring */}
               <div className="relative w-48 h-48 mb-4">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   {/* Background circle */}
@@ -445,71 +526,210 @@ export default function TripBudgetView({
                     className="text-gray-200 dark:text-gray-700"
                     strokeWidth="12"
                   />
-                  {/* Paid amount (orange) */}
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="40"
-                    fill="none"
-                    stroke="currentColor"
-                    className="text-orange-500"
-                    strokeWidth="12"
-                    strokeDasharray={`${(totalPaid / (totalPaid || 1)) * 251.2} 251.2`}
-                    strokeLinecap="round"
-                  />
+                  {/* Progress amount */}
+                  {budgetGoal > 0 ? (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke="currentColor"
+                      className={budgetUsedPercentage > 90 ? 'text-red-500' : budgetUsedPercentage > 75 ? 'text-yellow-500' : 'text-orange-500'}
+                      strokeWidth="12"
+                      strokeDasharray={`${Math.min(budgetUsedPercentage, 100) * 2.512} 251.2`}
+                      strokeLinecap="round"
+                    />
+                  ) : (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke="currentColor"
+                      className="text-orange-500"
+                      strokeWidth="12"
+                      strokeDasharray="251.2 251.2"
+                      strokeLinecap="round"
+                    />
+                  )}
                 </svg>
                 {/* Center text */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <p className="text-3xl font-bold text-static-text-900 dark:text-static-text-50">
                     {formatCurrency(totalExpenses, currency)}
                   </p>
-                  <p className="text-sm text-static-text-600 dark:text-static-text-400">
-                    Total trip cost
-                  </p>
+                  {budgetGoal > 0 ? (
+                    <p className="text-sm text-static-text-600 dark:text-static-text-400">
+                      {budgetUsedPercentage.toFixed(0)}% of {formatCurrency(budgetGoal, currency)}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-static-text-600 dark:text-static-text-400">
+                      Total spent
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {/* Legend */}
-              <div className="w-full space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                    <span className="text-sm text-static-text-600 dark:text-static-text-400">PAID</span>
+              {/* Budget Status */}
+              {budgetGoal > 0 && (
+                <div className="w-full space-y-2 mb-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-static-text-600 dark:text-static-text-400">Spent</span>
+                    <span className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
+                      {formatCurrency(totalExpenses, currency)}
+                    </span>
                   </div>
-                  <span className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
-                    {formatCurrency(totalPaid, currency)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-gray-300 dark:bg-gray-600"></div>
-                    <span className="text-sm text-static-text-600 dark:text-static-text-400">PENDING</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-static-text-600 dark:text-static-text-400">Remaining</span>
+                    <span className={`text-sm font-semibold ${
+                      budgetGoal - totalExpenses < 0
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-green-600 dark:text-green-400'
+                    }`}>
+                      {formatCurrency(budgetGoal - totalExpenses, currency)}
+                    </span>
                   </div>
-                  <span className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
-                    {formatCurrency(totalPending, currency)}
-                  </span>
                 </div>
+              )}
+
+              {/* Smart Insights */}
+              <div className="w-full pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                {expenses.length > 0 && (
+                  <>
+                    <div className="flex items-start gap-2">
+                      <span className="text-lg">💡</span>
+                      <p className="text-xs text-static-text-600 dark:text-static-text-400">
+                        <span className="font-semibold">{formatCurrency(dailyAverage, currency)}/day</span> average spending
+                      </p>
+                    </div>
+                    {biggestCategory && (
+                      <div className="flex items-start gap-2">
+                        <span className="text-lg">📊</span>
+                        <p className="text-xs text-static-text-600 dark:text-static-text-400">
+                          <span className="font-semibold">{biggestCategory.name}</span> is {biggestCategory.percentage.toFixed(0)}% of total
+                        </p>
+                      </div>
+                    )}
+                    {spendingByPerson.length > 0 && (
+                      <div className="flex items-start gap-2">
+                        <span className="text-lg">👥</span>
+                        <p className="text-xs text-static-text-600 dark:text-static-text-400">
+                          <span className="font-semibold">{spendingByPerson[0].name}</span> paid {spendingByPerson[0].percentage.toFixed(0)}%
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Categories Breakdown */}
+          {/* Spending by Person */}
+          {spendingByPerson.length > 1 && (
+            <div className="bg-white dark:bg-static-bg-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
+              <h3 className="font-semibold text-static-text-900 dark:text-static-text-50 mb-4">
+                Who's Paying
+              </h3>
+              <div className="space-y-3">
+                {spendingByPerson.map((person, idx) => (
+                  <div key={idx}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-static-text-900 dark:text-static-text-50">
+                        {person.name}
+                      </span>
+                      <span className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
+                        {formatCurrency(person.amount, currency)}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-orange-400 to-orange-600 rounded-full"
+                        style={{ width: `${person.percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Categories Breakdown - Interactive */}
           <div className="bg-white dark:bg-static-bg-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
             <h3 className="font-semibold text-static-text-900 dark:text-static-text-50 mb-4">
               Categories
             </h3>
             <div className="space-y-3">
               {categories.map((category) => (
-                <div key={category.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">{category.icon}</span>
-                    <span className="text-sm text-static-text-900 dark:text-static-text-50">
-                      {category.name}
-                    </span>
-                  </div>
-                  <span className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
-                    {formatCurrency(category.total, currency)}
-                  </span>
+                <div key={category.name}>
+                  <button
+                    onClick={() => setExpandedCategory(expandedCategory === category.name ? null : category.name)}
+                    className="w-full flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 -mx-2 rounded-lg transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{category.icon}</span>
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-static-text-900 dark:text-static-text-50">
+                          {category.name}
+                        </p>
+                        <p className="text-xs text-static-text-500">
+                          {category.count} expense{category.count !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
+                        {formatCurrency(category.total, currency)}
+                      </span>
+                      <svg
+                        className={`w-4 h-4 text-static-text-400 transition-transform ${
+                          expandedCategory === category.name ? 'rotate-180' : ''
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </button>
+
+                  {/* Expanded Category Details */}
+                  {expandedCategory === category.name && (
+                    <div className="mt-2 ml-11 space-y-2 pb-2">
+                      {/* Progress bar for percentage */}
+                      <div className="mb-3">
+                        <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-orange-500 rounded-full"
+                            style={{ width: `${category.percentage}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-static-text-500 mt-1">
+                          {category.percentage.toFixed(1)}% of total spending
+                        </p>
+                      </div>
+                      
+                      {/* Individual expenses */}
+                      {category.expenses.slice(0, 3).map((expense) => {
+                        const payer = members.find(m => m.id === expense.paidBy);
+                        return (
+                          <div key={expense.id} className="flex items-center justify-between text-xs">
+                            <span className="text-static-text-600 dark:text-static-text-400 truncate">
+                              {expense.description}
+                            </span>
+                            <span className="text-static-text-900 dark:text-static-text-50 font-medium ml-2">
+                              {formatCurrency(expense.totalAmount, currency)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {category.expenses.length > 3 && (
+                        <p className="text-xs text-static-text-500 italic">
+                          +{category.expenses.length - 3} more
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -656,6 +876,63 @@ export default function TripBudgetView({
                   className="flex-1 px-4 py-3 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
                 >
                   Add Member
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      
+      {/* Budget Goal Modal */}
+      {showBudgetGoalModal && (
+        <div 
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40"
+          onClick={() => setShowBudgetGoalModal(false)}
+        >
+          <div 
+            className="bg-white dark:bg-static-bg-800 rounded-2xl shadow-xl p-8 max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
+              Set Budget Goal
+            </h2>
+            <p className="text-static-text-600 dark:text-static-text-400 mb-6">
+              Track your spending against a target budget for this trip
+            </p>
+
+            <form onSubmit={(e) => { e.preventDefault(); handleSetBudgetGoal(); }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                  Budget Goal ({currency})
+                </label>
+                <input
+                  type="number"
+                  value={budgetGoalInput}
+                  onChange={(e) => setBudgetGoalInput(e.target.value)}
+                  placeholder="e.g., 5000"
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-3 bg-static-bg-100 dark:bg-static-bg-700 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder-static-text-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  autoFocus
+                />
+                <p className="text-xs text-static-text-500 mt-2">
+                  Current spending: {formatCurrency(totalExpenses, currency)}
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowBudgetGoalModal(false)}
+                  className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-static-text-900 dark:text-static-text-50 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  Save Goal
                 </button>
               </div>
             </form>
