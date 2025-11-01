@@ -74,20 +74,12 @@ export default function Header() {
               Flights
             </Link>
             {isSignedIn && (
-              <>
-                <Link 
-                  href="/itinerary" 
-                  className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-200 font-medium text-sm"
-                >
-                  My Trips
-                </Link>
-                <Link 
-                  href="/budget" 
-                  className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-200 font-medium text-sm"
-                >
-                  Budget
-                </Link>
-              </>
+              <Link 
+                href="/itinerary" 
+                className="text-static-text-900 dark:text-static-text-100 hover:text-accent-600 transition-colors duration-200 font-medium text-sm"
+              >
+                My Trips
+              </Link>
             )}
             <Link 
               href="/remember" 
@@ -200,22 +192,13 @@ export default function Header() {
                 Flights
               </Link>
               {isSignedIn && (
-                <>
-                  <Link 
-                    href="/itinerary" 
-                    className="text-static-text-900 dark:text-static-text-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-200 font-medium text-sm px-4 py-3 rounded-lg"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    My Trips
-                  </Link>
-                  <Link 
-                    href="/budget" 
-                    className="text-static-text-900 dark:text-static-text-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-200 font-medium text-sm px-4 py-3 rounded-lg"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Budget
-                  </Link>
-                </>
+                <Link 
+                  href="/itinerary" 
+                  className="text-static-text-900 dark:text-static-text-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-200 font-medium text-sm px-4 py-3 rounded-lg"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  My Trips
+                </Link>
               )}
               <Link 
                 href="/remember" 

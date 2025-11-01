@@ -29,17 +29,28 @@ interface TripSideHeaderProps {
   user?: {
     email?: string | null;
   } | null;
+  activeTab?: TabType;
+  onTabChange?: (tab: TabType) => void;
   onEditTrip?: () => void;
   onSignOut?: () => void;
 }
 
 type TabType = 'plan' | 'discover' | 'budget' | 'flights' | 'hotels';
 
-export default function TripSideHeader({ trip, user, onEditTrip, onSignOut }: TripSideHeaderProps) {
+export default function TripSideHeader({ 
+  trip, 
+  user, 
+  activeTab: controlledActiveTab,
+  onTabChange,
+  onEditTrip, 
+  onSignOut 
+}: TripSideHeaderProps) {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabType>('plan');
+  const [localActiveTab, setLocalActiveTab] = useState<TabType>('plan');
+
+  const activeTab = controlledActiveTab ?? localActiveTab;
 
   const totalNights = trip.destinations.reduce((sum, dest) => sum + (dest.nights || 0), 0);
   const startDate = new Date(trip.startDate);
@@ -74,7 +85,13 @@ export default function TripSideHeader({ trip, user, onEditTrip, onSignOut }: Tr
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                if (onTabChange) {
+                  onTabChange(tab.id);
+                } else {
+                  setLocalActiveTab(tab.id);
+                }
+              }}
               className={`w-full flex flex-col items-center justify-center gap-1 py-3 rounded-lg transition-all ${
                 isActive
                   ? 'tab-strip-gradient'

@@ -5,6 +5,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import { useParams, useRouter } from 'next/navigation';
 import TripLayout from '@/components/TripLayout';
 import ItineraryLayout from '@/components/itinerary/ItineraryLayout';
+import TripBudgetView from '@/components/budget/TripBudgetView';
 import AddDestinationModal from '@/components/itinerary/AddDestinationModal';
 import AddActivityModal from '@/components/itinerary/AddActivityModal';
 import EditTripModal from '@/components/itinerary/EditTripModal';
@@ -16,6 +17,8 @@ import type { User } from '@supabase/supabase-js';
 
 // Mark this route as dynamic since it uses client-side data (localStorage)
 export const dynamic = 'force-dynamic';
+
+type TabType = 'plan' | 'discover' | 'budget' | 'flights' | 'hotels';
 
 export default function TripDetailPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -29,6 +32,7 @@ export default function TripDetailPage() {
   const [showAddActivityModal, setShowAddActivityModal] = useState(false);
   const [showEditTripModal, setShowEditTripModal] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<TabType>('plan');
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -531,18 +535,70 @@ export default function TripDetailPage() {
       <TripLayout 
         trip={trip}
         user={user}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
         onEditTrip={() => setShowEditTripModal(true)}
         onSignOut={handleSignOut}
       >
-        <ItineraryLayout
-          trip={trip}
-          onUpdateTrip={handleUpdateTrip}
-          onRemoveDestination={handleRemoveDestination}
-          onAddDestination={(dest) => {
-            console.log('🎯 INLINE HANDLER CALLED:', dest);
-            handleAddDestination(dest);
-          }}
-        />
+        {activeTab === 'plan' && (
+          <ItineraryLayout
+            trip={trip}
+            onUpdateTrip={handleUpdateTrip}
+            onRemoveDestination={handleRemoveDestination}
+            onAddDestination={(dest) => {
+              console.log('🎯 INLINE HANDLER CALLED:', dest);
+              handleAddDestination(dest);
+            }}
+          />
+        )}
+
+        {activeTab === 'budget' && user && (
+          <TripBudgetView
+            trip={trip}
+            onUpdateTrip={handleUpdateTrip}
+            currentUserId={user.id}
+            currentUserEmail={user.email || ''}
+          />
+        )}
+
+        {activeTab === 'discover' && (
+          <div className="h-screen flex items-center justify-center bg-static-bg-50 dark:bg-static-bg-900">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
+                Discover Tab
+              </h2>
+              <p className="text-static-text-600 dark:text-static-text-400">
+                Coming soon...
+              </p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'flights' && (
+          <div className="h-screen flex items-center justify-center bg-static-bg-50 dark:bg-static-bg-900">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
+                Flights Tab
+              </h2>
+              <p className="text-static-text-600 dark:text-static-text-400">
+                Coming soon...
+              </p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'hotels' && (
+          <div className="h-screen flex items-center justify-center bg-static-bg-50 dark:bg-static-bg-900">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
+                Hotels Tab
+              </h2>
+              <p className="text-static-text-600 dark:text-static-text-400">
+                Coming soon...
+              </p>
+            </div>
+          </div>
+        )}
       </TripLayout>
 
       {/* Add Destination Modal */}
