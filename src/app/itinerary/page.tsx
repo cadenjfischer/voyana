@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
+import { createPortal } from 'react-dom';
 import Header from '@/components/Header';
 import AddTripModal from '@/components/AddTripModal';
 import EditTripModal from '@/components/itinerary/EditTripModal';
@@ -309,32 +310,6 @@ export default function ItineraryPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </button>
-      {/* Delete Trip Confirmation Modal */}
-      {tripToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white dark:bg-static-bg-800 rounded-2xl shadow-xl p-8 max-w-sm w-full">
-            <h2 className="text-lg font-bold text-static-text-900 dark:text-static-text-50 mb-2">Delete Trip?</h2>
-            <p className="text-static-text-700 dark:text-static-text-300 mb-6">Are you sure you want to delete <span className="font-semibold">{tripToDelete.title}</span>? This action cannot be undone.</p>
-            <div className="flex justify-end gap-3">
-              <button
-                className="px-4 py-2 rounded-lg bg-static-gray-200 dark:bg-static-bg-700 text-static-text-900 dark:text-static-text-50 hover:bg-static-gray-300 dark:hover:bg-static-bg-600 transition"
-                onClick={() => setTripToDelete(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold transition"
-                onClick={() => {
-                  deleteTrip(tripToDelete.id);
-                  setTripToDelete(null);
-                }}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
                     </div>
                   </div>
 
@@ -409,6 +384,55 @@ export default function ItineraryPage() {
           trip={editingTrip}
           onUpdateTrip={handleUpdateTrip}
         />
+      )}
+
+      {/* Delete Trip Confirmation Modal - Portal to body */}
+      {tripToDelete && typeof window !== 'undefined' && createPortal(
+        <div 
+          className="fixed left-0 top-0 right-0 bottom-0 flex items-center justify-center bg-black/40"
+          style={{ 
+            position: 'fixed',
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.4)'
+          }}
+          onClick={() => setTripToDelete(null)}
+        >
+          <div 
+            className="bg-white dark:bg-static-bg-800 rounded-2xl shadow-xl p-8 max-w-sm w-full mx-4"
+            style={{ boxShadow: '0 8px 32px 0 rgba(0,0,0,0.25)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold text-static-text-900 dark:text-static-text-50 mb-2 text-center">Delete Trip?</h2>
+            <p className="text-static-text-700 dark:text-static-text-300 mb-6 text-center">
+              Are you sure you want to delete <span className="font-semibold">{tripToDelete.title}</span>? This action cannot be undone.
+            </p>
+            <div className="flex justify-center gap-3 w-full">
+              <button
+                className="px-4 py-2 rounded-lg bg-static-gray-200 dark:bg-static-bg-700 text-static-text-900 dark:text-static-text-50 hover:bg-static-gray-300 dark:hover:bg-static-bg-600 transition w-28"
+                onClick={() => setTripToDelete(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold transition w-28"
+                onClick={() => {
+                  deleteTrip(tripToDelete.id);
+                  setTripToDelete(null);
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );
