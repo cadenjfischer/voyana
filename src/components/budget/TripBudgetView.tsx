@@ -12,6 +12,8 @@ interface TripBudgetViewProps {
   currentUserEmail: string;
 }
 
+type BudgetTab = 'expenses' | 'balance' | 'settlements';
+
 export default function TripBudgetView({ 
   trip, 
   onUpdateTrip,
@@ -20,6 +22,12 @@ export default function TripBudgetView({
 }: TripBudgetViewProps) {
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'expenses' | 'balance' | 'settlements'>('expenses');
+  
+  // Add member form state
+  const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberEmail, setNewMemberEmail] = useState('');
 
   // Initialize budget data from trip if not exists
   const expenses: Expense[] = (trip as any).expenses || [];
@@ -34,6 +42,50 @@ export default function TripBudgetView({
   ];
 
   const currency = (trip as any).currency || 'USD';
+
+  // Handle add member
+  const handleAddMember = () => {
+    if (!newMemberName.trim()) return;
+    
+    const newMember: GroupMember = {
+      id: `member-${Date.now()}`,
+      name: newMemberName.trim(),
+      ...(newMemberEmail.trim() && { email: newMemberEmail.trim() }),
+      joinedAt: new Date().toISOString(),
+    };
+
+    const updatedMembers = [...members, newMember];
+    
+    // Update trip with new member
+    const updatedTrip = {
+      ...trip,
+      budgetMembers: updatedMembers,
+    } as any;
+    
+    onUpdateTrip(updatedTrip);
+
+    // Reset form and close modal
+    setNewMemberName('');
+    setNewMemberEmail('');
+    setShowAddMemberModal(false);
+  };
+
+  // Handle remove member
+  const handleRemoveMember = (memberId: string) => {
+    if (memberId === currentUserId) {
+      alert("You can't remove yourself from the group");
+      return;
+    }
+
+    const updatedMembers = members.filter(m => m.id !== memberId);
+    
+    const updatedTrip = {
+      ...trip,
+      budgetMembers: updatedMembers,
+    } as any;
+    
+    onUpdateTrip(updatedTrip);
+  };
 
   // Create a mock expense group for calculations
   const expenseGroup = {
@@ -53,238 +105,414 @@ export default function TripBudgetView({
   const myBalance = balances.find(b => b.memberId === currentUserId);
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.totalAmount, 0);
 
+  // Category breakdown
+  const categories = [
+    { name: 'Sleep', icon: '🛏️', color: 'bg-blue-500', total: 0 },
+    { name: 'Transport', icon: '🚗', color: 'bg-red-500', total: 0 },
+    { name: 'See & Do', icon: '📸', color: 'bg-yellow-500', total: 0 },
+    { name: 'Eat & Drink', icon: '🍽️', color: 'bg-purple-500', total: 0 },
+    { name: 'Other', icon: '⋯', color: 'bg-gray-500', total: totalExpenses },
+  ];
+
+  // Calculate percentages for donut chart
+  const totalPaid = totalExpenses;
+  const totalPending = 0; // For now, all expenses are paid
+
   return (
-    <div className="h-screen bg-static-bg-50 dark:bg-static-bg-900 overflow-y-auto">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+    <div className="h-screen bg-static-bg-50 dark:bg-static-bg-900 flex">
+      {/* Left Sidebar */}
+      <div className="w-64 bg-white dark:bg-static-bg-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
-            Trip Budget
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h1 className="text-xl font-bold text-static-text-900 dark:text-static-text-50 mb-1">
+            Budget
           </h1>
-          <p className="text-static-text-600 dark:text-static-text-400">
-            Track and split expenses for {trip.title}
-          </p>
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          {/* Total Expenses */}
-          <div className="bg-white dark:bg-static-bg-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <span className="text-sm font-medium text-static-text-600 dark:text-static-text-400">
-                Total Expenses
-              </span>
-            </div>
-            <p className="text-2xl font-bold text-static-text-900 dark:text-static-text-50">
-              {formatCurrency(totalExpenses, currency)}
-            </p>
-          </div>
-
-          {/* Your Balance */}
-          <div className="bg-white dark:bg-static-bg-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-3 mb-2">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                myBalance && myBalance.netBalance > 0 
-                  ? 'bg-green-100 dark:bg-green-900'
-                  : myBalance && myBalance.netBalance < 0
-                  ? 'bg-red-100 dark:bg-red-900'
-                  : 'bg-gray-100 dark:bg-gray-700'
-              }`}>
-                <svg className={`w-5 h-5 ${
-                  myBalance && myBalance.netBalance > 0 
-                    ? 'text-green-600 dark:text-green-400'
-                    : myBalance && myBalance.netBalance < 0
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-gray-600 dark:text-gray-400'
-                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <span className="text-sm font-medium text-static-text-600 dark:text-static-text-400">
-                Your Balance
-              </span>
-            </div>
-            <p className={`text-2xl font-bold ${
-              myBalance && myBalance.netBalance > 0
-                ? 'text-green-600 dark:text-green-400'
-                : myBalance && myBalance.netBalance < 0
-                ? 'text-red-600 dark:text-red-400'
-                : 'text-static-text-900 dark:text-static-text-50'
-            }`}>
-              {myBalance && myBalance.netBalance > 0 && '+'}
-              {formatCurrency(myBalance?.netBalance || 0, currency)}
-            </p>
-          </div>
-
-          {/* Group Members */}
-          <div className="bg-white dark:bg-static-bg-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <span className="text-sm font-medium text-static-text-600 dark:text-static-text-400">
-                Group Members
-              </span>
-            </div>
-            <p className="text-2xl font-bold text-static-text-900 dark:text-static-text-50">
-              {members.length}
-            </p>
+          <div className="flex items-center gap-2 text-sm text-static-text-600 dark:text-static-text-400">
+            <select className="bg-transparent border-none text-sm font-medium focus:outline-none cursor-pointer">
+              <option>{currency}</option>
+            </select>
+            <span>•</span>
+            <span>{new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Expenses List */}
-          <div className="bg-white dark:bg-static-bg-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-static-text-900 dark:text-static-text-50">
-                Expenses
-              </h2>
-              <button
-                onClick={() => setShowAddExpenseModal(true)}
-                className="px-4 py-2 bg-static-accent-600 hover:bg-static-accent-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add Expense
-              </button>
-            </div>
+        {/* Navigation Tabs */}
+        <nav className="flex-1 p-4">
+          <button
+            onClick={() => setActiveTab('expenses')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-colors ${
+              activeTab === 'expenses'
+                ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
+                : 'text-static-text-600 dark:text-static-text-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <span className="font-medium">Expenses</span>
+          </button>
 
-            {expenses.length === 0 ? (
-              <div className="text-center py-12">
-                <svg className="w-16 h-16 text-static-text-400 dark:text-static-text-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                <p className="text-static-text-600 dark:text-static-text-400 mb-4">
-                  No expenses yet
-                </p>
-                <button
-                  onClick={() => setShowAddExpenseModal(true)}
-                  className="text-static-accent-600 dark:text-static-accent-400 hover:underline font-medium"
-                >
-                  Add your first expense
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                {expenses.map((expense) => {
-                  const payer = members.find(m => m.id === expense.paidBy);
-                  return (
-                    <div
-                      key={expense.id}
-                      className="p-4 bg-static-bg-50 dark:bg-static-bg-900 rounded-lg border border-gray-200 dark:border-gray-700"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-static-text-900 dark:text-static-text-50">
-                          {expense.description}
-                        </h3>
-                        <span className="text-lg font-bold text-static-text-900 dark:text-static-text-50">
-                          {formatCurrency(expense.totalAmount, currency)}
-                        </span>
+          <button
+            onClick={() => setActiveTab('balance')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-colors ${
+              activeTab === 'balance'
+                ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
+                : 'text-static-text-600 dark:text-static-text-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+            </svg>
+            <span className="font-medium">Balance</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('settlements')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              activeTab === 'settlements'
+                ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
+                : 'text-static-text-600 dark:text-static-text-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            <span className="font-medium">Settlements</span>
+          </button>
+        </nav>
+
+        {/* Add Expense Button */}
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => setShowAddExpenseModal(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add expense
+          </button>
+        </div>
+
+        {/* Invite Friends */}
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
+            <h3 className="font-semibold text-static-text-900 dark:text-static-text-50 mb-1">
+              Manage your budget together
+            </h3>
+            <p className="text-sm text-static-text-600 dark:text-static-text-400 mb-3">
+              Invite your friends to budget your trip together!
+            </p>
+            <button
+              onClick={() => setShowAddMemberModal(true)}
+              className="flex items-center gap-2 text-orange-600 dark:text-orange-400 font-medium text-sm hover:underline"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+              Invite friends
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Expenses Tab */}
+        {activeTab === 'expenses' && (
+          <div className="p-8">
+            {/* Expense List */}
+            <div className="max-w-4xl">
+              {expenses.length === 0 ? (
+                <div className="text-center py-20">
+                  <svg className="w-20 h-20 text-static-text-400 dark:text-static-text-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <h3 className="text-xl font-semibold text-static-text-900 dark:text-static-text-50 mb-2">
+                    No expenses yet
+                  </h3>
+                  <p className="text-static-text-600 dark:text-static-text-400 mb-6">
+                    Start tracking your trip expenses
+                  </p>
+                  <button
+                    onClick={() => setShowAddExpenseModal(true)}
+                    className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add your first expense
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {expenses.map((expense) => {
+                    const payer = members.find(m => m.id === expense.paidBy);
+                    return (
+                      <div
+                        key={expense.id}
+                        className="bg-white dark:bg-static-bg-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-start gap-4">
+                          {/* Expense Icon/Avatar */}
+                          <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                            {expense.receiptPhoto ? (
+                              <img src={expense.receiptPhoto} alt="" className="w-full h-full object-cover rounded-lg" />
+                            ) : (
+                              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
+                            )}
+                          </div>
+
+                          {/* Expense Details */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-static-text-900 dark:text-static-text-50 mb-1">
+                              {expense.description}
+                            </h3>
+                            <p className="text-sm text-static-text-600 dark:text-static-text-400">
+                              by <span className="font-medium">{payer?.name || 'Unknown'}</span>
+                            </p>
+                            <p className="text-xs text-static-text-500 dark:text-static-text-500 mt-1">
+                              {expense.category || 'Other'}
+                            </p>
+                          </div>
+
+                          {/* Amount */}
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-xl font-bold text-static-text-900 dark:text-static-text-50">
+                              {formatCurrency(expense.totalAmount, currency)}
+                            </p>
+                            <p className="text-xs text-static-text-500 dark:text-static-text-500 mt-1">
+                              {formatCurrency(0, currency)}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-sm text-static-text-600 dark:text-static-text-400">
-                        Paid by <span className="font-medium">{payer?.name || 'Unknown'}</span>
-                      </p>
-                      <p className="text-xs text-static-text-500 dark:text-static-text-500 mt-1">
-                        {new Date(expense.date).toLocaleDateString()} • Split: {expense.splitType}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
+        )}
 
-          {/* Balances & Settlements */}
-          <div className="space-y-6">
-            {/* Member Balances */}
-            <div className="bg-white dark:bg-static-bg-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-static-text-900 dark:text-static-text-50">
-                  Member Balances
-                </h2>
-                <button
-                  onClick={() => setShowAddMemberModal(true)}
-                  className="text-sm text-static-accent-600 dark:text-static-accent-400 hover:underline font-medium"
-                >
-                  Add Member
-                </button>
-              </div>
+        {/* Balance Tab */}
+        {activeTab === 'balance' && (
+          <div className="p-8">
+            <div className="max-w-4xl">
+              <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50 mb-6">
+                Member Balances
+              </h2>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {balances.map((balance) => (
                   <div
                     key={balance.memberId}
-                    className="flex items-center justify-between p-3 bg-static-bg-50 dark:bg-static-bg-900 rounded-lg"
+                    className="bg-white dark:bg-static-bg-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-semibold">
-                        {balance.name.charAt(0).toUpperCase()}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
+                          {balance.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-static-text-900 dark:text-static-text-50">
+                            {balance.name}
+                          </h3>
+                          <p className="text-sm text-static-text-600 dark:text-static-text-400">
+                            Paid {formatCurrency(balance.totalPaid, currency)} • 
+                            Owes {formatCurrency(balance.totalOwed, currency)}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-static-text-900 dark:text-static-text-50">
-                          {balance.name}
+                      <div className="text-right">
+                        <p className={`text-2xl font-bold ${
+                          balance.netBalance > 0
+                            ? 'text-green-600 dark:text-green-400'
+                            : balance.netBalance < 0
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-static-text-600 dark:text-static-text-400'
+                        }`}>
+                          {balance.netBalance > 0 && '+'}
+                          {formatCurrency(balance.netBalance, currency)}
                         </p>
-                        <p className="text-xs text-static-text-600 dark:text-static-text-400">
-                          Paid: {formatCurrency(balance.totalPaid, currency)} • 
-                          Owes: {formatCurrency(balance.totalOwed, currency)}
+                        <p className="text-sm text-static-text-600 dark:text-static-text-400">
+                          {balance.netBalance > 0 ? 'gets back' : balance.netBalance < 0 ? 'owes' : 'settled'}
                         </p>
                       </div>
                     </div>
-                    <span className={`font-bold ${
-                      balance.netBalance > 0
-                        ? 'text-green-600 dark:text-green-400'
-                        : balance.netBalance < 0
-                        ? 'text-red-600 dark:text-red-400'
-                        : 'text-static-text-600 dark:text-static-text-400'
-                    }`}>
-                      {balance.netBalance > 0 && '+'}
-                      {formatCurrency(balance.netBalance, currency)}
-                    </span>
                   </div>
                 ))}
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Suggested Settlements */}
-            {settlements.length > 0 && (
-              <div className="bg-white dark:bg-static-bg-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-                <h2 className="text-xl font-bold text-static-text-900 dark:text-static-text-50 mb-4">
-                  Suggested Settlements
-                </h2>
-                <p className="text-sm text-static-text-600 dark:text-static-text-400 mb-4">
-                  Settle all debts with {settlements.length} payment{settlements.length > 1 ? 's' : ''}:
-                </p>
-                <div className="space-y-3">
+        {/* Settlements Tab */}
+        {activeTab === 'settlements' && (
+          <div className="p-8">
+            <div className="max-w-4xl">
+              <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
+                Suggested Settlements
+              </h2>
+              <p className="text-static-text-600 dark:text-static-text-400 mb-6">
+                {settlements.length > 0 
+                  ? `Settle all debts with ${settlements.length} payment${settlements.length > 1 ? 's' : ''}`
+                  : 'All balances are settled!'}
+              </p>
+
+              {settlements.length === 0 ? (
+                <div className="text-center py-20">
+                  <svg className="w-20 h-20 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h3 className="text-xl font-semibold text-static-text-900 dark:text-static-text-50 mb-2">
+                    All Settled Up!
+                  </h3>
+                  <p className="text-static-text-600 dark:text-static-text-400">
+                    Everyone has paid their share
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
                   {settlements.map((settlement, idx) => {
                     const fromMember = members.find(m => m.id === settlement.from);
                     const toMember = members.find(m => m.id === settlement.to);
                     return (
                       <div
                         key={idx}
-                        className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+                        className="bg-white dark:bg-static-bg-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700"
                       >
-                        <p className="text-sm text-static-text-900 dark:text-static-text-50">
-                          <span className="font-semibold">{fromMember?.name}</span>
-                          {' pays '}
-                          <span className="font-semibold">{toMember?.name}</span>
-                        </p>
-                        <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-1">
-                          {formatCurrency(settlement.amount, currency)}
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            {/* From Avatar */}
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-pink-600 flex items-center justify-center text-white font-bold">
+                              {fromMember?.name.charAt(0).toUpperCase()}
+                            </div>
+                            
+                            {/* Arrow */}
+                            <svg className="w-8 h-8 text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                            
+                            {/* To Avatar */}
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-teal-600 flex items-center justify-center text-white font-bold">
+                              {toMember?.name.charAt(0).toUpperCase()}
+                            </div>
+
+                            {/* Names */}
+                            <div>
+                              <p className="text-static-text-900 dark:text-static-text-50">
+                                <span className="font-semibold">{fromMember?.name}</span>
+                                {' pays '}
+                                <span className="font-semibold">{toMember?.name}</span>
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Amount */}
+                          <div className="text-right">
+                            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                              {formatCurrency(settlement.amount, currency)}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Right Sidebar - Total Trip Cost & Categories */}
+        <div className="fixed right-8 top-24 w-80">
+          {/* Total Trip Cost Donut */}
+          <div className="bg-white dark:bg-static-bg-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
+            <div className="flex flex-col items-center">
+              {/* Donut Chart */}
+              <div className="relative w-48 h-48 mb-4">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  {/* Background circle */}
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-gray-200 dark:text-gray-700"
+                    strokeWidth="12"
+                  />
+                  {/* Paid amount (orange) */}
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-orange-500"
+                    strokeWidth="12"
+                    strokeDasharray={`${(totalPaid / (totalPaid || 1)) * 251.2} 251.2`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                {/* Center text */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <p className="text-3xl font-bold text-static-text-900 dark:text-static-text-50">
+                    {formatCurrency(totalExpenses, currency)}
+                  </p>
+                  <p className="text-sm text-static-text-600 dark:text-static-text-400">
+                    Total trip cost
+                  </p>
+                </div>
               </div>
-            )}
+
+              {/* Legend */}
+              <div className="w-full space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                    <span className="text-sm text-static-text-600 dark:text-static-text-400">PAID</span>
+                  </div>
+                  <span className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
+                    {formatCurrency(totalPaid, currency)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-gray-300 dark:bg-gray-600"></div>
+                    <span className="text-sm text-static-text-600 dark:text-static-text-400">PENDING</span>
+                  </div>
+                  <span className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
+                    {formatCurrency(totalPending, currency)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Categories Breakdown */}
+          <div className="bg-white dark:bg-static-bg-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+            <h3 className="font-semibold text-static-text-900 dark:text-static-text-50 mb-4">
+              Categories
+            </h3>
+            <div className="space-y-3">
+              {categories.map((category) => (
+                <div key={category.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">{category.icon}</span>
+                    <span className="text-sm text-static-text-900 dark:text-static-text-50">
+                      {category.name}
+                    </span>
+                  </div>
+                  <span className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
+                    {formatCurrency(category.total, currency)}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -325,18 +553,112 @@ export default function TripBudgetView({
             className="bg-white dark:bg-static-bg-800 rounded-2xl shadow-xl p-8 max-w-md w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-xl font-bold text-static-text-900 dark:text-static-text-50 mb-4">
+            <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
               Add Member
             </h2>
             <p className="text-static-text-600 dark:text-static-text-400 mb-6">
-              Member invitation modal coming soon...
+              Add someone to your trip budget group
             </p>
-            <button
-              onClick={() => setShowAddMemberModal(false)}
-              className="w-full px-4 py-2 bg-static-accent-600 hover:bg-static-accent-700 text-white rounded-lg font-medium transition-colors"
-            >
-              Close
-            </button>
+
+            <form onSubmit={(e) => { e.preventDefault(); handleAddMember(); }} className="space-y-4">
+              {/* Name Input */}
+              <div>
+                <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                  Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newMemberName}
+                  onChange={(e) => setNewMemberName(e.target.value)}
+                  placeholder="Enter member's name"
+                  className="w-full px-4 py-3 bg-static-bg-100 dark:bg-static-bg-700 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder-static-text-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              {/* Email Input */}
+              <div>
+                <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                  Email <span className="text-static-text-500 text-xs">(optional)</span>
+                </label>
+                <input
+                  type="email"
+                  value={newMemberEmail}
+                  onChange={(e) => setNewMemberEmail(e.target.value)}
+                  placeholder="email@example.com"
+                  className="w-full px-4 py-3 bg-static-bg-100 dark:bg-static-bg-700 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder-static-text-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+
+              {/* Current Members List */}
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-3">
+                  Current Members ({members.length})
+                </p>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {members.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between py-2 px-3 bg-static-bg-100 dark:bg-static-bg-700 rounded-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-sm font-bold">
+                          {member.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-static-text-900 dark:text-static-text-50">
+                            {member.name}
+                            {member.id === currentUserId && (
+                              <span className="ml-2 text-xs text-static-text-500">(You)</span>
+                            )}
+                          </p>
+                          {member.email && (
+                            <p className="text-xs text-static-text-600 dark:text-static-text-400">
+                              {member.email}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {member.id !== currentUserId && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMember(member.id)}
+                          className="text-red-500 hover:text-red-600 p-1"
+                          title="Remove member"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewMemberName('');
+                    setNewMemberEmail('');
+                    setShowAddMemberModal(false);
+                  }}
+                  className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-static-text-900 dark:text-static-text-50 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!newMemberName.trim()}
+                  className="flex-1 px-4 py-3 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+                >
+                  Add Member
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

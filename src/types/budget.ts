@@ -3,8 +3,8 @@
 export interface GroupMember {
   id: string;
   name: string;
-  email: string;
-  role: 'owner' | 'admin' | 'member';
+  email?: string;
+  role?: 'owner' | 'admin' | 'member';
   joinedAt: string;
   avatar?: string;
 }
