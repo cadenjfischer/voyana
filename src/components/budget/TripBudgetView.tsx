@@ -187,7 +187,7 @@ export default function TripBudgetView({
   return (
     <div className="h-screen bg-static-bg-50 dark:bg-static-bg-900 flex">
       {/* Left Sidebar */}
-      <div className="w-64 bg-white dark:bg-static-bg-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+      <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <h1 className="text-xl font-bold text-static-text-900 dark:text-static-text-50 mb-1">
@@ -208,7 +208,7 @@ export default function TripBudgetView({
             onClick={() => setActiveTab('expenses')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-colors ${
               activeTab === 'expenses'
-                ? 'bg-static-bg-700 dark:bg-static-bg-700 text-white'
+                ? 'tab-strip-gradient text-white'
                 : 'text-static-text-600 dark:text-static-text-400 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
@@ -317,7 +317,7 @@ export default function TripBudgetView({
                     return (
                       <div
                         key={expense.id}
-                        className="bg-white dark:bg-static-bg-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
+                        className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
                       >
                         <div className="flex items-start gap-4">
                           {/* Expense Icon/Avatar */}
@@ -375,7 +375,7 @@ export default function TripBudgetView({
                 {balances.map((balance) => (
                   <div
                     key={balance.memberId}
-                    className="bg-white dark:bg-static-bg-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700"
+                    className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -448,7 +448,7 @@ export default function TripBudgetView({
                     return (
                       <div
                         key={idx}
-                        className="bg-white dark:bg-static-bg-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700"
+                        className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
@@ -496,7 +496,7 @@ export default function TripBudgetView({
         {/* Right Sidebar - Total Trip Cost & Categories */}
         <div className="fixed right-8 top-24 w-80">
           {/* Budget Goal Progress */}
-          <div className="bg-white dark:bg-static-bg-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-static-text-900 dark:text-static-text-50">
                 {budgetGoal > 0 ? 'Budget Goal' : 'Trip Spending'}
@@ -610,7 +610,7 @@ export default function TripBudgetView({
 
           {/* Spending by Person */}
           {spendingByPerson.length > 1 && (
-            <div className="bg-white dark:bg-static-bg-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
               <h3 className="font-semibold text-static-text-900 dark:text-static-text-50 mb-4">
                 Who's Paying
               </h3>
@@ -638,7 +638,7 @@ export default function TripBudgetView({
           )}
 
           {/* Categories Breakdown - Interactive */}
-          <div className="bg-white dark:bg-static-bg-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
             <h3 className="font-semibold text-static-text-900 dark:text-static-text-50 mb-4">
               Categories
             </h3>
@@ -728,7 +728,7 @@ export default function TripBudgetView({
           onClick={() => setShowAddExpenseModal(false)}
         >
           <div 
-            className="bg-white dark:bg-static-bg-800 rounded-2xl shadow-xl p-8 max-w-md w-full mx-4"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-xl font-bold text-static-text-900 dark:text-static-text-50 mb-4">
@@ -754,7 +754,7 @@ export default function TripBudgetView({
           onClick={() => setShowAddMemberModal(false)}
         >
           <div 
-            className="bg-white dark:bg-static-bg-800 rounded-2xl shadow-xl p-8 max-w-md w-full mx-4"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
@@ -874,7 +874,7 @@ export default function TripBudgetView({
           onClick={() => setShowBudgetGoalModal(false)}
         >
           <div 
-            className="bg-white dark:bg-static-bg-800 rounded-2xl shadow-xl p-8 max-w-md w-full mx-4"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
