@@ -512,73 +512,47 @@ export default function TripBudgetView({
               </button>
             </div>
 
-            <div className="flex flex-col items-center">
-              {/* Progress Ring */}
-              <div className="relative w-56 h-56 mb-6">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                  {/* Background circle */}
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="42"
-                    fill="none"
-                    stroke="currentColor"
-                    className="text-gray-200 dark:text-gray-700"
-                    strokeWidth="6"
-                  />
-                  {/* Progress amount */}
-                  {budgetGoal > 0 ? (
-                    <>
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="42"
-                        fill="none"
-                        stroke="currentColor"
-                        className={budgetUsedPercentage > 90 ? 'text-red-500' : budgetUsedPercentage > 75 ? 'text-yellow-500' : 'text-orange-500'}
-                        strokeWidth="6"
-                        strokeDasharray={`${Math.min(budgetUsedPercentage, 100) * 2.639} 263.9`}
-                        strokeLinecap="round"
-                      />
-                      {/* Dot at the end of progress */}
-                      <circle
-                        cx={50 + 42 * Math.cos((Math.min(budgetUsedPercentage, 100) * 3.6 - 90) * Math.PI / 180)}
-                        cy={50 + 42 * Math.sin((Math.min(budgetUsedPercentage, 100) * 3.6 - 90) * Math.PI / 180)}
-                        r="3"
-                        fill="currentColor"
-                        className={budgetUsedPercentage > 90 ? 'text-red-500' : budgetUsedPercentage > 75 ? 'text-yellow-500' : 'text-orange-500'}
-                      />
-                    </>
-                  ) : (
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="42"
-                      fill="none"
-                      stroke="currentColor"
-                      className="text-orange-500"
-                      strokeWidth="6"
-                      strokeDasharray="8 4"
-                      opacity="0.3"
-                    />
-                  )}
-                </svg>
-                {/* Center text */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-4xl font-bold text-static-text-900 dark:text-static-text-50 mb-1">
-                    {formatCurrency(totalExpenses, currency)}
+            <div className="flex flex-col">
+              {/* Amount Display */}
+              <div className="text-center mb-6">
+                <p className="text-5xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
+                  {formatCurrency(totalExpenses, currency)}
+                </p>
+                {budgetGoal > 0 ? (
+                  <p className="text-sm text-static-text-500 dark:text-static-text-500">
+                    {budgetUsedPercentage.toFixed(0)}% of {formatCurrency(budgetGoal, currency)} goal
                   </p>
-                  {budgetGoal > 0 ? (
-                    <p className="text-sm text-static-text-500 dark:text-static-text-500">
-                      {budgetUsedPercentage.toFixed(0)}% of {formatCurrency(budgetGoal, currency)}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-static-text-500 dark:text-static-text-500">
-                      Total spent
+                ) : (
+                  <p className="text-sm text-static-text-500 dark:text-static-text-500">
+                    Total spent • No goal set
+                  </p>
+                )}
+              </div>
+
+              {/* Progress Bar */}
+              {budgetGoal > 0 && (
+                <div className="w-full mb-6">
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        budgetUsedPercentage > 100
+                          ? 'bg-gradient-to-r from-red-500 to-red-600'
+                          : budgetUsedPercentage > 90
+                          ? 'bg-gradient-to-r from-red-400 to-red-500'
+                          : budgetUsedPercentage > 75
+                          ? 'bg-gradient-to-r from-yellow-400 to-yellow-500'
+                          : 'bg-gradient-to-r from-orange-400 to-orange-600'
+                      }`}
+                      style={{ width: `${Math.min(budgetUsedPercentage, 100)}%` }}
+                    />
+                  </div>
+                  {budgetUsedPercentage > 100 && (
+                    <p className="text-xs text-red-500 dark:text-red-400 mt-2 text-center font-medium">
+                      ⚠️ Over budget by {formatCurrency(totalExpenses - budgetGoal, currency)}
                     </p>
                   )}
                 </div>
-              </div>
+              )}
 
               {/* Budget Status */}
               {budgetGoal > 0 && (
