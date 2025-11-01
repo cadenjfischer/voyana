@@ -29,6 +29,17 @@ export default function TripBudgetView({
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
 
+  // Add expense form state
+  const [expenseStep, setExpenseStep] = useState<'details' | 'split'>(('details'));
+  const [expenseDescription, setExpenseDescription] = useState('');
+  const [expenseAmount, setExpenseAmount] = useState('');
+  const [expenseCategory, setExpenseCategory] = useState('');
+  const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
+  const [expensePaidBy, setExpensePaidBy] = useState(currentUserId);
+  const [expenseSplitType, setExpenseSplitType] = useState<'equal' | 'custom'>('equal');
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([currentUserId]);
+  const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
+
   // Initialize budget data from trip if not exists
   const expenses: Expense[] = (trip as any).expenses || [];
   const members: GroupMember[] = (trip as any).budgetMembers || [
@@ -99,6 +110,126 @@ export default function TripBudgetView({
     
     onUpdateTrip(updatedTrip);
     setShowBudgetGoalModal(false);
+  };
+
+  // Handle expense member toggle
+  const toggleExpenseMember = (memberId: string) => {
+    if (selectedMembers.includes(memberId)) {
+      setSelectedMembers(selectedMembers.filter(id => id !== memberId));
+      const newSplits = { ...customSplits };
+      delete newSplits[memberId];
+      setCustomSplits(newSplits);
+    } else {
+      setSelectedMembers([...selectedMembers, memberId]);
+    }
+  };
+
+  // Handle custom split amount change
+  const handleCustomSplitChange = (memberId: string, value: string) => {
+    const newSplits = { ...customSplits, [memberId]: value };
+    setCustomSplits(newSplits);
+  };
+
+  // Calculate remaining amount for custom splits
+  const calculateRemainingAmount = () => {
+    const total = parseFloat(expenseAmount) || 0;
+    const allocated = Object.values(customSplits).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+    return total - allocated;
+  };
+
+  // Auto-fill remaining amount for last unset member
+  const autoFillRemaining = () => {
+    const remaining = calculateRemainingAmount();
+    const unsetMembers = selectedMembers.filter(id => !customSplits[id] || customSplits[id] === '');
+    
+    if (unsetMembers.length === 1 && remaining > 0) {
+      handleCustomSplitChange(unsetMembers[0], remaining.toFixed(2));
+    }
+  };
+
+  // Reset expense form
+  const resetExpenseForm = () => {
+    setExpenseStep('details');
+    setExpenseDescription('');
+    setExpenseAmount('');
+    setExpenseCategory('');
+    setExpenseDate(new Date().toISOString().split('T')[0]);
+    setExpensePaidBy(currentUserId);
+    setExpenseSplitType('equal');
+    setSelectedMembers([currentUserId]);
+    setCustomSplits({});
+  };
+
+  // Handle add expense
+  const handleAddExpense = () => {
+    if (!expenseDescription.trim() || !expenseAmount || parseFloat(expenseAmount) <= 0) {
+      alert('Please enter a valid description and amount');
+      return;
+    }
+
+    if (selectedMembers.length === 0) {
+      alert('Please select at least one member');
+      return;
+    }
+
+    const totalAmount = parseFloat(expenseAmount);
+
+    // Calculate shares
+    let shares: ExpenseShare[] = [];
+    
+    if (expenseSplitType === 'equal') {
+      const amountPerPerson = totalAmount / selectedMembers.length;
+      shares = selectedMembers.map(memberId => ({
+        memberId,
+        amount: amountPerPerson,
+        percentage: (amountPerPerson / totalAmount) * 100,
+      }));
+    } else {
+      // Custom split
+      const totalAllocated = Object.entries(customSplits)
+        .filter(([id]) => selectedMembers.includes(id))
+        .reduce((sum, [, val]) => sum + (parseFloat(val) || 0), 0);
+
+      if (Math.abs(totalAllocated - totalAmount) > 0.01) {
+        alert(`Split amounts must equal ${formatCurrency(totalAmount, currency)}`);
+        return;
+      }
+
+      shares = selectedMembers.map(memberId => {
+        const amount = parseFloat(customSplits[memberId]) || 0;
+        return {
+          memberId,
+          amount,
+          percentage: (amount / totalAmount) * 100,
+        };
+      });
+    }
+
+    const newExpense: Expense = {
+      id: `expense-${Date.now()}`,
+      groupId: trip.id,
+      description: expenseDescription.trim(),
+      totalAmount,
+      paidBy: expensePaidBy,
+      splitType: expenseSplitType === 'equal' ? 'equal' : 'custom',
+      shares,
+      participants: selectedMembers,
+      category: expenseCategory || 'Other',
+      date: expenseDate,
+      createdBy: currentUserId,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedExpenses = [...expenses, newExpense];
+    
+    const updatedTrip = {
+      ...trip,
+      expenses: updatedExpenses,
+    } as any;
+    
+    onUpdateTrip(updatedTrip);
+    resetExpenseForm();
+    setShowAddExpenseModal(false);
   };
 
   // Create a mock expense group for calculations
@@ -721,28 +852,339 @@ export default function TripBudgetView({
         </div>
       </div>
 
-      {/* Add Expense Modal - Placeholder */}
+      {/* Add Expense Modal */}
       {showAddExpenseModal && (
         <div 
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40"
-          onClick={() => setShowAddExpenseModal(false)}
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4"
+          onClick={() => {
+            resetExpenseForm();
+            setShowAddExpenseModal(false);
+          }}
         >
           <div 
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full mx-4"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-xl font-bold text-static-text-900 dark:text-static-text-50 mb-4">
-              Add Expense
-            </h2>
-            <p className="text-static-text-600 dark:text-static-text-400 mb-6">
-              Expense modal coming soon...
-            </p>
-            <button
-              onClick={() => setShowAddExpenseModal(false)}
-              className="w-full px-4 py-2 bg-static-accent-600 hover:bg-static-accent-700 text-white rounded-lg font-medium transition-colors"
-            >
-              Close
-            </button>
+            {/* Header */}
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+              <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50">
+                Add Expense
+              </h2>
+              <button
+                onClick={() => {
+                  resetExpenseForm();
+                  setShowAddExpenseModal(false);
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Step Indicator */}
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setExpenseStep('details')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                    expenseStep === 'details'
+                      ? 'bg-static-bg-700 text-white'
+                      : 'text-static-text-600 dark:text-static-text-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${
+                    expenseStep === 'details' ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'
+                  }`}>
+                    1
+                  </span>
+                  Details
+                </button>
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <button
+                  onClick={() => {
+                    if (expenseDescription && expenseAmount) {
+                      setExpenseStep('split');
+                    }
+                  }}
+                  disabled={!expenseDescription || !expenseAmount}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                    expenseStep === 'split'
+                      ? 'bg-static-bg-700 text-white'
+                      : 'text-static-text-600 dark:text-static-text-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                  }`}
+                >
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${
+                    expenseStep === 'split' ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'
+                  }`}>
+                    2
+                  </span>
+                  Split
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {expenseStep === 'details' ? (
+                <div className="space-y-4">
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                      Description <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={expenseDescription}
+                      onChange={(e) => setExpenseDescription(e.target.value)}
+                      placeholder="e.g., Dinner at restaurant"
+                      className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder-gray-700 dark:placeholder-gray-600 focus:outline-none focus:border-static-accent-500 transition-colors"
+                      autoFocus
+                    />
+                  </div>
+
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                      Amount <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex items-center gap-3 border border-gray-600 dark:border-gray-600 rounded-lg focus-within:border-static-accent-500 transition-colors px-4 py-3">
+                      <span className="text-sm font-medium text-static-text-500">
+                        {currency}
+                      </span>
+                      <input
+                        type="number"
+                        value={expenseAmount}
+                        onChange={(e) => setExpenseAmount(e.target.value)}
+                        placeholder="0.00"
+                        step="0.01"
+                        min="0"
+                        className="flex-1 bg-transparent text-static-text-900 dark:text-static-text-50 placeholder-gray-700 dark:placeholder-gray-600 focus:outline-none text-xl"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Category */}
+                  <div>
+                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                      Category
+                    </label>
+                    <select
+                      value={expenseCategory}
+                      onChange={(e) => setExpenseCategory(e.target.value)}
+                      className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 focus:outline-none focus:border-static-accent-500 transition-colors appearance-none cursor-pointer"
+                      style={{ 
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23fff'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                        backgroundPosition: 'right 0.75rem center',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundSize: '1.25rem'
+                      }}
+                    >
+                      <option value="" className="bg-gray-900 text-gray-300">Select category</option>
+                      <option value="Food" className="bg-gray-900 text-white">🍽️ Food & Drink</option>
+                      <option value="Lodging" className="bg-gray-900 text-white">🛏️ Lodging</option>
+                      <option value="Transport" className="bg-gray-900 text-white">🚗 Transport</option>
+                      <option value="Activities" className="bg-gray-900 text-white">📸 See & Do</option>
+                      <option value="Shopping" className="bg-gray-900 text-white">🛍️ Shopping</option>
+                      <option value="Other" className="bg-gray-900 text-white">⋯ Other</option>
+                    </select>
+                  </div>
+
+                  {/* Date */}
+                  <div>
+                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      value={expenseDate}
+                      onChange={(e) => setExpenseDate(e.target.value)}
+                      className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 focus:outline-none focus:border-static-accent-500 transition-colors"
+                    />
+                  </div>
+
+                  {/* Paid By */}
+                  <div>
+                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                      Paid by
+                    </label>
+                    <select
+                      value={expensePaidBy}
+                      onChange={(e) => setExpensePaidBy(e.target.value)}
+                      className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 focus:outline-none focus:border-static-accent-500 transition-colors appearance-none cursor-pointer"
+                      style={{ 
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23fff'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                        backgroundPosition: 'right 0.75rem center',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundSize: '1.25rem'
+                      }}
+                    >
+                      {members.map(member => (
+                        <option key={member.id} value={member.id} className="bg-gray-900 text-white">
+                          {member.name} {member.id === currentUserId ? '(You)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Next Button */}
+                  <div className="pt-4">
+                    <button
+                      onClick={() => setExpenseStep('split')}
+                      disabled={!expenseDescription.trim() || !expenseAmount || parseFloat(expenseAmount) <= 0}
+                      className="w-full px-4 py-3 bg-static-bg-700 hover:bg-static-bg-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+                    >
+                      Next: Split Expense
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Split Type */}
+                  <div>
+                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-3">
+                      How should this be split?
+                    </label>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          setExpenseSplitType('equal');
+                          setCustomSplits({});
+                        }}
+                        className={`flex-1 px-4 py-3 rounded-lg border-2 font-medium transition-colors ${
+                          expenseSplitType === 'equal'
+                            ? 'border-static-bg-700 bg-static-bg-700 text-white'
+                            : 'border-gray-300 dark:border-gray-600 text-static-text-700 dark:text-static-text-300 hover:border-static-bg-600'
+                        }`}
+                      >
+                        Equal Split
+                      </button>
+                      <button
+                        onClick={() => setExpenseSplitType('custom')}
+                        className={`flex-1 px-4 py-3 rounded-lg border-2 font-medium transition-colors ${
+                          expenseSplitType === 'custom'
+                            ? 'border-static-bg-700 bg-static-bg-700 text-white'
+                            : 'border-gray-300 dark:border-gray-600 text-static-text-700 dark:text-static-text-300 hover:border-static-bg-600'
+                        }`}
+                      >
+                        Custom Amounts
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Member Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-3">
+                      Split between
+                    </label>
+                    <div className="space-y-2">
+                      {members.map(member => {
+                        const isSelected = selectedMembers.includes(member.id);
+                        const equalAmount = expenseSplitType === 'equal' && isSelected
+                          ? (parseFloat(expenseAmount) || 0) / selectedMembers.length
+                          : 0;
+                        
+                        return (
+                          <div
+                            key={member.id}
+                            className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-colors ${
+                              isSelected
+                                ? 'border-static-bg-700 bg-static-bg-700/10'
+                                : 'border-gray-300 dark:border-gray-600'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleExpenseMember(member.id)}
+                              className="w-5 h-5 rounded border-gray-300 text-static-bg-700 focus:ring-static-accent-500"
+                            />
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-bold">
+                              {member.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium text-static-text-900 dark:text-static-text-50">
+                                {member.name}
+                                {member.id === currentUserId && (
+                                  <span className="ml-2 text-xs text-static-text-500">(You)</span>
+                                )}
+                              </p>
+                            </div>
+                            {isSelected && (
+                              <div className="flex items-center gap-2">
+                                {expenseSplitType === 'custom' ? (
+                                  <div className="flex items-center gap-2 px-3 py-2 border border-gray-600 dark:border-gray-600 rounded-lg focus-within:border-static-accent-500 transition-colors">
+                                    <span className="text-sm text-static-text-500">
+                                      {currency}
+                                    </span>
+                                    <input
+                                      type="number"
+                                      value={customSplits[member.id] || ''}
+                                      onChange={(e) => handleCustomSplitChange(member.id, e.target.value)}
+                                      onBlur={autoFillRemaining}
+                                      placeholder="0.00"
+                                      step="0.01"
+                                      min="0"
+                                      className="w-24 bg-transparent text-static-text-900 dark:text-static-text-50 placeholder-gray-600 dark:placeholder-gray-400 focus:outline-none text-right"
+                                    />
+                                  </div>
+                                ) : (
+                                  <span className="text-lg font-bold text-static-text-900 dark:text-static-text-50">
+                                    {formatCurrency(equalAmount, currency)}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Remaining Amount Indicator for Custom Split */}
+                  {expenseSplitType === 'custom' && selectedMembers.length > 0 && (
+                    <div className={`p-4 rounded-lg ${
+                      Math.abs(calculateRemainingAmount()) < 0.01
+                        ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700'
+                        : 'bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700'
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-static-text-900 dark:text-static-text-50">
+                          {Math.abs(calculateRemainingAmount()) < 0.01 ? '✓ Split complete' : 'Remaining to allocate'}
+                        </span>
+                        <span className={`text-lg font-bold ${
+                          Math.abs(calculateRemainingAmount()) < 0.01
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-yellow-600 dark:text-yellow-400'
+                        }`}>
+                          {formatCurrency(Math.max(0, calculateRemainingAmount()), currency)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      onClick={() => setExpenseStep('details')}
+                      className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-static-text-900 dark:text-static-text-50 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={handleAddExpense}
+                      disabled={selectedMembers.length === 0}
+                      className="flex-1 px-4 py-3 bg-static-bg-700 hover:bg-static-bg-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+                    >
+                      Add Expense
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -775,7 +1217,7 @@ export default function TripBudgetView({
                   value={newMemberName}
                   onChange={(e) => setNewMemberName(e.target.value)}
                   placeholder="Enter member's name"
-                  className="w-full px-4 py-3 bg-static-bg-100 dark:bg-static-bg-700 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder-static-text-500 focus:outline-none focus:ring-2 focus:ring-static-accent-500"
+                  className="w-full px-4 py-3 bg-static-bg-100 dark:bg-static-bg-700 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-static-accent-500"
                   autoFocus
                   required
                 />
@@ -791,7 +1233,7 @@ export default function TripBudgetView({
                   value={newMemberEmail}
                   onChange={(e) => setNewMemberEmail(e.target.value)}
                   placeholder="email@example.com"
-                  className="w-full px-4 py-3 bg-static-bg-100 dark:bg-static-bg-700 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder-static-text-500 focus:outline-none focus:ring-2 focus:ring-static-accent-500"
+                  className="w-full px-4 py-3 bg-static-bg-100 dark:bg-static-bg-700 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-static-accent-500"
                 />
               </div>
 
@@ -896,7 +1338,7 @@ export default function TripBudgetView({
                   placeholder="e.g., 5000"
                   min="0"
                   step="0.01"
-                  className="w-full px-4 py-3 bg-static-bg-100 dark:bg-static-bg-700 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder-static-text-500 focus:outline-none focus:ring-2 focus:ring-static-accent-500"
+                  className="w-full px-4 py-3 bg-static-bg-100 dark:bg-static-bg-700 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-static-accent-500"
                   autoFocus
                 />
                 <p className="text-xs text-static-text-500 mt-2">
