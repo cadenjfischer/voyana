@@ -285,14 +285,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Placeholder text colors */
+/* Placeholder text colors - toned down for both themes */
 ::placeholder {
-  color: var(--color-static-text-900);
-  opacity: 0.5;
+  color: var(--color-static-text-700);
+  opacity: 0.8;
 }
 
 .dark ::placeholder {
-  color: var(--color-static-text-50);
+  color: var(--color-static-text-600);
   opacity: 1;
 }
 
@@ -455,18 +455,9 @@ body {
   outline-offset: 2px;
 }
 
-/* Native <select> theming so dropdowns aren’t bright in dark mode */
-select {
-  background-color: var(--color-static-bg-50);
-  color: var(--color-static-text-900);
-  border-color: var(--color-static-gray-700);
-}
-
+/* Native <select> dropdown menu colors (keep closed state class-driven) */
 .dark select {
-  background-color: var(--color-static-bg-900);
-  color: var(--color-static-text-50);
-  border-color: var(--color-static-gray-700);
-  color-scheme: dark;
+  color-scheme: dark; /* improves OS dropdown menu appearance */
 }
 
 /* Many browsers honor option colors; this helps avoid white highlight */

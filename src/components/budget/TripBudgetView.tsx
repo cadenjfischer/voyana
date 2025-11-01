@@ -325,7 +325,13 @@ export default function TripBudgetView({
             Budget
           </h1>
           <div className="flex items-center gap-2 text-sm text-static-text-600 dark:text-static-text-400">
-            <select className="bg-transparent border-none text-sm font-medium focus:outline-none cursor-pointer">
+            <select className="bg-transparent border-none text-sm font-medium text-static-text-700 dark:text-static-text-300 focus:outline-none cursor-pointer appearance-none"
+              style={{ 
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                backgroundPosition: 'right 0.5rem center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: '1rem'
+              }}>
               <option>{currency}</option>
             </select>
             <span>•</span>
@@ -941,7 +947,7 @@ export default function TripBudgetView({
                       value={expenseDescription}
                       onChange={(e) => setExpenseDescription(e.target.value)}
                       placeholder="e.g., Dinner at restaurant"
-                      className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder-gray-700 dark:placeholder-gray-600 focus:outline-none focus:border-static-accent-500 transition-colors"
+                      className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-50 placeholder:text-static-text-700 dark:placeholder:text-static-text-600 focus:outline-none focus:border-static-accent-500 transition-colors"
                       autoFocus
                     />
                   </div>
@@ -962,7 +968,7 @@ export default function TripBudgetView({
                         placeholder="0.00"
                         step="0.01"
                         min="0"
-                        className="flex-1 bg-transparent text-static-text-900 dark:text-static-text-50 placeholder-gray-700 dark:placeholder-gray-600 focus:outline-none text-xl"
+                        className="flex-1 bg-transparent text-static-text-50 placeholder:text-static-text-700 dark:placeholder:text-static-text-600 focus:outline-none text-xl"
                       />
                     </div>
                   </div>
@@ -975,21 +981,23 @@ export default function TripBudgetView({
                     <select
                       value={expenseCategory}
                       onChange={(e) => setExpenseCategory(e.target.value)}
-                      className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 focus:outline-none focus:border-static-accent-500 transition-colors appearance-none cursor-pointer"
+                      className={`w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg focus:outline-none focus:border-static-accent-500 transition-colors appearance-none cursor-pointer ${
+                        expenseCategory ? 'text-static-text-50' : 'text-static-text-600 dark:text-static-text-500'
+                      }`}
                       style={{ 
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23fff'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
                         backgroundPosition: 'right 0.75rem center',
                         backgroundRepeat: 'no-repeat',
                         backgroundSize: '1.25rem'
                       }}
                     >
-                      <option value="" className="bg-gray-900 text-gray-300">Select category</option>
-                      <option value="Food" className="bg-gray-900 text-white">🍽️ Food & Drink</option>
-                      <option value="Lodging" className="bg-gray-900 text-white">🛏️ Lodging</option>
-                      <option value="Transport" className="bg-gray-900 text-white">🚗 Transport</option>
-                      <option value="Activities" className="bg-gray-900 text-white">📸 See & Do</option>
-                      <option value="Shopping" className="bg-gray-900 text-white">🛍️ Shopping</option>
-                      <option value="Other" className="bg-gray-900 text-white">⋯ Other</option>
+                      <option value="">Select category</option>
+                      <option value="Food">🍽️ Food & Drink</option>
+                      <option value="Lodging">🛏️ Lodging</option>
+                      <option value="Transport">🚗 Transport</option>
+                      <option value="Activities">📸 See & Do</option>
+                      <option value="Shopping">🛍️ Shopping</option>
+                      <option value="Other">⋯ Other</option>
                     </select>
                   </div>
 
@@ -1014,16 +1022,16 @@ export default function TripBudgetView({
                     <select
                       value={expensePaidBy}
                       onChange={(e) => setExpensePaidBy(e.target.value)}
-                      className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 focus:outline-none focus:border-static-accent-500 transition-colors appearance-none cursor-pointer"
+                      className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-50 focus:outline-none focus:border-static-accent-500 transition-colors appearance-none cursor-pointer"
                       style={{ 
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23fff'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                        backgroundImage: `url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E\")`,
                         backgroundPosition: 'right 0.75rem center',
                         backgroundRepeat: 'no-repeat',
                         backgroundSize: '1.25rem'
                       }}
                     >
                       {members.map(member => (
-                        <option key={member.id} value={member.id} className="bg-gray-900 text-white">
+                        <option key={member.id} value={member.id}>
                           {member.name} {member.id === currentUserId ? '(You)' : ''}
                         </option>
                       ))}
@@ -1128,7 +1136,7 @@ export default function TripBudgetView({
                                       placeholder="0.00"
                                       step="0.01"
                                       min="0"
-                                      className="w-24 bg-transparent text-static-text-900 dark:text-static-text-50 placeholder-gray-600 dark:placeholder-gray-400 focus:outline-none text-right"
+                                      className="w-24 bg-transparent text-static-text-900 dark:text-static-text-50 placeholder:text-static-text-600 dark:placeholder:text-static-text-500 focus:outline-none text-right"
                                     />
                                   </div>
                                 ) : (
@@ -1217,7 +1225,7 @@ export default function TripBudgetView({
                   value={newMemberName}
                   onChange={(e) => setNewMemberName(e.target.value)}
                   placeholder="Enter member's name"
-                  className="w-full px-4 py-3 bg-static-bg-100 dark:bg-static-bg-700 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-static-accent-500"
+                  className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder:text-static-text-700 dark:placeholder:text-static-text-600 focus:outline-none focus:border-static-accent-500 transition-colors"
                   autoFocus
                   required
                 />
@@ -1233,7 +1241,7 @@ export default function TripBudgetView({
                   value={newMemberEmail}
                   onChange={(e) => setNewMemberEmail(e.target.value)}
                   placeholder="email@example.com"
-                  className="w-full px-4 py-3 bg-static-bg-100 dark:bg-static-bg-700 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-static-accent-500"
+                  className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder:text-static-text-700 dark:placeholder:text-static-text-600 focus:outline-none focus:border-static-accent-500 transition-colors"
                 />
               </div>
 
@@ -1338,7 +1346,7 @@ export default function TripBudgetView({
                   placeholder="e.g., 5000"
                   min="0"
                   step="0.01"
-                  className="w-full px-4 py-3 bg-static-bg-100 dark:bg-static-bg-700 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-static-accent-500"
+                  className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder:text-static-text-700 dark:placeholder:text-static-text-600 focus:outline-none focus:border-static-accent-500 transition-colors"
                   autoFocus
                 />
                 <p className="text-xs text-static-text-500 mt-2">
