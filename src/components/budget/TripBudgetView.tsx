@@ -25,6 +25,8 @@ export default function TripBudgetView({
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'expenses' | 'balance' | 'settlements'>('expenses');
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  const [expandedExpenseId, setExpandedExpenseId] = useState<string | null>(null);
   
   // Add member form state
   const [newMemberName, setNewMemberName] = useState('');
@@ -252,138 +254,95 @@ export default function TripBudgetView({
       return;
     }
 
-    // Get all members who have at least one item assigned
-    const allParticipants = [...new Set(Object.values(itemAssignments).flat())];
-    
-    if (allParticipants.length === 0) {
+    // Calculate itemized total
+    const itemsTotal = scannedReceipt.items.reduce((sum, item) => 
+      sum + (item.price * (item.quantity || 1)), 0
+    );
+
+    // Determine the actual total paid
+    // Priority: 1) Detected total, 2) Subtotal + Tax, 3) Items total
+    const actualTotal = scannedReceipt.total || 
+      (scannedReceipt.subtotal && scannedReceipt.tax 
+        ? scannedReceipt.subtotal + scannedReceipt.tax 
+        : itemsTotal);
+
+    // Calculate the difference (anything not captured in items)
+    const difference = actualTotal - itemsTotal;
+
+    // Calculate who owes what based on item assignments
+    const memberTotals: Record<string, number> = {};
+    const allParticipants = new Set<string>();
+
+    // Assign items to members
+    scannedReceipt.items.forEach((item, index) => {
+      const assignedMembers = itemAssignments[index];
+      const itemTotal = item.price * (item.quantity || 1);
+      
+      if (assignedMembers && assignedMembers.length > 0) {
+        // Item is assigned - those members pay for the ENTIRE item (split among them)
+        const perPerson = itemTotal / assignedMembers.length;
+        assignedMembers.forEach(memberId => {
+          allParticipants.add(memberId);
+          memberTotals[memberId] = (memberTotals[memberId] || 0) + perPerson;
+        });
+      }
+      // If unassigned, skip it (or we could split among everyone)
+    });
+
+    if (allParticipants.size === 0) {
       alert('Please assign at least one item to a group member');
       return;
     }
 
-    // Separate assigned and unassigned items
-    const assignedItems = scannedReceipt.items.filter((_, index) => 
-      itemAssignments[index] && itemAssignments[index].length > 0
-    );
-    
-    const unassignedItems = scannedReceipt.items.filter((_, index) => 
-      !itemAssignments[index] || itemAssignments[index].length === 0
-    );
-
-    const newExpenses: Expense[] = [];
-
-    // Create expenses for assigned items
-    scannedReceipt.items.forEach((item, index) => {
-      const assignedMembers = itemAssignments[index];
-      
-      if (assignedMembers && assignedMembers.length > 0) {
-        const totalAmount = item.price * (item.quantity || 1);
-        const amountPerPerson = totalAmount / assignedMembers.length;
-
-        const shares: ExpenseShare[] = assignedMembers.map(memberId => ({
-          memberId,
-          amount: amountPerPerson,
-          percentage: (amountPerPerson / totalAmount) * 100,
-        }));
-
-        newExpenses.push({
-          id: `expense-${Date.now()}-${index}`,
-          groupId: trip.id,
-          description: item.name,
-          totalAmount,
-          paidBy: expensePaidBy,
-          splitType: 'equal',
-          shares,
-          participants: assignedMembers,
-          category: 'Food & Dining',
-          date: new Date().toISOString().split('T')[0],
-          createdBy: currentUserId,
-          createdAt: new Date().toISOString(),
-        });
-      }
-    });
-
-    // Create one expense for all unassigned items (split equally among all participants)
-    if (unassignedItems.length > 0) {
-      const unassignedTotal = unassignedItems.reduce((sum, item) => 
-        sum + (item.price * (item.quantity || 1)), 0
-      );
-      const amountPerPerson = unassignedTotal / allParticipants.length;
-
-      const shares: ExpenseShare[] = allParticipants.map(memberId => ({
-        memberId,
-        amount: amountPerPerson,
-        percentage: (amountPerPerson / unassignedTotal) * 100,
-      }));
-
-      newExpenses.push({
-        id: `expense-${Date.now()}-unassigned`,
-        groupId: trip.id,
-        description: `Shared items (${unassignedItems.length} items)`,
-        totalAmount: unassignedTotal,
-        paidBy: expensePaidBy,
-        splitType: 'equal',
-        shares,
-        participants: allParticipants,
-        category: 'Food & Dining',
-        date: new Date().toISOString().split('T')[0],
-        createdBy: currentUserId,
-        createdAt: new Date().toISOString(),
+    // Distribute the difference proportionally based on each person's item total
+    if (Math.abs(difference) > 0.01) {
+      Array.from(allParticipants).forEach(memberId => {
+        const proportion = memberTotals[memberId] / itemsTotal;
+        memberTotals[memberId] += difference * proportion;
       });
     }
 
-    // Add tax and tip as separate expenses if they exist
-    if (scannedReceipt.tax && scannedReceipt.tax > 0) {
-      const allMembers = [...new Set(Object.values(itemAssignments).flat())];
-      const taxPerPerson = scannedReceipt.tax / allMembers.length;
-      const taxAmount = scannedReceipt.tax;
-      
-      newExpenses.push({
-        id: `expense-${Date.now()}-tax`,
-        groupId: trip.id,
-        description: 'Tax',
-        totalAmount: taxAmount,
-        paidBy: expensePaidBy,
-        splitType: 'equal',
-        shares: allMembers.map(memberId => ({
-          memberId,
-          amount: taxPerPerson,
-          percentage: (taxPerPerson / taxAmount) * 100,
-        })),
-        participants: allMembers,
-        category: 'Food & Dining',
-        date: new Date().toISOString().split('T')[0],
-        createdBy: currentUserId,
-        createdAt: new Date().toISOString(),
-      });
-    }
+    // Create shares
+    const shares: ExpenseShare[] = Array.from(allParticipants).map(memberId => ({
+      memberId,
+      amount: memberTotals[memberId],
+      percentage: (memberTotals[memberId] / actualTotal) * 100,
+    }));
 
-    if (scannedReceipt.tip && scannedReceipt.tip > 0) {
-      const allMembers = [...new Set(Object.values(itemAssignments).flat())];
-      const tipPerPerson = scannedReceipt.tip / allMembers.length;
-      const tipAmount = scannedReceipt.tip;
-      
-      newExpenses.push({
-        id: `expense-${Date.now()}-tip`,
-        groupId: trip.id,
-        description: 'Tip',
-        totalAmount: tipAmount,
-        paidBy: expensePaidBy,
-        splitType: 'equal',
-        shares: allMembers.map(memberId => ({
-          memberId,
-          amount: tipPerPerson,
-          percentage: (tipPerPerson / tipAmount) * 100,
-        })),
-        participants: allMembers,
-        category: 'Food & Dining',
-        date: new Date().toISOString().split('T')[0],
-        createdBy: currentUserId,
-        createdAt: new Date().toISOString(),
-      });
-    }
+    // Simple description - just "Receipt" (expandable dropdown can show details later)
+    const description = 'Receipt';
 
-    // Update trip with new expenses
-    const updatedExpenses = [...expenses, ...newExpenses];
+    // Store receipt details as metadata (we'll add this to the expense)
+    const receiptDetails = {
+      items: scannedReceipt.items.map((item, index) => ({
+        ...item,
+        assignedTo: itemAssignments[index] || [],
+      })),
+      subtotal: scannedReceipt.subtotal,
+      tax: scannedReceipt.tax,
+      tip: scannedReceipt.tip,
+      total: actualTotal,
+    };
+
+    // Create single consolidated expense
+    const newExpense: Expense = {
+      id: `expense-${Date.now()}`,
+      groupId: trip.id,
+      description,
+      totalAmount: actualTotal,
+      paidBy: expensePaidBy,
+      splitType: 'custom',
+      shares,
+      participants: Array.from(allParticipants),
+      category: 'Food & Dining',
+      date: new Date().toISOString().split('T')[0],
+      createdBy: currentUserId,
+      createdAt: new Date().toISOString(),
+      receiptDetails, // Store receipt breakdown for expandable view
+    } as any;
+
+    // Update trip with new expense
+    const updatedExpenses = [...expenses, newExpense];
     const updatedTrip = {
       ...trip,
       expenses: updatedExpenses,
@@ -411,6 +370,12 @@ export default function TripBudgetView({
 
   // Handle add expense
   const handleAddExpense = () => {
+    // Route to appropriate handler based on whether we're editing
+    if (editingExpenseId) {
+      handleSaveEditedExpense();
+      return;
+    }
+
     if (!expenseDescription.trim() || !expenseAmount || parseFloat(expenseAmount) <= 0) {
       alert('Please enter a valid description and amount');
       return;
@@ -478,6 +443,116 @@ export default function TripBudgetView({
     
     onUpdateTrip(updatedTrip);
     resetExpenseForm();
+    setShowAddExpenseModal(false);
+  };
+
+  const handleEditExpense = (expense: Expense) => {
+    // Populate form with expense data
+    setExpenseDescription(expense.description);
+    setExpenseAmount(expense.totalAmount.toString());
+    setExpenseCategory(expense.category || '');
+    setExpenseDate(expense.date);
+    setExpensePaidBy(expense.paidBy);
+    setExpenseSplitType(expense.splitType === 'equal' ? 'equal' : 'custom');
+    setSelectedMembers(expense.participants);
+
+    // Set custom splits if it's a custom split
+    if (expense.splitType === 'custom' && expense.shares) {
+      const splits: Record<string, string> = {};
+      expense.shares.forEach(share => {
+        splits[share.memberId] = share.amount.toFixed(2);
+      });
+      setCustomSplits(splits);
+    }
+
+    // Set editing state
+    setEditingExpenseId(expense.id);
+    setShowAddExpenseModal(true);
+  };
+
+  const handleDeleteExpense = (expenseId: string) => {
+    if (!confirm('Are you sure you want to delete this expense?')) {
+      return;
+    }
+
+    const updatedExpenses = expenses.filter(exp => exp.id !== expenseId);
+    const updatedTrip = {
+      ...trip,
+      expenses: updatedExpenses,
+    } as any;
+    
+    onUpdateTrip(updatedTrip);
+  };
+
+  const handleSaveEditedExpense = () => {
+    if (!expenseDescription.trim() || !expenseAmount || parseFloat(expenseAmount) <= 0) {
+      alert('Please enter a valid description and amount');
+      return;
+    }
+
+    if (selectedMembers.length === 0) {
+      alert('Please select at least one member');
+      return;
+    }
+
+    const totalAmount = parseFloat(expenseAmount);
+
+    // Calculate shares
+    let shares: ExpenseShare[] = [];
+    
+    if (expenseSplitType === 'equal') {
+      const amountPerPerson = totalAmount / selectedMembers.length;
+      shares = selectedMembers.map(memberId => ({
+        memberId,
+        amount: amountPerPerson,
+        percentage: (amountPerPerson / totalAmount) * 100,
+      }));
+    } else {
+      // Custom split
+      const totalAllocated = Object.entries(customSplits)
+        .filter(([id]) => selectedMembers.includes(id))
+        .reduce((sum, [, val]) => sum + (parseFloat(val) || 0), 0);
+
+      if (Math.abs(totalAllocated - totalAmount) > 0.01) {
+        alert(`Split amounts must equal ${formatCurrency(totalAmount, currency)}`);
+        return;
+      }
+
+      shares = selectedMembers.map(memberId => {
+        const amount = parseFloat(customSplits[memberId]) || 0;
+        return {
+          memberId,
+          amount,
+          percentage: (amount / totalAmount) * 100,
+        };
+      });
+    }
+
+    const updatedExpenses = expenses.map(exp => {
+      if (exp.id === editingExpenseId) {
+        return {
+          ...exp,
+          description: expenseDescription.trim(),
+          totalAmount,
+          paidBy: expensePaidBy,
+          splitType: expenseSplitType === 'equal' ? 'equal' : 'custom',
+          shares,
+          participants: selectedMembers,
+          category: expenseCategory || 'Other',
+          date: expenseDate,
+        } as Expense;
+      }
+      return exp;
+    });
+
+    const updatedTrip = {
+      ...trip,
+      expenses: updatedExpenses,
+    } as any;
+    
+    onUpdateTrip(updatedTrip);
+    resetExpenseForm();
+    setEditingExpenseId(null);
     setShowAddExpenseModal(false);
   };
 
@@ -713,6 +788,10 @@ export default function TripBudgetView({
                 <div className="space-y-3">
                   {expenses.map((expense) => {
                     const payer = members.find(m => m.id === expense.paidBy);
+                    const expenseWithReceipt = expense as any;
+                    const hasReceiptDetails = expenseWithReceipt.receiptDetails && expenseWithReceipt.receiptDetails.items;
+                    const isExpanded = expandedExpenseId === expense.id;
+                    
                     return (
                       <div
                         key={expense.id}
@@ -723,6 +802,10 @@ export default function TripBudgetView({
                           <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
                             {expense.receiptPhoto ? (
                               <img src={expense.receiptPhoto} alt="" className="w-full h-full object-cover rounded-lg" />
+                            ) : hasReceiptDetails ? (
+                              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
                             ) : (
                               <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -732,25 +815,98 @@ export default function TripBudgetView({
 
                           {/* Expense Details */}
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-static-text-900 dark:text-static-text-50 mb-1">
-                              {expense.description}
-                            </h3>
-                            <p className="text-sm text-static-text-600 dark:text-static-text-400">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-static-text-900 dark:text-static-text-50">
+                                {expense.description}
+                              </h3>
+                              {hasReceiptDetails && (
+                                <button
+                                  onClick={() => setExpandedExpenseId(isExpanded ? null : expense.id)}
+                                  className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
+                                >
+                                  {isExpanded ? '▼ Hide details' : '▶ View details'}
+                                </button>
+                              )}
+                            </div>
+                            <p className="text-sm text-static-text-600 dark:text-static-text-400 mt-1">
                               by <span className="font-medium">{payer?.name || 'Unknown'}</span>
                             </p>
                             <p className="text-xs text-static-text-500 dark:text-static-text-500 mt-1">
                               {expense.category || 'Other'}
                             </p>
+
+                            {/* Expandable Receipt Details */}
+                            {hasReceiptDetails && isExpanded && (
+                              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                                <div className="space-y-2">
+                                  {expenseWithReceipt.receiptDetails.items.map((item: any, idx: number) => {
+                                    const assignedMembers = item.assignedTo || [];
+                                    const memberNames = assignedMembers
+                                      .map((id: string) => members.find(m => m.id === id)?.name || 'Unknown')
+                                      .join(', ') || 'Unassigned';
+                                    const qty = item.quantity && item.quantity > 1 ? `${item.quantity}× ` : '';
+                                    
+                                    return (
+                                      <div key={idx} className="text-sm flex justify-between">
+                                        <span className="text-static-text-700 dark:text-static-text-300">
+                                          {qty}{item.name}
+                                          <span className="text-xs text-static-text-500 ml-2">({memberNames})</span>
+                                        </span>
+                                        <span className="font-medium text-static-text-900 dark:text-static-text-50">
+                                          {formatCurrency(item.price * (item.quantity || 1), currency)}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                  
+                                  {/* Show suggested tax/tip if present */}
+                                  {expenseWithReceipt.receiptDetails.tax && (
+                                    <div className="text-xs text-static-text-500 italic pt-2 border-t border-gray-100 dark:border-gray-800">
+                                      Suggested tax: {formatCurrency(expenseWithReceipt.receiptDetails.tax, currency)}
+                                    </div>
+                                  )}
+                                  {expenseWithReceipt.receiptDetails.tip && (
+                                    <div className="text-xs text-static-text-500 italic">
+                                      Suggested tip: {formatCurrency(expenseWithReceipt.receiptDetails.tip, currency)}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
 
-                          {/* Amount */}
-                          <div className="text-right flex-shrink-0">
-                            <p className="text-xl font-bold text-static-text-900 dark:text-static-text-50">
-                              {formatCurrency(expense.totalAmount, currency)}
-                            </p>
-                            <p className="text-xs text-static-text-500 dark:text-static-text-500 mt-1">
-                              {formatCurrency(0, currency)}
-                            </p>
+                          {/* Amount and Actions */}
+                          <div className="flex items-start gap-3">
+                            <div className="text-right flex-shrink-0">
+                              <p className="text-xl font-bold text-static-text-900 dark:text-static-text-50">
+                                {formatCurrency(expense.totalAmount, currency)}
+                              </p>
+                              <p className="text-xs text-static-text-500 dark:text-static-text-500 mt-1">
+                                {formatCurrency(0, currency)}
+                              </p>
+                            </div>
+
+                            {/* Edit and Delete Buttons */}
+                            <div className="flex items-center gap-1 pt-1">
+                              <button
+                                onClick={() => handleEditExpense(expense)}
+                                className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                                title="Edit expense"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteExpense(expense.id)}
+                                className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                                title="Delete expense"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1136,11 +1292,12 @@ export default function TripBudgetView({
             {/* Header */}
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50">
-                Add Expense
+                {editingExpenseId ? 'Edit Expense' : 'Add Expense'}
               </h2>
               <button
                 onClick={() => {
                   resetExpenseForm();
+                  setEditingExpenseId(null);
                   setShowAddExpenseModal(false);
                 }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -1486,7 +1643,7 @@ export default function TripBudgetView({
                       disabled={selectedMembers.length === 0}
                       className="flex-1 px-4 py-3 bg-static-bg-700 hover:bg-static-bg-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white disabled:text-static-text-700 rounded-lg font-medium transition-colors"
                     >
-                      Add Expense
+                      {editingExpenseId ? 'Save Changes' : 'Add Expense'}
                     </button>
                   </div>
                 </div>
@@ -1758,16 +1915,33 @@ export default function TripBudgetView({
                               <span>{formatCurrency(scannedReceipt.tax, currency)}</span>
                             </div>
                           )}
+                          
+                          {/* Show the actual total - calculated or detected */}
+                          {(() => {
+                            const itemsTotal = scannedReceipt.items.reduce((sum, item) => 
+                              sum + (item.price * (item.quantity || 1)), 0
+                            );
+                            const displayTotal = scannedReceipt.total || 
+                              (scannedReceipt.subtotal && scannedReceipt.tax 
+                                ? scannedReceipt.subtotal + scannedReceipt.tax 
+                                : itemsTotal);
+                            
+                            return (
+                              <div className="flex justify-between font-bold text-lg text-static-text-900 dark:text-static-text-50 pt-2 mt-1 border-t-2 border-gray-300 dark:border-gray-600">
+                                <span>Total Amount:</span>
+                                <span>{formatCurrency(displayTotal, currency)}</span>
+                              </div>
+                            );
+                          })()}
+                          
+                          {/* Show tip as suggestion only if present */}
                           {scannedReceipt.tip && (
-                            <div className="flex justify-between">
-                              <span>Tip:</span>
-                              <span>{formatCurrency(scannedReceipt.tip, currency)}</span>
-                            </div>
-                          )}
-                          {scannedReceipt.total && (
-                            <div className="flex justify-between font-semibold text-static-text-900 dark:text-static-text-50 pt-1 border-t border-gray-300 dark:border-gray-600">
-                              <span>Total:</span>
-                              <span>{formatCurrency(scannedReceipt.total, currency)}</span>
+                            <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
+                              <p className="text-xs text-static-text-500 italic mb-1">Tip suggestion (not included):</p>
+                              <div className="flex justify-between text-xs text-static-text-500">
+                                <span>Suggested tip:</span>
+                                <span>{formatCurrency(scannedReceipt.tip, currency)}</span>
+                              </div>
                             </div>
                           )}
                         </div>
