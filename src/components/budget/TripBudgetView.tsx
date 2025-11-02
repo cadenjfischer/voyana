@@ -41,10 +41,24 @@ export default function TripBudgetView({
   const [selectedMembers, setSelectedMembers] = useState<string[]>([currentUserId]);
   const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
 
+  // Scan receipt state
+  const [showScanReceiptModal, setShowScanReceiptModal] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scannedReceipt, setScannedReceipt] = useState<{
+    fullText: string;
+    items: Array<{ name: string; price: number; quantity?: number }>;
+    subtotal?: number;
+    tax?: number;
+    tip?: number;
+    total?: number;
+  } | null>(null);
+  const [receiptImage, setReceiptImage] = useState<string | null>(null);
+  const [itemAssignments, setItemAssignments] = useState<Record<number, string[]>>({});
+
   // Lock body scroll when modal is open
   useEffect(() => {
     const prev = document.body.style.overflow;
-    if (showAddExpenseModal) {
+    if (showAddExpenseModal || showScanReceiptModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = prev || '';
@@ -52,7 +66,7 @@ export default function TripBudgetView({
     return () => {
       document.body.style.overflow = prev || '';
     };
-  }, [showAddExpenseModal]);
+  }, [showAddExpenseModal, showScanReceiptModal]);
 
   // Initialize budget data from trip if not exists
   const expenses: Expense[] = (trip as any).expenses || [];
@@ -172,6 +186,227 @@ export default function TripBudgetView({
     setExpenseSplitType('equal');
     setSelectedMembers([currentUserId]);
     setCustomSplits({});
+  };
+
+  // Handle scan receipt
+  const handleScanReceipt = async (file: File) => {
+    try {
+      setIsScanning(true);
+      
+      // Create image preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setReceiptImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // Send to API
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('/api/scan-receipt', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to scan receipt');
+      }
+
+      const data = await response.json();
+      setScannedReceipt(data);
+      
+      // Initialize item assignments (all items unassigned)
+      const initialAssignments: Record<number, string[]> = {};
+      data.items.forEach((_: any, index: number) => {
+        initialAssignments[index] = [];
+      });
+      setItemAssignments(initialAssignments);
+
+    } catch (error) {
+      console.error('Error scanning receipt:', error);
+      alert('Failed to scan receipt. Please try again.');
+      setShowScanReceiptModal(false);
+      setReceiptImage(null);
+      setScannedReceipt(null);
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  // Toggle member assignment for an item
+  const toggleItemAssignment = (itemIndex: number, memberId: string) => {
+    setItemAssignments(prev => {
+      const current = prev[itemIndex] || [];
+      const updated = current.includes(memberId)
+        ? current.filter(id => id !== memberId)
+        : [...current, memberId];
+      return { ...prev, [itemIndex]: updated };
+    });
+  };
+
+  // Create expenses from scanned receipt
+  const handleCreateExpensesFromReceipt = () => {
+    if (!scannedReceipt || !expensePaidBy) {
+      alert('Please select who paid for this receipt');
+      return;
+    }
+
+    // Get all members who have at least one item assigned
+    const allParticipants = [...new Set(Object.values(itemAssignments).flat())];
+    
+    if (allParticipants.length === 0) {
+      alert('Please assign at least one item to a group member');
+      return;
+    }
+
+    // Separate assigned and unassigned items
+    const assignedItems = scannedReceipt.items.filter((_, index) => 
+      itemAssignments[index] && itemAssignments[index].length > 0
+    );
+    
+    const unassignedItems = scannedReceipt.items.filter((_, index) => 
+      !itemAssignments[index] || itemAssignments[index].length === 0
+    );
+
+    const newExpenses: Expense[] = [];
+
+    // Create expenses for assigned items
+    scannedReceipt.items.forEach((item, index) => {
+      const assignedMembers = itemAssignments[index];
+      
+      if (assignedMembers && assignedMembers.length > 0) {
+        const totalAmount = item.price * (item.quantity || 1);
+        const amountPerPerson = totalAmount / assignedMembers.length;
+
+        const shares: ExpenseShare[] = assignedMembers.map(memberId => ({
+          memberId,
+          amount: amountPerPerson,
+          percentage: (amountPerPerson / totalAmount) * 100,
+        }));
+
+        newExpenses.push({
+          id: `expense-${Date.now()}-${index}`,
+          groupId: trip.id,
+          description: item.name,
+          totalAmount,
+          paidBy: expensePaidBy,
+          splitType: 'equal',
+          shares,
+          participants: assignedMembers,
+          category: 'Food & Dining',
+          date: new Date().toISOString().split('T')[0],
+          createdBy: currentUserId,
+          createdAt: new Date().toISOString(),
+        });
+      }
+    });
+
+    // Create one expense for all unassigned items (split equally among all participants)
+    if (unassignedItems.length > 0) {
+      const unassignedTotal = unassignedItems.reduce((sum, item) => 
+        sum + (item.price * (item.quantity || 1)), 0
+      );
+      const amountPerPerson = unassignedTotal / allParticipants.length;
+
+      const shares: ExpenseShare[] = allParticipants.map(memberId => ({
+        memberId,
+        amount: amountPerPerson,
+        percentage: (amountPerPerson / unassignedTotal) * 100,
+      }));
+
+      newExpenses.push({
+        id: `expense-${Date.now()}-unassigned`,
+        groupId: trip.id,
+        description: `Shared items (${unassignedItems.length} items)`,
+        totalAmount: unassignedTotal,
+        paidBy: expensePaidBy,
+        splitType: 'equal',
+        shares,
+        participants: allParticipants,
+        category: 'Food & Dining',
+        date: new Date().toISOString().split('T')[0],
+        createdBy: currentUserId,
+        createdAt: new Date().toISOString(),
+      });
+    }
+
+    // Add tax and tip as separate expenses if they exist
+    if (scannedReceipt.tax && scannedReceipt.tax > 0) {
+      const allMembers = [...new Set(Object.values(itemAssignments).flat())];
+      const taxPerPerson = scannedReceipt.tax / allMembers.length;
+      const taxAmount = scannedReceipt.tax;
+      
+      newExpenses.push({
+        id: `expense-${Date.now()}-tax`,
+        groupId: trip.id,
+        description: 'Tax',
+        totalAmount: taxAmount,
+        paidBy: expensePaidBy,
+        splitType: 'equal',
+        shares: allMembers.map(memberId => ({
+          memberId,
+          amount: taxPerPerson,
+          percentage: (taxPerPerson / taxAmount) * 100,
+        })),
+        participants: allMembers,
+        category: 'Food & Dining',
+        date: new Date().toISOString().split('T')[0],
+        createdBy: currentUserId,
+        createdAt: new Date().toISOString(),
+      });
+    }
+
+    if (scannedReceipt.tip && scannedReceipt.tip > 0) {
+      const allMembers = [...new Set(Object.values(itemAssignments).flat())];
+      const tipPerPerson = scannedReceipt.tip / allMembers.length;
+      const tipAmount = scannedReceipt.tip;
+      
+      newExpenses.push({
+        id: `expense-${Date.now()}-tip`,
+        groupId: trip.id,
+        description: 'Tip',
+        totalAmount: tipAmount,
+        paidBy: expensePaidBy,
+        splitType: 'equal',
+        shares: allMembers.map(memberId => ({
+          memberId,
+          amount: tipPerPerson,
+          percentage: (tipPerPerson / tipAmount) * 100,
+        })),
+        participants: allMembers,
+        category: 'Food & Dining',
+        date: new Date().toISOString().split('T')[0],
+        createdBy: currentUserId,
+        createdAt: new Date().toISOString(),
+      });
+    }
+
+    // Update trip with new expenses
+    const updatedExpenses = [...expenses, ...newExpenses];
+    const updatedTrip = {
+      ...trip,
+      expenses: updatedExpenses,
+    } as any;
+    
+    onUpdateTrip(updatedTrip);
+
+    // Reset and close
+    setShowScanReceiptModal(false);
+    setReceiptImage(null);
+    setScannedReceipt(null);
+    setItemAssignments({});
+    setExpensePaidBy('');
+  };
+
+  // Reset scan receipt modal
+  const resetScanReceiptModal = () => {
+    setShowScanReceiptModal(false);
+    setReceiptImage(null);
+    setScannedReceipt(null);
+    setItemAssignments({});
+    setExpensePaidBy('');
+    setIsScanning(false);
   };
 
   // Handle add expense
@@ -400,7 +635,7 @@ export default function TripBudgetView({
         </nav>
 
         {/* Add Expense Button */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
           <button
             onClick={() => setShowAddExpenseModal(true)}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-static-bg-700 dark:bg-static-bg-700 hover:bg-static-bg-600 dark:hover:bg-static-bg-600 text-white rounded-lg font-medium transition-colors"
@@ -409,6 +644,18 @@ export default function TripBudgetView({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Add expense
+          </button>
+
+          {/* Scan Receipt Button */}
+          <button
+            onClick={() => setShowScanReceiptModal(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-static-bg-800 dark:bg-static-bg-800 hover:bg-static-bg-700 dark:hover:bg-static-bg-700 text-static-text-50 rounded-lg font-medium transition-colors border border-gray-700 dark:border-gray-600"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Scan receipt
           </button>
         </div>
 
@@ -1422,6 +1669,261 @@ export default function TripBudgetView({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Scan Receipt Modal */}
+      {showScanReceiptModal && (
+        <div 
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40"
+          onClick={resetScanReceiptModal}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50">
+                Scan Receipt
+              </h2>
+              <p className="text-static-text-600 dark:text-static-text-400 mt-1">
+                Upload a photo of your receipt to split items automatically
+              </p>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {!receiptImage && !isScanning && (
+                <div className="space-y-4">
+                  <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-600 dark:border-gray-600 rounded-lg cursor-pointer hover:border-gray-500 dark:hover:border-gray-500 transition-colors">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <svg className="w-12 h-12 mb-4 text-static-text-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <p className="mb-2 text-sm text-static-text-600 dark:text-static-text-400">
+                        <span className="font-semibold">Click to upload</span> or drag and drop
+                      </p>
+                      <p className="text-xs text-static-text-500">PNG, JPG, JPEG (MAX. 10MB)</p>
+                    </div>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleScanReceipt(file);
+                      }}
+                    />
+                  </label>
+                </div>
+              )}
+
+              {isScanning && (
+                <div className="flex flex-col items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-300 border-t-static-bg-700 mb-4"></div>
+                  <p className="text-static-text-600 dark:text-static-text-400">Scanning receipt...</p>
+                </div>
+              )}
+
+              {receiptImage && !scannedReceipt && !isScanning && (
+                <div className="flex flex-col items-center">
+                  <img src={receiptImage} alt="Receipt" className="max-h-96 rounded-lg mb-4" />
+                </div>
+              )}
+
+              {scannedReceipt && (
+                <div className="space-y-6">
+                  {/* Receipt Preview */}
+                  {receiptImage && (
+                    <div className="flex items-start gap-4 p-4 bg-static-bg-100 dark:bg-static-bg-800 rounded-lg">
+                      <img src={receiptImage} alt="Receipt" className="w-24 h-32 object-cover rounded" />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-static-text-900 dark:text-static-text-50 mb-2">
+                          Receipt Scanned
+                        </h3>
+                        <div className="text-sm text-static-text-600 dark:text-static-text-400 space-y-1">
+                          {scannedReceipt.subtotal && (
+                            <div className="flex justify-between">
+                              <span>Subtotal:</span>
+                              <span>{formatCurrency(scannedReceipt.subtotal, currency)}</span>
+                            </div>
+                          )}
+                          {scannedReceipt.tax && (
+                            <div className="flex justify-between">
+                              <span>Tax:</span>
+                              <span>{formatCurrency(scannedReceipt.tax, currency)}</span>
+                            </div>
+                          )}
+                          {scannedReceipt.tip && (
+                            <div className="flex justify-between">
+                              <span>Tip:</span>
+                              <span>{formatCurrency(scannedReceipt.tip, currency)}</span>
+                            </div>
+                          )}
+                          {scannedReceipt.total && (
+                            <div className="flex justify-between font-semibold text-static-text-900 dark:text-static-text-50 pt-1 border-t border-gray-300 dark:border-gray-600">
+                              <span>Total:</span>
+                              <span>{formatCurrency(scannedReceipt.total, currency)}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Who Paid */}
+                  <div>
+                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                      Who paid for this? *
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {members.map((member) => (
+                        <button
+                          key={member.id}
+                          type="button"
+                          onClick={() => setExpensePaidBy(member.id)}
+                          className={`px-4 py-3 rounded-lg border-2 transition-all ${
+                            expensePaidBy === member.id
+                              ? 'border-static-bg-700 bg-static-bg-700/10'
+                              : 'border-gray-600 hover:border-gray-500'
+                          }`}
+                        >
+                          <div className="font-medium text-static-text-900 dark:text-static-text-50">
+                            {member.name}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Items List */}
+                  {scannedReceipt.items && scannedReceipt.items.length > 0 ? (
+                    <div>
+                      <div className="flex justify-between items-center mb-3">
+                        <h3 className="text-lg font-semibold text-static-text-900 dark:text-static-text-50">
+                          Assign items to group members
+                        </h3>
+                        {scannedReceipt.items.some((_, i) => !itemAssignments[i] || itemAssignments[i].length === 0) && (
+                          <span className="text-xs text-static-text-500 dark:text-static-text-400">
+                            Unassigned items will be split equally
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-3">
+                        {scannedReceipt.items.map((item, index) => {
+                        const isAssigned = itemAssignments[index] && itemAssignments[index].length > 0;
+                        return (
+                          <div
+                            key={index}
+                            className={`p-4 rounded-lg border transition-all ${
+                              isAssigned
+                                ? 'bg-static-bg-100 dark:bg-static-bg-800 border-gray-200 dark:border-gray-700'
+                                : 'bg-yellow-50 dark:bg-yellow-900/10 border-yellow-300 dark:border-yellow-700/50'
+                            }`}
+                          >
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="font-medium text-static-text-900 dark:text-static-text-50">
+                                    {item.name}
+                                  </div>
+                                  {!isAssigned && (
+                                    <span className="px-2 py-0.5 bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 text-xs rounded-full">
+                                      Unassigned
+                                    </span>
+                                  )}
+                                </div>
+                                {item.quantity && item.quantity > 1 && (
+                                  <div className="text-sm text-static-text-500 mt-1">
+                                    Quantity: {item.quantity}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="font-semibold text-static-text-900 dark:text-static-text-50 ml-4">
+                                {formatCurrency(item.price * (item.quantity || 1), currency)}
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {members.map((member) => {
+                                const isSelected = itemAssignments[index]?.includes(member.id);
+                                return (
+                                  <button
+                                    key={member.id}
+                                    type="button"
+                                    onClick={() => toggleItemAssignment(index, member.id)}
+                                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                                      isSelected
+                                        ? 'bg-static-bg-700 text-white'
+                                        : 'bg-gray-200 dark:bg-gray-700 text-static-text-700 dark:text-static-text-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                    }`}
+                                  >
+                                    {member.name}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            {isAssigned ? (
+                              <div className="mt-2 text-sm text-static-text-600 dark:text-static-text-400">
+                                {formatCurrency(
+                                  (item.price * (item.quantity || 1)) / itemAssignments[index].length,
+                                  currency
+                                )}{' '}
+                                per person
+                              </div>
+                            ) : (
+                              <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                                Will be split equally among all participants
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    </div>
+                  ) : (
+                    <div className="p-6 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-300 dark:border-yellow-700/50 rounded-lg text-center">
+                      <p className="text-static-text-700 dark:text-static-text-300">
+                        No items detected. The receipt may be unclear or in an unexpected format.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setReceiptImage(null);
+                          setScannedReceipt(null);
+                        }}
+                        className="mt-3 text-static-bg-700 hover:underline font-medium"
+                      >
+                        Try another photo
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex gap-3">
+              <button
+                type="button"
+                onClick={resetScanReceiptModal}
+                className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-static-text-900 dark:text-static-text-50 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+              {scannedReceipt && (
+                <button
+                  type="button"
+                  onClick={handleCreateExpensesFromReceipt}
+                  disabled={!expensePaidBy || Object.values(itemAssignments).every(arr => !arr || arr.length === 0)}
+                  className="flex-1 px-4 py-3 bg-static-bg-700 dark:bg-static-bg-700 hover:bg-static-bg-600 dark:hover:bg-static-bg-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:text-static-text-700"
+                >
+                  Create Expenses ({scannedReceipt.items.filter((_, i) => itemAssignments[i]?.length > 0).length} assigned)
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
