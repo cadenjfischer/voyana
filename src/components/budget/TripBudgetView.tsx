@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Expense, GroupMember, ExpenseShare } from '@/types/budget';
 import { calculateGroupBalances, formatCurrency, calculateSettlements } from '@/utils/budget';
 import { Trip } from '@/types/itinerary';
@@ -40,6 +40,19 @@ export default function TripBudgetView({
   const [expenseSplitType, setExpenseSplitType] = useState<'equal' | 'custom'>('equal');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([currentUserId]);
   const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
+
+  // Lock body scroll when modals or the payer picker are open
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    if (showAddExpenseModal || showPayerPicker) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = prev || '';
+    }
+    return () => {
+      document.body.style.overflow = prev || '';
+    };
+  }, [showAddExpenseModal, showPayerPicker]);
 
   // Initialize budget data from trip if not exists
   const expenses: Expense[] = (trip as any).expenses || [];
@@ -863,14 +876,14 @@ export default function TripBudgetView({
       {/* Add Expense Modal */}
       {showAddExpenseModal && (
         <div 
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4 overflow-hidden overscroll-none"
           onClick={() => {
             resetExpenseForm();
             setShowAddExpenseModal(false);
           }}
         >
           <div 
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className={`bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] ${showPayerPicker ? 'overflow-hidden' : 'overflow-y-auto'}`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -1193,7 +1206,7 @@ export default function TripBudgetView({
               {/* Slide-up Payer Picker overlay (covers the content area; same size) */}
               {expenseStep === 'details' && (
                 <div
-                  className={`absolute inset-0 rounded-b-2xl bg-white dark:bg-gray-800 transform transition-transform duration-300 ${
+                  className={`absolute inset-0 z-20 rounded-b-2xl bg-white dark:bg-gray-800 transform transition-transform duration-300 ${
                     showPayerPicker ? 'translate-y-0' : 'translate-y-full pointer-events-none'
                   }`}
                   aria-hidden={!showPayerPicker}
@@ -1215,7 +1228,7 @@ export default function TripBudgetView({
                     </div>
 
                     {/* List */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                    <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-3">
                       {members.map((member) => {
                         const selected = member.id === expensePaidBy;
                         return (
