@@ -33,6 +33,7 @@ export default function AirlineDatePicker({
   const pickerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLButtonElement>(null);
   const [inputPosition, setInputPosition] = useState({ top: 0, left: 0, width: 0, height: 0 });
+  const [positionAbove, setPositionAbove] = useState(false);
 
   const today = new Date();
   today.setHours(12, 0, 0, 0); // Set to noon for consistent comparison
@@ -47,6 +48,14 @@ export default function AirlineDatePicker({
     const update = () => {
       if (!inputRef.current) return;
       const rect = inputRef.current.getBoundingClientRect();
+      const calendarHeight = single ? 320 : 450; // More accurate calendar height
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      
+      // Position above if not enough space below
+      const shouldPositionAbove = spaceBelow < calendarHeight && spaceAbove > spaceBelow;
+      setPositionAbove(shouldPositionAbove);
+      
       setInputPosition({
         top: rect.top + window.scrollY,
         left: rect.left + window.scrollX,
@@ -67,7 +76,7 @@ export default function AirlineDatePicker({
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [isOpen]);
+  }, [isOpen, single]);
 
   // Close picker when clicking outside
   useEffect(() => {
@@ -355,7 +364,12 @@ export default function AirlineDatePicker({
           ref={pickerRef}
           className={`absolute bg-static-bg-50 dark:bg-static-bg-900 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-[10002] ${single ? 'p-4' : 'p-6'}`}
           style={{
-            top: inputPosition.top + (compact ? 60 : inputPosition.height + 6),
+            bottom: positionAbove 
+              ? window.innerHeight - inputPosition.top + 6
+              : 'auto',
+            top: positionAbove
+              ? 'auto'
+              : inputPosition.top + (compact ? 60 : inputPosition.height + 6),
             right: typeof window !== 'undefined' ? window.innerWidth - inputPosition.left - inputPosition.width : 'auto',
             width: single ? '320px' : '600px',
           }}

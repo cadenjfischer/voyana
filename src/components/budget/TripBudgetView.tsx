@@ -438,7 +438,7 @@ export default function TripBudgetView({
       <div className="flex-1 overflow-y-auto">
         {/* Expenses Tab */}
         {activeTab === 'expenses' && (
-          <div className="p-8">
+          <div className="p-8 lg:pr-96 xl:pr-[28rem]">
             {/* Expense List */}
             <div className="max-w-4xl">
               {expenses.length === 0 ? (
@@ -517,7 +517,7 @@ export default function TripBudgetView({
 
         {/* Balance Tab */}
         {activeTab === 'balance' && (
-          <div className="p-8">
+          <div className="p-8 lg:pr-96 xl:pr-[28rem]">
             <div className="max-w-4xl">
               <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50 mb-6">
                 Member Balances
@@ -569,7 +569,7 @@ export default function TripBudgetView({
 
         {/* Settlements Tab */}
         {activeTab === 'settlements' && (
-          <div className="p-8">
+          <div className="p-8 lg:pr-96 xl:pr-[28rem]">
             <div className="max-w-4xl">
               <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
                 Suggested Settlements
@@ -646,7 +646,7 @@ export default function TripBudgetView({
         )}
 
         {/* Right Sidebar - Total Trip Cost & Categories */}
-        <div className="fixed right-8 top-24 w-80">
+        <div className="hidden lg:block lg:fixed lg:right-8 lg:top-24 lg:w-80 xl:w-96">
           {/* Budget Goal Progress */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
             <div className="flex items-center justify-between mb-4">
