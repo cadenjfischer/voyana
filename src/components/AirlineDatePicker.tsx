@@ -198,16 +198,16 @@ export default function AirlineDatePicker({
     return (
       <div className="flex-1 min-w-0">
         {/* Month header */}
-        <div className="text-center mb-4">
-          <h3 className="text-lg font-semibold text-static-text-900 dark:text-static-text-50">
+        <div className={`text-center ${single ? 'mb-3' : 'mb-4'}`}>
+          <h3 className={`${single ? 'text-base' : 'text-lg'} font-semibold text-static-text-900 dark:text-static-text-50`}>
             {getMonthYear(month)}
           </h3>
         </div>
 
         {/* Day headers */}
-        <div className="grid grid-cols-7 mb-3">
+        <div className={`grid grid-cols-7 ${single ? 'mb-2' : 'mb-3'}`}>
           {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((day) => (
-            <div key={day} className="h-8 flex items-center justify-center">
+            <div key={day} className={`${single ? 'h-7' : 'h-8'} flex items-center justify-center`}>
               <span className="text-xs font-medium text-static-text-900 dark:text-static-text-50 opacity-60 uppercase tracking-wide">
                 {day}
               </span>
@@ -235,7 +235,7 @@ export default function AirlineDatePicker({
             const showRangeBackground = (isInRange || isInHoverRange) && !isPastDate && !isStartDate && !isEndDate && !isHoverEnd;
             
             // Wrapper div for range background - full width cell
-            let wrapperClass = 'relative h-8 flex items-center justify-center';
+            let wrapperClass = `relative ${single ? 'h-7' : 'h-8'} flex items-center justify-center`;
             if (showRangeBackground) {
               wrapperClass += ' bg-static-accent-200 dark:bg-static-accent-800/60';
               
@@ -259,7 +259,9 @@ export default function AirlineDatePicker({
             }
             
             // Button class for the date number
-            let buttonClass = 'relative w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors z-10';
+            const cellSize = single ? 'w-7 h-7' : 'w-8 h-8';
+            const fontSize = single ? 'text-xs' : 'text-sm';
+            let buttonClass = `relative ${cellSize} rounded-full flex items-center justify-center ${fontSize} font-medium transition-colors z-10`;
             
             if (isPastDate) {
               buttonClass += ' text-static-text-900 dark:text-static-text-50 opacity-20 cursor-not-allowed';
@@ -351,15 +353,15 @@ export default function AirlineDatePicker({
       {isOpen && typeof window !== 'undefined' && createPortal(
         <div 
           ref={pickerRef}
-          className="absolute bg-static-bg-50 dark:bg-static-bg-900 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-[10002] p-6"
+          className={`absolute bg-static-bg-50 dark:bg-static-bg-900 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-[10002] ${single ? 'p-4' : 'p-6'}`}
           style={{
             top: inputPosition.top + (compact ? 60 : inputPosition.height + 6),
             right: typeof window !== 'undefined' ? window.innerWidth - inputPosition.left - inputPosition.width : 'auto',
-            width: '600px',
+            width: single ? '320px' : '600px',
           }}
         >
           {/* Navigation header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className={`flex items-center justify-between ${single ? 'mb-4' : 'mb-6'}`}>
             <button
               type="button"
               onClick={() => navigateMonth('prev')}
@@ -382,9 +384,9 @@ export default function AirlineDatePicker({
           </div>
 
           {/* Two month view */}
-          <div className="flex gap-8">
+          <div className={`flex ${single ? 'gap-0' : 'gap-8'}`}>
             {renderMonth(currentMonth)}
-            {renderMonth(getNextMonth(currentMonth))}
+            {!single && renderMonth(getNextMonth(currentMonth))}
           </div>
         </div>,
         document.body

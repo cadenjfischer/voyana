@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Expense, GroupMember, ExpenseShare } from '@/types/budget';
 import { calculateGroupBalances, formatCurrency, calculateSettlements } from '@/utils/budget';
 import { Trip } from '@/types/itinerary';
+import AirlineDatePicker from '@/components/AirlineDatePicker';
 
 interface TripBudgetViewProps {
   trip: Trip;
@@ -35,16 +36,15 @@ export default function TripBudgetView({
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseCategory, setExpenseCategory] = useState('');
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
-  const [expensePaidBy, setExpensePaidBy] = useState(currentUserId);
-  const [showPayerPicker, setShowPayerPicker] = useState(false);
+  const [expensePaidBy, setExpensePaidBy] = useState('');
   const [expenseSplitType, setExpenseSplitType] = useState<'equal' | 'custom'>('equal');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([currentUserId]);
   const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
 
-  // Lock body scroll when modals or the payer picker are open
+  // Lock body scroll when modal is open
   useEffect(() => {
     const prev = document.body.style.overflow;
-    if (showAddExpenseModal || showPayerPicker) {
+    if (showAddExpenseModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = prev || '';
@@ -52,7 +52,7 @@ export default function TripBudgetView({
     return () => {
       document.body.style.overflow = prev || '';
     };
-  }, [showAddExpenseModal, showPayerPicker]);
+  }, [showAddExpenseModal]);
 
   // Initialize budget data from trip if not exists
   const expenses: Expense[] = (trip as any).expenses || [];
@@ -168,7 +168,7 @@ export default function TripBudgetView({
     setExpenseAmount('');
     setExpenseCategory('');
     setExpenseDate(new Date().toISOString().split('T')[0]);
-    setExpensePaidBy(currentUserId);
+    setExpensePaidBy('');
     setExpenseSplitType('equal');
     setSelectedMembers([currentUserId]);
     setCustomSplits({});
@@ -883,7 +883,7 @@ export default function TripBudgetView({
           }}
         >
           <div 
-            className={`bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] ${showPayerPicker ? 'overflow-hidden' : 'overflow-y-auto'}`}
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -952,112 +952,154 @@ export default function TripBudgetView({
             <div className="relative p-6">
               {expenseStep === 'details' ? (
                 <div className="space-y-4">
-                  {/* Description */}
-                  <div>
-                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
-                      Description <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={expenseDescription}
-                      onChange={(e) => setExpenseDescription(e.target.value)}
-                      placeholder="e.g., Dinner at restaurant"
-                      className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-50 placeholder:text-static-text-700 dark:placeholder:text-static-text-600 focus:outline-none focus:border-static-accent-500 transition-colors"
-                      autoFocus
-                    />
-                  </div>
-
-                  {/* Amount */}
-                  <div>
-                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
-                      Amount <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex items-center gap-3 border border-gray-600 dark:border-gray-600 rounded-lg focus-within:border-static-accent-500 transition-colors px-4 py-3">
-                      <span className="text-sm font-medium text-static-text-500">
-                        {currency}
-                      </span>
-                      <input
-                        type="number"
-                        value={expenseAmount}
-                        onChange={(e) => setExpenseAmount(e.target.value)}
-                        placeholder="0.00"
-                        step="0.01"
-                        min="0"
-                        className="flex-1 bg-transparent text-static-text-50 placeholder:text-static-text-700 dark:placeholder:text-static-text-600 focus:outline-none text-xl"
-                      />
+                  {/* Show Payer Selection First if not selected */}
+                  {!expensePaidBy ? (
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-static-text-900 dark:text-static-text-50 mb-2">
+                          Who paid for this expense?
+                        </h3>
+                        <p className="text-sm text-static-text-600 dark:text-static-text-400 mb-4">
+                          Select the person who paid
+                        </p>
+                      </div>
+                      
+                      {/* Member List */}
+                      <div className="space-y-3">
+                        {members.map((member) => (
+                          <button
+                            key={member.id}
+                            type="button"
+                            onClick={() => setExpensePaidBy(member.id)}
+                            className="w-full flex items-center gap-3 p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-static-accent-500 dark:hover:border-static-accent-500 transition-colors bg-transparent"
+                          >
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                              {member.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 text-left">
+                              <p className="font-medium text-static-text-900 dark:text-static-text-50">
+                                {member.name}
+                                {member.id === currentUserId && (
+                                  <span className="ml-2 text-sm text-static-text-500">(You)</span>
+                                )}
+                              </p>
+                              {member.email && (
+                                <p className="text-sm text-static-text-600 dark:text-static-text-400">
+                                  {member.email}
+                                </p>
+                              )}
+                            </div>
+                            <svg className="w-5 h-5 text-static-text-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      {/* Back button to change payer */}
+                      <button
+                        type="button"
+                        onClick={() => setExpensePaidBy('')}
+                        className="flex items-center gap-2 text-sm text-static-text-600 dark:text-static-text-400 hover:text-static-text-900 dark:hover:text-static-text-50 transition-colors mb-4"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Change payer ({payer?.name})
+                      </button>
 
-                  {/* Category */}
-                  <div>
-                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
-                      Category
-                    </label>
-                    <select
-                      value={expenseCategory}
-                      onChange={(e) => setExpenseCategory(e.target.value)}
-                      className={`w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg focus:outline-none focus:border-static-accent-500 transition-colors appearance-none cursor-pointer ${
-                        expenseCategory ? 'text-static-text-50' : 'text-static-text-600 dark:text-static-text-500'
-                      }`}
-                      style={{ 
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-                        backgroundPosition: 'right 0.75rem center',
-                        backgroundRepeat: 'no-repeat',
-                        backgroundSize: '1.25rem'
-                      }}
-                    >
-                      <option value="">Select category</option>
-                      <option value="Food">🍽️ Food & Drink</option>
-                      <option value="Lodging">🛏️ Lodging</option>
-                      <option value="Transport">🚗 Transport</option>
-                      <option value="Activities">📸 See & Do</option>
-                      <option value="Shopping">🛍️ Shopping</option>
-                      <option value="Other">⋯ Other</option>
-                    </select>
-                  </div>
+                      {/* Description */}
+                      <div>
+                        <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                          Description <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={expenseDescription}
+                          onChange={(e) => setExpenseDescription(e.target.value)}
+                          placeholder="e.g., Dinner at restaurant"
+                          className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-50 placeholder:text-static-text-700 dark:placeholder:text-static-text-600 focus:outline-none focus:border-static-accent-500 transition-colors"
+                          autoFocus
+                        />
+                      </div>
 
-                  {/* Date */}
-                  <div>
-                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
-                      Date
-                    </label>
-                    <input
-                      type="date"
-                      value={expenseDate}
-                      onChange={(e) => setExpenseDate(e.target.value)}
-                      className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 focus:outline-none focus:border-static-accent-500 transition-colors"
-                    />
-                  </div>
+                      {/* Amount */}
+                      <div>
+                        <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                          Amount <span className="text-red-500">*</span>
+                        </label>
+                        <div className="flex items-center gap-3 border border-gray-600 dark:border-gray-600 rounded-lg focus-within:border-static-accent-500 transition-colors px-4 py-3">
+                          <span className="text-sm font-medium text-static-text-500">
+                            {currency}
+                          </span>
+                          <input
+                            type="number"
+                            value={expenseAmount}
+                            onChange={(e) => setExpenseAmount(e.target.value)}
+                            placeholder="0.00"
+                            step="0.01"
+                            min="0"
+                            className="flex-1 bg-transparent text-static-text-50 placeholder:text-static-text-700 dark:placeholder:text-static-text-600 focus:outline-none text-xl"
+                          />
+                        </div>
+                      </div>
 
-                  {/* Paid By */}
-                  <div>
-                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
-                      Paid by
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowPayerPicker(true)}
-                      className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-left flex items-center justify-between focus:outline-none focus:border-static-accent-500 transition-colors"
-                    >
-                      <span className="text-static-text-50">
-                        {payer ? `${payer.name}${payer.id === currentUserId ? ' (You)' : ''}` : 'Choose payer'}
-                      </span>
-                      <svg className="w-5 h-5 text-static-text-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </div>
+                      {/* Category */}
+                      <div>
+                        <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                          Category
+                        </label>
+                        <select
+                          value={expenseCategory}
+                          onChange={(e) => setExpenseCategory(e.target.value)}
+                          className={`w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg focus:outline-none focus:border-static-accent-500 transition-colors appearance-none cursor-pointer ${
+                            expenseCategory ? 'text-static-text-50' : 'text-static-text-600 dark:text-static-text-500'
+                          }`}
+                          style={{ 
+                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                            backgroundPosition: 'right 0.75rem center',
+                            backgroundRepeat: 'no-repeat',
+                            backgroundSize: '1.25rem'
+                          }}
+                        >
+                          <option value="">Select category</option>
+                          <option value="Food">🍽️ Food & Drink</option>
+                          <option value="Lodging">🛏️ Lodging</option>
+                          <option value="Transport">🚗 Transport</option>
+                          <option value="Activities">📸 See & Do</option>
+                          <option value="Shopping">🛍️ Shopping</option>
+                          <option value="Other">⋯ Other</option>
+                        </select>
+                      </div>
 
-                  {/* Next Button */}
-                  <div className="pt-4">
-                    <button
-                      onClick={() => setExpenseStep('split')}
-                      disabled={!expenseDescription.trim() || !expenseAmount || parseFloat(expenseAmount) <= 0}
-                      className="w-full px-4 py-3 bg-static-bg-700 hover:bg-static-bg-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
-                    >
-                      Next: Split Expense
-                    </button>
-                  </div>
+                      {/* Date */}
+                      <div>
+                        <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                          Date
+                        </label>
+                        <AirlineDatePicker
+                          startDate={expenseDate}
+                          endDate=""
+                          onStartDateChange={(date) => setExpenseDate(date)}
+                          onEndDateChange={() => {}}
+                          single={true}
+                        />
+                      </div>
+
+                      {/* Next Button */}
+                      <div className="pt-4">
+                        <button
+                          onClick={() => setExpenseStep('split')}
+                          disabled={!expenseDescription.trim() || !expenseAmount || parseFloat(expenseAmount) <= 0}
+                          className="w-full px-4 py-3 bg-static-bg-700 hover:bg-static-bg-600 disabled:bg-gray-400 text-white disabled:text-static-text-700 rounded-lg font-medium transition-colors"
+                        >
+                          Next: Split Expense
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -1167,7 +1209,7 @@ export default function TripBudgetView({
                     <div className={`p-4 rounded-lg ${
                       Math.abs(calculateRemainingAmount()) < 0.01
                         ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700'
-                        : 'bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700'
+                        : 'bg-static-accent-100 dark:bg-static-accent-900/30 border border-static-accent-300 dark:border-static-accent-700'
                     }`}>
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-static-text-900 dark:text-static-text-50">
@@ -1176,7 +1218,7 @@ export default function TripBudgetView({
                         <span className={`text-lg font-bold ${
                           Math.abs(calculateRemainingAmount()) < 0.01
                             ? 'text-green-600 dark:text-green-400'
-                            : 'text-yellow-600 dark:text-yellow-400'
+                            : 'text-static-accent-700 dark:text-static-accent-400'
                         }`}>
                           {formatCurrency(Math.max(0, calculateRemainingAmount()), currency)}
                         </span>
@@ -1195,82 +1237,10 @@ export default function TripBudgetView({
                     <button
                       onClick={handleAddExpense}
                       disabled={selectedMembers.length === 0}
-                      className="flex-1 px-4 py-3 bg-static-bg-700 hover:bg-static-bg-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+                      className="flex-1 px-4 py-3 bg-static-bg-700 hover:bg-static-bg-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white disabled:text-static-text-700 rounded-lg font-medium transition-colors"
                     >
                       Add Expense
                     </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Slide-up Payer Picker overlay (covers the content area; same size) */}
-              {expenseStep === 'details' && showPayerPicker && (
-                <div
-                  className="absolute inset-0 z-20 rounded-b-2xl bg-white dark:bg-gray-800 transform transition-transform duration-300 translate-y-0"
-                >
-                  <div className="h-full flex flex-col">
-                    {/* Header */}
-                    <div className="flex items-center px-2 py-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowPayerPicker(false)}
-                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        aria-label="Back"
-                      >
-                        <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                      </button>
-                      <h3 className="ml-2 text-lg font-semibold text-static-text-900 dark:text-static-text-50">Who paid for this expense?</h3>
-                    </div>
-
-                    {/* List */}
-                    <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-3">
-                      {members.map((member) => {
-                        const selected = member.id === expensePaidBy;
-                        return (
-                          <button
-                            key={member.id}
-                            type="button"
-                            onClick={() => { setExpensePaidBy(member.id); setShowPayerPicker(false); }}
-                            className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-colors text-left ${
-                              selected
-                                ? 'border-static-bg-700 bg-static-bg-700/10'
-                                : 'border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
-                            }`}
-                          >
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-bold">
-                              {member.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-medium text-static-text-900 dark:text-static-text-50">
-                                {member.name} {member.id === currentUserId && <span className="text-static-text-500">(You)</span>}
-                              </p>
-                              {member.email && (
-                                <p className="text-sm text-static-text-600 dark:text-static-text-400">{member.email}</p>
-                              )}
-                            </div>
-                            <span
-                              className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                                selected
-                                  ? 'border-static-bg-700 bg-static-bg-700'
-                                  : 'border-gray-400 dark:border-gray-500'
-                              }`}
-                              aria-hidden
-                            >
-                              {selected && (
-                                <svg className="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                              )}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Footer spacer so it matches current content padding */}
-                    <div className="p-4" />
                   </div>
                 </div>
               )}
