@@ -36,6 +36,7 @@ export default function TripBudgetView({
   const [expenseCategory, setExpenseCategory] = useState('');
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
   const [expensePaidBy, setExpensePaidBy] = useState(currentUserId);
+  const [showPayerPicker, setShowPayerPicker] = useState(false);
   const [expenseSplitType, setExpenseSplitType] = useState<'equal' | 'custom'>('equal');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([currentUserId]);
   const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
@@ -314,6 +315,7 @@ export default function TripBudgetView({
   // Calculate percentages for progress ring
   const totalPaid = totalExpenses;
   const totalPending = 0; // For now, all expenses are paid
+  const payer = members.find((m) => m.id === expensePaidBy);
 
   return (
     <div className="h-screen bg-static-bg-50 dark:bg-static-bg-900 flex">
@@ -934,7 +936,7 @@ export default function TripBudgetView({
             </div>
 
             {/* Content */}
-            <div className="p-6">
+            <div className="relative p-6">
               {expenseStep === 'details' ? (
                 <div className="space-y-4">
                   {/* Description */}
@@ -1019,23 +1021,18 @@ export default function TripBudgetView({
                     <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
                       Paid by
                     </label>
-                    <select
-                      value={expensePaidBy}
-                      onChange={(e) => setExpensePaidBy(e.target.value)}
-                      className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-50 focus:outline-none focus:border-static-accent-500 transition-colors appearance-none cursor-pointer"
-                      style={{ 
-                        backgroundImage: `url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E\")`,
-                        backgroundPosition: 'right 0.75rem center',
-                        backgroundRepeat: 'no-repeat',
-                        backgroundSize: '1.25rem'
-                      }}
+                    <button
+                      type="button"
+                      onClick={() => setShowPayerPicker(true)}
+                      className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-left flex items-center justify-between focus:outline-none focus:border-static-accent-500 transition-colors"
                     >
-                      {members.map(member => (
-                        <option key={member.id} value={member.id}>
-                          {member.name} {member.id === currentUserId ? '(You)' : ''}
-                        </option>
-                      ))}
-                    </select>
+                      <span className="text-static-text-50">
+                        {payer ? `${payer.name}${payer.id === currentUserId ? ' (You)' : ''}` : 'Choose payer'}
+                      </span>
+                      <svg className="w-5 h-5 text-static-text-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
                   </div>
 
                   {/* Next Button */}
@@ -1189,6 +1186,81 @@ export default function TripBudgetView({
                     >
                       Add Expense
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Slide-up Payer Picker overlay (covers the content area; same size) */}
+              {expenseStep === 'details' && (
+                <div
+                  className={`absolute inset-0 rounded-b-2xl bg-white dark:bg-gray-800 transform transition-transform duration-300 ${
+                    showPayerPicker ? 'translate-y-0' : 'translate-y-full pointer-events-none'
+                  }`}
+                  aria-hidden={!showPayerPicker}
+                >
+                  <div className="h-full flex flex-col">
+                    {/* Header */}
+                    <div className="flex items-center px-2 py-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowPayerPicker(false)}
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        aria-label="Back"
+                      >
+                        <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <h3 className="ml-2 text-lg font-semibold text-static-text-900 dark:text-static-text-50">Who paid for this expense?</h3>
+                    </div>
+
+                    {/* List */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                      {members.map((member) => {
+                        const selected = member.id === expensePaidBy;
+                        return (
+                          <button
+                            key={member.id}
+                            type="button"
+                            onClick={() => { setExpensePaidBy(member.id); setShowPayerPicker(false); }}
+                            className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-colors text-left ${
+                              selected
+                                ? 'border-static-bg-700 bg-static-bg-700/10'
+                                : 'border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            }`}
+                          >
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-bold">
+                              {member.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium text-static-text-900 dark:text-static-text-50">
+                                {member.name} {member.id === currentUserId && <span className="text-static-text-500">(You)</span>}
+                              </p>
+                              {member.email && (
+                                <p className="text-sm text-static-text-600 dark:text-static-text-400">{member.email}</p>
+                              )}
+                            </div>
+                            <span
+                              className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                                selected
+                                  ? 'border-static-bg-700 bg-static-bg-700'
+                                  : 'border-gray-400 dark:border-gray-500'
+                              }`}
+                              aria-hidden
+                            >
+                              {selected && (
+                                <svg className="w-3 h-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Footer spacer so it matches current content padding */}
+                    <div className="p-4" />
                   </div>
                 </div>
               )}
