@@ -1204,12 +1204,9 @@ export default function TripBudgetView({
               )}
 
               {/* Slide-up Payer Picker overlay (covers the content area; same size) */}
-              {expenseStep === 'details' && (
+              {expenseStep === 'details' && showPayerPicker && (
                 <div
-                  className={`absolute inset-0 z-20 rounded-b-2xl bg-white dark:bg-gray-800 transform transition-transform duration-300 ${
-                    showPayerPicker ? 'translate-y-0' : 'translate-y-full pointer-events-none'
-                  }`}
-                  aria-hidden={!showPayerPicker}
+                  className="absolute inset-0 z-20 rounded-b-2xl bg-white dark:bg-gray-800 transform transition-transform duration-300 translate-y-0"
                 >
                   <div className="h-full flex flex-col">
                     {/* Header */}
