@@ -58,6 +58,7 @@ export default function TripBudgetView({
   const [itemAssignments, setItemAssignments] = useState<Record<number, string[]>>({});
   const [splittingItemIndex, setSplittingItemIndex] = useState<number | null>(null);
   const [itemSplits, setItemSplits] = useState<Record<number, Record<string, number>>>({});
+  const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -2078,78 +2079,151 @@ export default function TripBudgetView({
                           </span>
                         )}
                       </div>
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         {scannedReceipt.items.map((item, index) => {
                         const isAssigned = itemAssignments[index] && itemAssignments[index].length > 0;
+                        const assignedMembers = itemAssignments[index] || [];
+                        const showMemberDropdown = openDropdownIndex === index;
+                        
                         return (
                           <div
                             key={index}
-                            className={`p-4 rounded-lg border transition-all ${
+                            className={`relative p-3 rounded-lg border transition-all ${
                               isAssigned
-                                ? 'bg-static-bg-700 text-white'
-                                : 'bg-transparent border-gray-600'
+                                ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800'
+                                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600'
                             }`}
                           >
-                            <div className="flex justify-between items-start mb-3">
-                              <div>
-                                <h4 className="font-semibold text-static-text-900 dark:text-static-text-50">
-                                  {item.name}
-                                </h4>
-                                {item.quantity && item.quantity > 1 && (
-                                  <p className="text-sm text-static-text-500">
-                                    Quantity: {item.quantity}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-lg text-static-text-900 dark:text-static-text-50">
-                                  {formatCurrency(item.price * (item.quantity || 1), currency)}
-                                </span>
-                                {!isAssigned && (
-                                  <span className="px-2 py-0.5 text-xs font-medium bg-transparent text-white border border-white rounded-full">
-                                      Unassigned
+                            <div className="flex items-center justify-between gap-3">
+                              {/* Item name and quantity */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-medium text-static-text-900 dark:text-static-text-50 truncate">
+                                    {item.name}
+                                  </h4>
+                                  {item.quantity && item.quantity > 1 && (
+                                    <span className="text-xs text-static-text-500 dark:text-static-text-400 flex-shrink-0">
+                                      Qty: {item.quantity}
                                     </span>
-                                )}
+                                  )}
+                                </div>
                               </div>
+
+                              {/* Price */}
+                              <div className="font-semibold text-static-text-900 dark:text-static-text-50 flex-shrink-0">
+                                {formatCurrency(item.price * (item.quantity || 1), currency)}
+                              </div>
+
+                              {/* Status badge */}
+                              {!isAssigned && (
+                                <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 dark:bg-gray-700 text-static-text-600 dark:text-static-text-400 rounded-full flex-shrink-0">
+                                  Unassigned
+                                </span>
+                              )}
                             </div>
 
-                            {item.quantity && item.quantity > 1 && !isAssigned && (
-                              <div className="mt-2 flex justify-end">
+                            {/* Assigned members or assignment button */}
+                            <div className="mt-2 flex items-center gap-2">
+                              {isAssigned ? (
+                                <>
+                                  {/* Show assigned members as compact chips */}
+                                  <div className="flex items-center gap-1 flex-wrap flex-1">
+                                    {assignedMembers.map((memberId) => {
+                                      const member = members.find(m => m.id === memberId);
+                                      if (!member) return null;
+                                      return (
+                                        <div
+                                          key={memberId}
+                                          className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 border border-blue-300 dark:border-blue-700 rounded-full"
+                                        >
+                                          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold">
+                                            {member.name.charAt(0).toUpperCase()}
+                                          </div>
+                                          <span className="text-xs font-medium text-static-text-700 dark:text-static-text-300">
+                                            {member.name}
+                                          </span>
+                                          <button
+                                            onClick={() => toggleItemAssignment(index, memberId)}
+                                            className="ml-0.5 text-static-text-500 hover:text-static-text-700 dark:hover:text-static-text-200"
+                                          >
+                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                          </button>
+                                        </div>
+                                      );
+                                    })}
+                                    <button
+                                      onClick={() => setOpenDropdownIndex(showMemberDropdown ? null : index)}
+                                      className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center text-static-text-600 dark:text-static-text-400"
+                                    >
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                  <div className="text-xs text-static-text-600 dark:text-static-text-400 flex-shrink-0">
+                                    {formatCurrency(
+                                      (item.price * (item.quantity || 1)) / assignedMembers.length,
+                                      currency
+                                    )}/person
+                                  </div>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={() => setOpenDropdownIndex(showMemberDropdown ? null : index)}
+                                  className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                  </svg>
+                                  Assign members
+                                </button>
+                              )}
+
+                              {/* Split item button for quantities > 1 */}
+                              {item.quantity && item.quantity > 1 && (
                                 <button
                                   onClick={() => setSplittingItemIndex(index)}
-                                  className="text-sm font-medium text-static-accent-500 hover:text-static-accent-400"
+                                  className="text-xs font-medium text-static-text-600 dark:text-static-text-400 hover:text-static-text-900 dark:hover:text-static-text-100 flex items-center gap-1 flex-shrink-0"
                                 >
-                                  Split Item
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                  </svg>
+                                  Split
                                 </button>
-                              </div>
-                            )}
-
-                            <div className="flex flex-wrap gap-2 mt-3">
-                              {members.map((member) => (
-                                <button
-                                  key={member.id}
-                                  onClick={() => toggleItemAssignment(index, member.id)}
-                                  className={`px-3 py-1.5 rounded-full border-2 text-sm font-medium transition-all ${
-                                    itemAssignments[index]?.includes(member.id)
-                                      ? 'border-static-bg-700 bg-static-bg-700/20 text-static-text-50'
-                                      : 'border-gray-600 hover:border-gray-500 text-static-text-400'
-                                  }`}
-                                >
-                                  {member.name}
-                                </button>
-                              ))}
+                              )}
                             </div>
-                            {isAssigned ? (
-                              <div className="mt-2 text-sm text-static-text-600 dark:text-static-text-400">
-                                {formatCurrency(
-                                  (item.price * (item.quantity || 1)) / itemAssignments[index].length,
-                                  currency
-                                )}{' '}
-                                per person
-                              </div>
-                            ) : (
-                              <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
-                                Will be split equally among all participants
+
+                            {/* Member dropdown */}
+                            {showMemberDropdown && (
+                              <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-2">
+                                {members.map((member) => {
+                                  const isSelected = assignedMembers.includes(member.id);
+                                  return (
+                                    <button
+                                      key={member.id}
+                                      onClick={() => {
+                                        toggleItemAssignment(index, member.id);
+                                      }}
+                                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${
+                                        isSelected
+                                          ? 'bg-blue-100 dark:bg-blue-900/50 text-static-text-900 dark:text-static-text-50'
+                                          : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-static-text-700 dark:text-static-text-300'
+                                      }`}
+                                    >
+                                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                        {member.name.charAt(0).toUpperCase()}
+                                      </div>
+                                      <span className="flex-1 font-medium">{member.name}</span>
+                                      {isSelected && (
+                                        <svg className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                      )}
+                                    </button>
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
