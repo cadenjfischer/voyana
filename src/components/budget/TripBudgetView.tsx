@@ -73,6 +73,22 @@ export default function TripBudgetView({
     };
   }, [showAddExpenseModal, showScanReceiptModal, splittingItemIndex]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      // Check if click is outside dropdown
+      if (openDropdownIndex !== null && !target.closest('.member-dropdown-container')) {
+        setOpenDropdownIndex(null);
+      }
+    };
+
+    if (openDropdownIndex !== null) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [openDropdownIndex]);
+
   // Initialize budget data from trip if not exists
   const expenses: Expense[] = (trip as any).expenses || [];
   const members: GroupMember[] = (trip as any).budgetMembers || [
@@ -248,6 +264,8 @@ export default function TripBudgetView({
         : [...current, memberId];
       return { ...prev, [itemIndex]: updated };
     });
+    // Close the dropdown after selection
+    setOpenDropdownIndex(null);
   };
 
   // Create expenses from scanned receipt
@@ -2088,7 +2106,7 @@ export default function TripBudgetView({
                         return (
                           <div
                             key={index}
-                            className={`relative p-3 rounded-lg border transition-all ${
+                            className={`relative p-3 rounded-lg border transition-all member-dropdown-container ${
                               isAssigned
                                 ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800'
                                 : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600'
