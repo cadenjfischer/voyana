@@ -60,6 +60,7 @@ export default function TripBudgetView({
   const [splittingItemIndex, setSplittingItemIndex] = useState<number | null>(null);
   const [itemSplits, setItemSplits] = useState<Record<number, Record<string, number>>>({});
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
+  const [viewingReceiptImageUrl, setViewingReceiptImageUrl] = useState<string | null>(null);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -881,6 +882,7 @@ export default function TripBudgetView({
                     const payer = members.find(m => m.id === expense.paidBy);
                     const expenseWithReceipt = expense as any;
                     const hasReceiptDetails = expenseWithReceipt.receiptDetails && expenseWithReceipt.receiptDetails.items;
+                    const hasReceiptImage = expenseWithReceipt.receiptImageUrl;
                     const isExpanded = expandedExpenseId === expense.id;
                     
                     return (
@@ -890,8 +892,21 @@ export default function TripBudgetView({
                       >
                         <div className="flex items-start gap-4">
                           {/* Expense Icon/Avatar */}
-                          <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                            {expense.receiptPhoto ? (
+                          <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 relative group">
+                            {hasReceiptImage ? (
+                              <button
+                                onClick={() => setViewingReceiptImageUrl(expenseWithReceipt.receiptImageUrl)}
+                                className="w-full h-full rounded-lg overflow-hidden hover:opacity-75 transition-opacity"
+                                title="View receipt"
+                              >
+                                <img src={expenseWithReceipt.receiptImageUrl} alt="Receipt" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                  <svg className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                  </svg>
+                                </div>
+                              </button>
+                            ) : expense.receiptPhoto ? (
                               <img src={expense.receiptPhoto} alt="" className="w-full h-full object-cover rounded-lg" />
                             ) : hasReceiptDetails ? (
                               <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -910,6 +925,15 @@ export default function TripBudgetView({
                               <h3 className="font-semibold text-static-text-900 dark:text-static-text-50">
                                 {expense.description}
                               </h3>
+                              {hasReceiptImage && (
+                                <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full flex items-center gap-1">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  </svg>
+                                  Receipt
+                                </span>
+                              )}
                               {hasReceiptDetails && (
                                 <button
                                   onClick={() => setExpandedExpenseId(isExpanded ? null : expense.id)}
@@ -929,6 +953,19 @@ export default function TripBudgetView({
                             {/* Expandable Receipt Details */}
                             {hasReceiptDetails && isExpanded && (
                               <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                {/* Show receipt image thumbnail if available */}
+                                {hasReceiptImage && (
+                                  <button
+                                    onClick={() => setViewingReceiptImageUrl(expenseWithReceipt.receiptImageUrl)}
+                                    className="mb-4 flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                                  >
+                                    <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <span className="text-sm font-medium text-blue-700 dark:text-blue-300">View original receipt image</span>
+                                  </button>
+                                )}
+                                
                                 <div className="space-y-3">
                                   {expenseWithReceipt.receiptDetails.items.map((item: any, idx: number) => {
                                     const assignedMembers = item.assignedTo || [];
@@ -2378,6 +2415,57 @@ export default function TripBudgetView({
                 </>
               );
             })()}
+          </div>
+        </div>
+      )}
+
+      {/* Receipt Image Modal */}
+      {viewingReceiptImageUrl && (
+        <div
+          className="fixed inset-0 z-[10002] flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setViewingReceiptImageUrl(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] w-full">
+            {/* Close button */}
+            <button
+              onClick={() => setViewingReceiptImageUrl(null)}
+              className="absolute -top-12 right-0 p-2 text-white hover:text-gray-300 transition-colors"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            {/* Receipt image */}
+            <div 
+              className="bg-white rounded-lg overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={viewingReceiptImageUrl}
+                alt="Receipt"
+                className="w-full h-auto max-h-[85vh] object-contain"
+              />
+              
+              {/* Download button */}
+              <div className="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <p className="text-sm text-static-text-600 dark:text-static-text-400">
+                  Click outside to close
+                </p>
+                <a
+                  href={viewingReceiptImageUrl}
+                  download="receipt.jpg"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       )}
