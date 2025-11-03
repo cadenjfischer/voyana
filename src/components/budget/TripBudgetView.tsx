@@ -2261,26 +2261,29 @@ export default function TripBudgetView({
                     </div>
                   )}
 
-                  {/* Compact Splitwise-style UI */}
-                  <div className="space-y-3">
-                    {/* Paid by - Compact button that expands */}
-                    <div>
+                  {/* Splitwise-style side-by-side layout */}
+                  <div className="flex gap-4">
+                    {/* Left side - Compact buttons */}
+                    <div className="flex-1 space-y-3 min-w-0">
+                      {/* Paid by button */}
                       <button
                         type="button"
                         onClick={() => setOpenDropdownIndex(openDropdownIndex === -1 ? null : -1)}
                         className={`w-full px-4 py-3 rounded-lg border-2 transition-all flex items-center justify-between ${
-                          expensePaidBy
+                          openDropdownIndex === -1
+                            ? 'border-static-bg-700 bg-static-bg-700/10'
+                            : expensePaidBy
                             ? 'border-static-bg-700 bg-static-bg-700/5 hover:bg-static-bg-700/10'
                             : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
-                          <div className="text-left">
+                          <div className="text-left min-w-0 flex-1">
                             <div className="text-xs text-static-text-500 dark:text-static-text-400">Paid by</div>
-                            <div className="font-medium text-static-text-900 dark:text-static-text-50">
+                            <div className="font-medium text-static-text-900 dark:text-static-text-50 truncate">
                               {expensePaidBy 
                                 ? members.find(m => m.id === expensePaidBy)?.name 
                                 : 'Choose who paid'
@@ -2289,87 +2292,104 @@ export default function TripBudgetView({
                           </div>
                         </div>
                         <svg 
-                          className={`w-5 h-5 text-static-text-400 transition-transform ${openDropdownIndex === -1 ? 'rotate-180' : ''}`} 
+                          className="w-5 h-5 text-static-text-400 flex-shrink-0" 
                           fill="none" 
                           stroke="currentColor" 
                           viewBox="0 0 24 24"
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </button>
 
-                      {/* Paid by dropdown */}
-                      {openDropdownIndex === -1 && (
-                        <div className="mt-2 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
-                          {members.map((member) => (
-                            <button
-                              key={member.id}
-                              type="button"
-                              onClick={() => {
-                                setExpensePaidBy(member.id);
-                                setOpenDropdownIndex(null);
-                              }}
-                              className={`w-full px-3 py-2 rounded-lg flex items-center gap-3 transition-colors ${
-                                expensePaidBy === member.id
-                                  ? 'bg-blue-50 dark:bg-blue-900/30 text-static-text-900 dark:text-static-text-50'
-                                  : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-static-text-700 dark:text-static-text-300'
-                              }`}
-                            >
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                                {member.name.charAt(0).toUpperCase()}
-                              </div>
-                              <span className="flex-1 text-left font-medium">{member.name}</span>
-                              {expensePaidBy === member.id && (
-                                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Split - Compact button that shows items */}
-                    <div>
+                      {/* Split button */}
                       <button
                         type="button"
                         onClick={() => setOpenDropdownIndex(openDropdownIndex === -2 ? null : -2)}
-                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-all flex items-center justify-between"
+                        className={`w-full px-4 py-3 rounded-lg border-2 transition-all flex items-center justify-between ${
+                          openDropdownIndex === -2
+                            ? 'border-static-bg-700 bg-static-bg-700/10'
+                            : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                        }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                           </svg>
-                          <div className="text-left">
+                          <div className="text-left min-w-0 flex-1">
                             <div className="text-xs text-static-text-500 dark:text-static-text-400">Split</div>
-                            <div className="font-medium text-static-text-900 dark:text-static-text-50">
+                            <div className="font-medium text-static-text-900 dark:text-static-text-50 truncate">
                               {(() => {
                                 const assignedCount = scannedReceipt.items.filter((_, i) => itemAssignments[i]?.length > 0).length;
                                 const totalCount = scannedReceipt.items.length;
-                                if (assignedCount === 0) return 'Assign items to members';
-                                if (assignedCount === totalCount) return `All ${totalCount} items assigned`;
-                                return `${assignedCount} of ${totalCount} items assigned`;
+                                if (assignedCount === 0) return 'Assign items';
+                                if (assignedCount === totalCount) return `All ${totalCount} assigned`;
+                                return `${assignedCount}/${totalCount} assigned`;
                               })()}
                             </div>
                           </div>
                         </div>
                         <svg 
-                          className={`w-5 h-5 text-static-text-400 transition-transform ${openDropdownIndex === -2 ? 'rotate-180' : ''}`} 
+                          className="w-5 h-5 text-static-text-400 flex-shrink-0" 
                           fill="none" 
                           stroke="currentColor" 
                           viewBox="0 0 24 24"
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </button>
+                    </div>
 
-                      {/* Items list dropdown */}
-                      {openDropdownIndex === -2 && scannedReceipt.items && scannedReceipt.items.length > 0 && (
-                        <div className="mt-2 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                          <div className="text-xs text-static-text-500 dark:text-static-text-400 px-2">
-                            Unassigned items will be split equally among all members
-                          </div>
+                    {/* Right side - Details panel */}
+                    {(openDropdownIndex === -1 || openDropdownIndex === -2) && (
+                      <div className="flex-1 min-w-0 animate-in fade-in slide-in-from-right-2 duration-200">
+                        <div className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 h-full max-h-[400px] overflow-y-auto">
+                          {/* Paid by panel */}
+                          {openDropdownIndex === -1 && (
+                            <div className="space-y-2">
+                              <h3 className="text-sm font-semibold text-static-text-900 dark:text-static-text-50 mb-3">
+                                Who paid?
+                              </h3>
+                              {members.map((member) => (
+                                <button
+                                  key={member.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setExpensePaidBy(member.id);
+                                    setOpenDropdownIndex(null);
+                                  }}
+                                  className={`w-full px-3 py-2.5 rounded-lg flex items-center gap-3 transition-colors ${
+                                    expensePaidBy === member.id
+                                      ? 'bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-500 dark:border-blue-600'
+                                      : 'border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'
+                                  }`}
+                                >
+                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                    {member.name.charAt(0).toUpperCase()}
+                                  </div>
+                                  <span className="flex-1 text-left font-medium text-static-text-900 dark:text-static-text-50">
+                                    {member.name}
+                                  </span>
+                                  {expensePaidBy === member.id && (
+                                    <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Split panel - Items list */}
+                          {openDropdownIndex === -2 && scannedReceipt.items && scannedReceipt.items.length > 0 && (
+                            <div className="space-y-2">
+                              <div className="mb-3">
+                                <h3 className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
+                                  Assign items
+                                </h3>
+                                <p className="text-xs text-static-text-500 dark:text-static-text-400 mt-1">
+                                  Unassigned items split equally
+                                </p>
+                              </div>
                         {scannedReceipt.items.map((item, index) => {
                         const isAssigned = itemAssignments[index] && itemAssignments[index].length > 0;
                         const assignedMembers = itemAssignments[index] || [];
@@ -2519,9 +2539,11 @@ export default function TripBudgetView({
                           </div>
                         );
                       })}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
