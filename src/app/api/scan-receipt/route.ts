@@ -61,8 +61,13 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    // Sanitize filename (remove spaces and special characters, keep extension)
+    const sanitizedFileName = file.name
+      .replace(/\s+/g, '-')  // Replace spaces with hyphens
+      .replace(/[^a-zA-Z0-9.-]/g, '');  // Remove special characters except dots and hyphens
+    
     // Upload to Supabase Storage
-    const fileName = `${user.id}/${Date.now()}-${file.name}`;
+    const fileName = `${user.id}/${Date.now()}-${sanitizedFileName}`;
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('receipts')
       .upload(fileName, buffer, {
