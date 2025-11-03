@@ -64,11 +64,12 @@ export default function TripBudgetView({
   const [manualTip, setManualTip] = useState<string>(''); // For manual tip entry
   const [tipSplitType, setTipSplitType] = useState<'proportional' | 'equal' | 'custom'>('proportional'); // How to split tip
   const [tipAssignedMembers, setTipAssignedMembers] = useState<string[]>([]); // Members who pay tip (for custom)
+  const [showTipSplitModal, setShowTipSplitModal] = useState(false); // Modal for tip split options
 
   // Lock body scroll when modal is open
   useEffect(() => {
     const prev = document.body.style.overflow;
-    if (showAddExpenseModal || showScanReceiptModal || splittingItemIndex !== null) {
+    if (showAddExpenseModal || showScanReceiptModal || splittingItemIndex !== null || showTipSplitModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = prev || '';
@@ -76,7 +77,7 @@ export default function TripBudgetView({
     return () => {
       document.body.style.overflow = prev || '';
     };
-  }, [showAddExpenseModal, showScanReceiptModal, splittingItemIndex]);
+  }, [showAddExpenseModal, showScanReceiptModal, splittingItemIndex, showTipSplitModal]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -2203,96 +2204,21 @@ export default function TripBudgetView({
                                   </span>
                                 </div>
 
-                                {/* Tip Distribution Options */}
-                                <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
-                                  <label className="block text-xs font-medium text-static-text-900 dark:text-static-text-50 mb-2">
-                                    How to split tip?
-                                  </label>
-                                  
-                                  <div className="space-y-2">
-                                    {/* Proportional */}
-                                    <label className="flex items-start gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                      <input
-                                        type="radio"
-                                        name="tip-split"
-                                        checked={tipSplitType === 'proportional'}
-                                        onChange={() => setTipSplitType('proportional')}
-                                        className="mt-0.5"
-                                      />
-                                      <div className="flex-1">
-                                        <div className="text-sm font-medium text-static-text-900 dark:text-static-text-50">
-                                          Proportional (Recommended)
-                                        </div>
-                                        <div className="text-xs text-static-text-600 dark:text-static-text-400">
-                                          Each person pays tip based on their bill amount
-                                        </div>
-                                      </div>
-                                    </label>
-
-                                    {/* Equal */}
-                                    <label className="flex items-start gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                      <input
-                                        type="radio"
-                                        name="tip-split"
-                                        checked={tipSplitType === 'equal'}
-                                        onChange={() => setTipSplitType('equal')}
-                                        className="mt-0.5"
-                                      />
-                                      <div className="flex-1">
-                                        <div className="text-sm font-medium text-static-text-900 dark:text-static-text-50">
-                                          Split Equally
-                                        </div>
-                                        <div className="text-xs text-static-text-600 dark:text-static-text-400">
-                                          Everyone pays the same tip amount
-                                        </div>
-                                      </div>
-                                    </label>
-
-                                    {/* Custom */}
-                                    <label className="flex items-start gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                      <input
-                                        type="radio"
-                                        name="tip-split"
-                                        checked={tipSplitType === 'custom'}
-                                        onChange={() => setTipSplitType('custom')}
-                                        className="mt-0.5"
-                                      />
-                                      <div className="flex-1">
-                                        <div className="text-sm font-medium text-static-text-900 dark:text-static-text-50">
-                                          Select Who Pays Tip
-                                        </div>
-                                        <div className="text-xs text-static-text-600 dark:text-static-text-400">
-                                          Choose specific people to split the tip
-                                        </div>
-                                      </div>
-                                    </label>
-
-                                    {/* Custom member selection */}
-                                    {tipSplitType === 'custom' && (
-                                      <div className="pl-8 pr-2 pb-2 space-y-2">
-                                        {members.map((member) => (
-                                          <label key={member.id} className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                              type="checkbox"
-                                              checked={tipAssignedMembers.includes(member.id)}
-                                              onChange={(e) => {
-                                                if (e.target.checked) {
-                                                  setTipAssignedMembers([...tipAssignedMembers, member.id]);
-                                                } else {
-                                                  setTipAssignedMembers(tipAssignedMembers.filter(id => id !== member.id));
-                                                }
-                                              }}
-                                              className="rounded"
-                                            />
-                                            <span className="text-sm text-static-text-900 dark:text-static-text-50">
-                                              {member.name}
-                                            </span>
-                                          </label>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
+                                {/* Tip Split Options Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => setShowTipSplitModal(true)}
+                                  className="w-full mt-2 px-4 py-2.5 bg-static-bg-100 dark:bg-gray-800 hover:bg-static-bg-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-static-text-900 dark:text-static-text-50 transition-colors flex items-center justify-between"
+                                >
+                                  <span>
+                                    {tipSplitType === 'proportional' && 'Split tip proportionally'}
+                                    {tipSplitType === 'equal' && 'Split tip equally'}
+                                    {tipSplitType === 'custom' && `Custom tip split (${tipAssignedMembers.length} people)`}
+                                  </span>
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                  </svg>
+                                </button>
                               </div>
                             )}
                           </div>
@@ -2618,6 +2544,132 @@ export default function TripBudgetView({
                 </>
               );
             })()}
+          </div>
+        </div>
+      )}
+
+      {/* Tip Split Modal */}
+      {showTipSplitModal && (
+        <div
+          className="fixed inset-0 z-[10002] flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setShowTipSplitModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-static-text-900 dark:text-static-text-50">
+                How to Split Tip?
+              </h3>
+              <button
+                onClick={() => setShowTipSplitModal(false)}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <svg className="w-6 h-6 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              {/* Proportional */}
+              <label className="flex items-start gap-4 cursor-pointer p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-2 border-transparent">
+                <input
+                  type="radio"
+                  name="tip-split-modal"
+                  checked={tipSplitType === 'proportional'}
+                  onChange={() => setTipSplitType('proportional')}
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="text-base font-semibold text-static-text-900 dark:text-static-text-50 mb-1">
+                    Proportional (Recommended)
+                  </div>
+                  <div className="text-sm text-static-text-600 dark:text-static-text-400">
+                    Each person pays tip based on their bill amount. Fair and automatic.
+                  </div>
+                </div>
+              </label>
+
+              {/* Equal */}
+              <label className="flex items-start gap-4 cursor-pointer p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-2 border-transparent">
+                <input
+                  type="radio"
+                  name="tip-split-modal"
+                  checked={tipSplitType === 'equal'}
+                  onChange={() => setTipSplitType('equal')}
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="text-base font-semibold text-static-text-900 dark:text-static-text-50 mb-1">
+                    Split Equally
+                  </div>
+                  <div className="text-sm text-static-text-600 dark:text-static-text-400">
+                    Everyone pays the same tip amount regardless of their bill.
+                  </div>
+                </div>
+              </label>
+
+              {/* Custom */}
+              <label className="flex items-start gap-4 cursor-pointer p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-2 border-transparent">
+                <input
+                  type="radio"
+                  name="tip-split-modal"
+                  checked={tipSplitType === 'custom'}
+                  onChange={() => setTipSplitType('custom')}
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="text-base font-semibold text-static-text-900 dark:text-static-text-50 mb-1">
+                    Select Who Pays Tip
+                  </div>
+                  <div className="text-sm text-static-text-600 dark:text-static-text-400 mb-3">
+                    Choose specific people to split the tip proportionally.
+                  </div>
+
+                  {/* Custom member selection */}
+                  {tipSplitType === 'custom' && (
+                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                      <p className="text-xs font-medium text-static-text-700 dark:text-static-text-300 mb-2">
+                        Select members:
+                      </p>
+                      {members.map((member) => (
+                        <label key={member.id} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={tipAssignedMembers.includes(member.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setTipAssignedMembers([...tipAssignedMembers, member.id]);
+                              } else {
+                                setTipAssignedMembers(tipAssignedMembers.filter(id => id !== member.id));
+                              }
+                            }}
+                            className="w-4 h-4 rounded"
+                          />
+                          <span className="text-sm font-medium text-static-text-900 dark:text-static-text-50">
+                            {member.name}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </label>
+            </div>
+
+            {/* Footer */}
+            <div className="sticky bottom-0 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-4">
+              <button
+                onClick={() => setShowTipSplitModal(false)}
+                className="w-full px-4 py-2.5 bg-static-bg-700 hover:bg-static-bg-600 text-white rounded-lg font-medium transition-colors"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}
