@@ -62,6 +62,8 @@ export default function TripBudgetView({
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
   const [viewingReceiptImageUrl, setViewingReceiptImageUrl] = useState<string | null>(null);
   const [manualTip, setManualTip] = useState<string>(''); // For manual tip entry
+  const [tipSplitType, setTipSplitType] = useState<'proportional' | 'equal' | 'custom'>('proportional'); // How to split tip
+  const [tipAssignedMembers, setTipAssignedMembers] = useState<string[]>([]); // Members who pay tip (for custom)
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -291,21 +293,20 @@ export default function TripBudgetView({
       sum + (item.price * (item.quantity || 1)), 0
     );
 
-    // Determine the actual total paid
-    // Priority: 1) Detected total, 2) Subtotal + Tax, 3) Items total
-    let actualTotal = scannedReceipt.total || 
+    // Determine the base total (before tip)
+    const baseTotal = scannedReceipt.total || 
       (scannedReceipt.subtotal && scannedReceipt.tax 
         ? scannedReceipt.subtotal + scannedReceipt.tax 
         : itemsTotal);
     
     // Add manual tip if provided
     const tipAmount = manualTip && parseFloat(manualTip) > 0 ? parseFloat(manualTip) : 0;
-    actualTotal += tipAmount;
+    const actualTotal = baseTotal + tipAmount;
 
-    // Calculate the difference (anything not captured in items + tip)
-    const difference = actualTotal - itemsTotal;
+    // Calculate the difference between base total and items (tax, fees, etc.)
+    const baseDifference = baseTotal - itemsTotal;
 
-    // Calculate who owes what based on item assignments
+    // Calculate who owes what based on item assignments (BEFORE tip)
     const memberTotals: Record<string, number> = {};
     const allParticipants = new Set<string>();
 
@@ -339,20 +340,62 @@ export default function TripBudgetView({
       }
     });
 
-    // Distribute the difference (tax, tip, etc.) proportionally
-    if (Math.abs(difference) > 0.01) {
-      const validItemsTotalForProportion = Object.keys(memberTotals).reduce((sum, memberId) => sum + memberTotals[memberId], 0);
-      if (validItemsTotalForProportion > 0.01) {
+    // Distribute base difference (tax, fees) proportionally
+    if (Math.abs(baseDifference) > 0.01) {
+      const validItemsTotal = Object.keys(memberTotals).reduce((sum, memberId) => sum + memberTotals[memberId], 0);
+      if (validItemsTotal > 0.01) {
         Array.from(allParticipants).forEach(memberId => {
-          const proportion = memberTotals[memberId] / validItemsTotalForProportion;
-          memberTotals[memberId] += difference * proportion;
+          const proportion = memberTotals[memberId] / validItemsTotal;
+          memberTotals[memberId] += baseDifference * proportion;
         });
       } else if (allParticipants.size > 0) {
-        // If for some reason items have no cost, split difference equally
-        const perPersonDiff = difference / allParticipants.size;
+        const perPersonDiff = baseDifference / allParticipants.size;
         Array.from(allParticipants).forEach(memberId => {
           memberTotals[memberId] = (memberTotals[memberId] || 0) + perPersonDiff;
         });
+      }
+    }
+
+    // NOW distribute the tip according to the selected method
+    if (tipAmount > 0) {
+      if (tipSplitType === 'proportional') {
+        // Default: Distribute tip proportionally based on each person's bill
+        const validTotal = Object.keys(memberTotals).reduce((sum, memberId) => sum + memberTotals[memberId], 0);
+        if (validTotal > 0.01) {
+          Array.from(allParticipants).forEach(memberId => {
+            const proportion = memberTotals[memberId] / validTotal;
+            memberTotals[memberId] += tipAmount * proportion;
+          });
+        }
+      } else if (tipSplitType === 'equal') {
+        // Split tip equally among all participants
+        const tipPerPerson = tipAmount / allParticipants.size;
+        Array.from(allParticipants).forEach(memberId => {
+          memberTotals[memberId] += tipPerPerson;
+        });
+      } else if (tipSplitType === 'custom') {
+        // Split tip only among selected members
+        const selectedTipPayers = tipAssignedMembers.length > 0 ? tipAssignedMembers : Array.from(allParticipants);
+        if (selectedTipPayers.length > 0) {
+          // Calculate tip proportionally among selected members only
+          const selectedMemberTotal = selectedTipPayers.reduce((sum, memberId) => 
+            sum + (memberTotals[memberId] || 0), 0);
+          
+          if (selectedMemberTotal > 0.01) {
+            selectedTipPayers.forEach(memberId => {
+              const proportion = (memberTotals[memberId] || 0) / selectedMemberTotal;
+              memberTotals[memberId] = (memberTotals[memberId] || 0) + (tipAmount * proportion);
+              allParticipants.add(memberId); // Ensure they're in participants
+            });
+          } else {
+            // If selected members have no bill, split equally
+            const tipPerPerson = tipAmount / selectedTipPayers.length;
+            selectedTipPayers.forEach(memberId => {
+              memberTotals[memberId] = (memberTotals[memberId] || 0) + tipPerPerson;
+              allParticipants.add(memberId);
+            });
+          }
+        }
       }
     }
 
@@ -425,6 +468,8 @@ export default function TripBudgetView({
     setSplittingItemIndex(null);
     setItemSplits({});
     setManualTip(''); // Reset manual tip
+    setTipSplitType('proportional'); // Reset tip split type
+    setTipAssignedMembers([]); // Reset tip assigned members
   };
 
   // Handle quantity change in split modal
@@ -2156,6 +2201,97 @@ export default function TripBudgetView({
                                       currency
                                     )}
                                   </span>
+                                </div>
+
+                                {/* Tip Distribution Options */}
+                                <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                                  <label className="block text-xs font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                                    How to split tip?
+                                  </label>
+                                  
+                                  <div className="space-y-2">
+                                    {/* Proportional */}
+                                    <label className="flex items-start gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                      <input
+                                        type="radio"
+                                        name="tip-split"
+                                        checked={tipSplitType === 'proportional'}
+                                        onChange={() => setTipSplitType('proportional')}
+                                        className="mt-0.5"
+                                      />
+                                      <div className="flex-1">
+                                        <div className="text-sm font-medium text-static-text-900 dark:text-static-text-50">
+                                          Proportional (Recommended)
+                                        </div>
+                                        <div className="text-xs text-static-text-600 dark:text-static-text-400">
+                                          Each person pays tip based on their bill amount
+                                        </div>
+                                      </div>
+                                    </label>
+
+                                    {/* Equal */}
+                                    <label className="flex items-start gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                      <input
+                                        type="radio"
+                                        name="tip-split"
+                                        checked={tipSplitType === 'equal'}
+                                        onChange={() => setTipSplitType('equal')}
+                                        className="mt-0.5"
+                                      />
+                                      <div className="flex-1">
+                                        <div className="text-sm font-medium text-static-text-900 dark:text-static-text-50">
+                                          Split Equally
+                                        </div>
+                                        <div className="text-xs text-static-text-600 dark:text-static-text-400">
+                                          Everyone pays the same tip amount
+                                        </div>
+                                      </div>
+                                    </label>
+
+                                    {/* Custom */}
+                                    <label className="flex items-start gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                      <input
+                                        type="radio"
+                                        name="tip-split"
+                                        checked={tipSplitType === 'custom'}
+                                        onChange={() => setTipSplitType('custom')}
+                                        className="mt-0.5"
+                                      />
+                                      <div className="flex-1">
+                                        <div className="text-sm font-medium text-static-text-900 dark:text-static-text-50">
+                                          Select Who Pays Tip
+                                        </div>
+                                        <div className="text-xs text-static-text-600 dark:text-static-text-400">
+                                          Choose specific people to split the tip
+                                        </div>
+                                      </div>
+                                    </label>
+
+                                    {/* Custom member selection */}
+                                    {tipSplitType === 'custom' && (
+                                      <div className="pl-8 pr-2 pb-2 space-y-2">
+                                        {members.map((member) => (
+                                          <label key={member.id} className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                              type="checkbox"
+                                              checked={tipAssignedMembers.includes(member.id)}
+                                              onChange={(e) => {
+                                                if (e.target.checked) {
+                                                  setTipAssignedMembers([...tipAssignedMembers, member.id]);
+                                                } else {
+                                                  setTipAssignedMembers(tipAssignedMembers.filter(id => id !== member.id));
+                                                }
+                                              }}
+                                              className="rounded"
+                                            />
+                                            <span className="text-sm text-static-text-900 dark:text-static-text-50">
+                                              {member.name}
+                                            </span>
+                                          </label>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             )}
