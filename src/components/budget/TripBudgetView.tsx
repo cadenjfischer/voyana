@@ -926,12 +926,13 @@ export default function TripBudgetView({
                                         <div className="mt-2 pl-2 border-l-2 border-gray-300 dark:border-gray-600">
                                           {hasSplits ? (
                                             Object.entries(splits).map(([memberId, qty]) => {
-                                              if ((qty as number) <= 0) return null;
+                                              const qtyNum = qty as number;
+                                              if (qtyNum <= 0) return null;
                                               const member = members.find(m => m.id === memberId);
                                               return (
                                                 <div key={memberId} className="flex justify-between items-center text-xs text-static-text-600 dark:text-static-text-400 py-1">
-                                                  <span>↳ {member?.name} (Qty: {qty})</span>
-                                                  <span>{formatCurrency(item.price * (qty as number), currency)}</span>
+                                                  <span>↳ {member?.name} (Qty: {qtyNum})</span>
+                                                  <span>{formatCurrency(item.price * qtyNum, currency)}</span>
                                                 </div>
                                               );
                                             })
@@ -1611,6 +1612,41 @@ export default function TripBudgetView({
                             ? 'border-static-bg-700 bg-static-bg-700 text-white'
                             : 'border-gray-300 dark:border-gray-600 text-static-text-700 dark:text-static-text-300 hover:border-static-bg-600'
                         }`}
+                      >
+                        Equal Split
+                      </button>
+                      <button
+                        onClick={() => setExpenseSplitType('custom')}
+                        className={`flex-1 px-4 py-3 rounded-lg border-2 font-medium transition-colors ${
+                          expenseSplitType === 'custom'
+                            ? 'border-static-bg-700 bg-static-bg-700 text-white'
+                            : 'border-gray-300 dark:border-gray-600 text-static-text-700 dark:text-static-text-300 hover:border-static-bg-600'
+                        }`}
+                      >
+                        Custom Amounts
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Member Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-3">
+                      Split between
+                    </label>
+                    <div className="space-y-2">
+                      {members.map(member => {
+                        const isSelected = selectedMembers.includes(member.id);
+                        const equalAmount = expenseSplitType === 'equal' && isSelected
+                          ? (parseFloat(expenseAmount) || 0) / selectedMembers.length
+                          : 0;
+                        
+                        return (
+                          <div
+                            key={member.id}
+                            className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-colors ${
+                              isSelected
+                                ? 'border-static-bg-700 bg-static-bg-700/10'
+                                : 'border-gray-300 dark:border-gray-600'
                             }`}
                           >
                             <input
