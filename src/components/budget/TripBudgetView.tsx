@@ -375,7 +375,7 @@ export default function TripBudgetView({
       })),
       subtotal: scannedReceipt.subtotal,
       tax: scannedReceipt.tax,
-      tip: tipAmount > 0 ? tipAmount : scannedReceipt.tip, // Use manual tip if provided
+      tip: tipAmount, // Only store manual tip (OCR tips are ignored)
       total: actualTotal,
     };
 
@@ -2076,19 +2076,6 @@ export default function TripBudgetView({
                               </div>
                             );
                           })()}
-                          
-                          {/* Show tip as suggestion only if present */}
-                          {scannedReceipt.tip && !manualTip && (
-                            <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
-                              <p className="text-xs text-static-text-500 italic mb-1">
-                                Tip suggestion (not included):
-                              </p>
-                              <div className="flex justify-between text-xs text-static-text-500">
-                                <span>Suggested tip:</span>
-                                <span>{formatCurrency(scannedReceipt.tip, currency)}</span>
-                              </div>
-                            </div>
-                          )}
 
                           {/* Manual Tip Input - Conditional Display */}
                           <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700">

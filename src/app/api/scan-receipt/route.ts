@@ -216,19 +216,11 @@ function parseReceiptText(text: string): ParsedReceipt {
       continue;
     }
 
-    // Check for tip (including gratuity suggestions)
-    // IMPORTANT: Only capture tips that are actually included in the total
-    // Skip "suggested tip" lines - users will set their own tip
-    if (tipKeywords.test(line) && !/(suggest|recommend|appreciation|18%|20%|22%)/i.test(line)) {
-      // Look for price in this line (e.g., "Gratuity $51.84" or "Tip: 10.00")
-      const priceMatch = line.match(/\$?\s*(\d+\.?\d{0,2})$/);
-      if (priceMatch) {
-        const tipAmount = parseFloat(priceMatch[1]);
-        // Only include if it's a reasonable tip amount (not a suggested percentage)
-        if (tipAmount > 0 && tipAmount < 200) {
-          result.tip = tipAmount;
-        }
-      }
+    // Check for tip (ONLY if it's actually part of the total, not a suggestion)
+    // Skip ALL tip/gratuity lines since they're almost always suggestions
+    // Users will manually add their own tip
+    if (tipKeywords.test(line)) {
+      // Skip this line - tips are user-set only
       continue;
     }
 
