@@ -56,11 +56,13 @@ export default function TripBudgetView({
   } | null>(null);
   const [receiptImage, setReceiptImage] = useState<string | null>(null);
   const [itemAssignments, setItemAssignments] = useState<Record<number, string[]>>({});
+  const [splittingItemIndex, setSplittingItemIndex] = useState<number | null>(null);
+  const [itemSplits, setItemSplits] = useState<Record<number, Record<string, number>>>({});
 
   // Lock body scroll when modal is open
   useEffect(() => {
     const prev = document.body.style.overflow;
-    if (showAddExpenseModal || showScanReceiptModal) {
+    if (showAddExpenseModal || showScanReceiptModal || splittingItemIndex !== null) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = prev || '';
@@ -68,7 +70,7 @@ export default function TripBudgetView({
     return () => {
       document.body.style.overflow = prev || '';
     };
-  }, [showAddExpenseModal, showScanReceiptModal]);
+  }, [showAddExpenseModal, showScanReceiptModal, splittingItemIndex]);
 
   // Initialize budget data from trip if not exists
   const expenses: Expense[] = (trip as any).expenses || [];
@@ -254,6 +256,14 @@ export default function TripBudgetView({
       return;
     }
 
+    // Assign any unassigned items to the payer
+    const finalAssignments = { ...itemAssignments };
+    scannedReceipt.items.forEach((_, index) => {
+      if (!finalAssignments[index] || finalAssignments[index].length === 0) {
+        finalAssignments[index] = [expensePaidBy];
+      }
+    });
+
     // Calculate itemized total
     const itemsTotal = scannedReceipt.items.reduce((sum, item) => 
       sum + (item.price * (item.quantity || 1)), 0
@@ -273,33 +283,51 @@ export default function TripBudgetView({
     const memberTotals: Record<string, number> = {};
     const allParticipants = new Set<string>();
 
-    // Assign items to members
+    // Process items, including quantity splits
     scannedReceipt.items.forEach((item, index) => {
-      const assignedMembers = itemAssignments[index];
       const itemTotal = item.price * (item.quantity || 1);
-      
-      if (assignedMembers && assignedMembers.length > 0) {
-        // Item is assigned - those members pay for the ENTIRE item (split among them)
-        const perPerson = itemTotal / assignedMembers.length;
-        assignedMembers.forEach(memberId => {
-          allParticipants.add(memberId);
-          memberTotals[memberId] = (memberTotals[memberId] || 0) + perPerson;
-        });
+      const splits = itemSplits[index];
+
+      if (splits && Object.keys(splits).length > 0) {
+        // Item was manually split
+        const totalSplitQuantity = Object.values(splits).reduce((sum, qty) => sum + qty, 0);
+        if (totalSplitQuantity > 0) {
+          const pricePerUnit = item.price;
+          Object.entries(splits).forEach(([memberId, quantity]) => {
+            if (quantity > 0) {
+              allParticipants.add(memberId);
+              memberTotals[memberId] = (memberTotals[memberId] || 0) + (pricePerUnit * quantity);
+            }
+          });
+        }
+      } else {
+        // Item was assigned as a whole or left unassigned
+        const assignedMembers = finalAssignments[index];
+        if (assignedMembers && assignedMembers.length > 0) {
+          const perPerson = itemTotal / assignedMembers.length;
+          assignedMembers.forEach(memberId => {
+            allParticipants.add(memberId);
+            memberTotals[memberId] = (memberTotals[memberId] || 0) + perPerson;
+          });
+        }
       }
-      // If unassigned, skip it (or we could split among everyone)
     });
 
-    if (allParticipants.size === 0) {
-      alert('Please assign at least one item to a group member');
-      return;
-    }
-
-    // Distribute the difference proportionally based on each person's item total
+    // Distribute the difference (tax, tip, etc.) proportionally
     if (Math.abs(difference) > 0.01) {
-      Array.from(allParticipants).forEach(memberId => {
-        const proportion = memberTotals[memberId] / itemsTotal;
-        memberTotals[memberId] += difference * proportion;
-      });
+      const validItemsTotalForProportion = Object.keys(memberTotals).reduce((sum, memberId) => sum + memberTotals[memberId], 0);
+      if (validItemsTotalForProportion > 0.01) {
+        Array.from(allParticipants).forEach(memberId => {
+          const proportion = memberTotals[memberId] / validItemsTotalForProportion;
+          memberTotals[memberId] += difference * proportion;
+        });
+      } else if (allParticipants.size > 0) {
+        // If for some reason items have no cost, split difference equally
+        const perPersonDiff = difference / allParticipants.size;
+        Array.from(allParticipants).forEach(memberId => {
+          memberTotals[memberId] = (memberTotals[memberId] || 0) + perPersonDiff;
+        });
+      }
     }
 
     // Create shares
@@ -316,7 +344,8 @@ export default function TripBudgetView({
     const receiptDetails = {
       items: scannedReceipt.items.map((item, index) => ({
         ...item,
-        assignedTo: itemAssignments[index] || [],
+        assignedTo: finalAssignments[index] || [],
+        splits: itemSplits[index] || {}, // Store the detailed splits
       })),
       subtotal: scannedReceipt.subtotal,
       tax: scannedReceipt.tax,
@@ -366,11 +395,52 @@ export default function TripBudgetView({
     setItemAssignments({});
     setExpensePaidBy('');
     setIsScanning(false);
+    setSplittingItemIndex(null);
+    setItemSplits({});
+  };
+
+  // Handle quantity change in split modal
+  const handleSplitChange = (itemIndex: number, memberId: string, newQuantity: number) => {
+    const item = scannedReceipt?.items[itemIndex];
+    if (!item) return;
+
+    const currentSplits = itemSplits[itemIndex] || {};
+    const otherSplitsTotal = Object.entries(currentSplits)
+      .filter(([id]) => id !== memberId)
+      .reduce((sum, [, qty]) => sum + qty, 0);
+
+    const maxAllowed = (item.quantity || 1) - otherSplitsTotal;
+    const finalQuantity = Math.max(0, Math.min(newQuantity, maxAllowed));
+
+    setItemSplits(prev => ({
+      ...prev,
+      [itemIndex]: {
+        ...prev[itemIndex],
+        [memberId]: finalQuantity,
+      },
+    }));
+  };
+
+  // Save the split and assign items accordingly
+  const handleSaveSplit = () => {
+    if (splittingItemIndex === null) return;
+
+    const splits = itemSplits[splittingItemIndex] || {};
+    const assignedMembers = Object.entries(splits)
+      .filter(([, qty]) => qty > 0)
+      .map(([id]) => id);
+
+    setItemAssignments(prev => ({
+      ...prev,
+      [splittingItemIndex]: assignedMembers,
+    }));
+
+    setSplittingItemIndex(null);
   };
 
   // Handle add expense
   const handleAddExpense = () => {
-    // Route to appropriate handler based on whether we're editing
+    // Route to appropriate handler based on whether
     if (editingExpenseId) {
       handleSaveEditedExpense();
       return;
@@ -689,7 +759,7 @@ export default function TripBudgetView({
             }`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-4 4m0 0l4-4-4-4" />
             </svg>
             <span className="font-medium">Balance</span>
           </button>
@@ -766,7 +836,7 @@ export default function TripBudgetView({
               {expenses.length === 0 ? (
                 <div className="text-center py-20">
                   <svg className="w-20 h-20 text-static-text-400 dark:text-static-text-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                   <h3 className="text-xl font-semibold text-static-text-900 dark:text-static-text-50 mb-2">
                     No expenses yet
@@ -805,11 +875,11 @@ export default function TripBudgetView({
                             ) : hasReceiptDetails ? (
                               <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
+                            </svg>
                             ) : (
                               <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                              </svg>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
                             )}
                           </div>
 
@@ -837,37 +907,55 @@ export default function TripBudgetView({
 
                             {/* Expandable Receipt Details */}
                             {hasReceiptDetails && isExpanded && (
-                              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                                <div className="space-y-2">
+                              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <div className="space-y-3">
                                   {expenseWithReceipt.receiptDetails.items.map((item: any, idx: number) => {
                                     const assignedMembers = item.assignedTo || [];
-                                    const memberNames = assignedMembers
-                                      .map((id: string) => members.find(m => m.id === id)?.name || 'Unknown')
-                                      .join(', ') || 'Unassigned';
-                                    const qty = item.quantity && item.quantity > 1 ? `${item.quantity}× ` : '';
-                                    
+                                    const splits = item.splits || {};
+                                    const hasSplits = Object.keys(splits).length > 0 && Object.values(splits).some(qty => (qty as number) > 0);
+
                                     return (
-                                      <div key={idx} className="text-sm flex justify-between">
-                                        <span className="text-static-text-700 dark:text-static-text-300">
-                                          {qty}{item.name}
-                                          <span className="text-xs text-static-text-500 ml-2">({memberNames})</span>
-                                        </span>
-                                        <span className="font-medium text-static-text-900 dark:text-static-text-50">
-                                          {formatCurrency(item.price * (item.quantity || 1), currency)}
-                                        </span>
+                                      <div key={idx} className="text-sm p-3 bg-static-bg-100 dark:bg-gray-900/50 rounded-lg">
+                                        <div className="flex justify-between items-center font-semibold">
+                                          <span className="text-static-text-800 dark:text-static-text-200">{item.name}</span>
+                                          <span className="text-static-text-900 dark:text-static-text-50">
+                                            {formatCurrency(item.price * (item.quantity || 1), currency)}
+                                          </span>
+                                        </div>
+                                        
+                                        <div className="mt-2 pl-2 border-l-2 border-gray-300 dark:border-gray-600">
+                                          {hasSplits ? (
+                                            Object.entries(splits).map(([memberId, qty]) => {
+                                              if ((qty as number) <= 0) return null;
+                                              const member = members.find(m => m.id === memberId);
+                                              return (
+                                                <div key={memberId} className="flex justify-between items-center text-xs text-static-text-600 dark:text-static-text-400 py-1">
+                                                  <span>↳ {member?.name} (Qty: {qty})</span>
+                                                  <span>{formatCurrency(item.price * (qty as number), currency)}</span>
+                                                </div>
+                                              );
+                                            })
+                                          ) : (
+                                            assignedMembers.map((memberId: string) => {
+                                              const member = members.find(m => m.id === memberId);
+                                              const amount = (item.price * (item.quantity || 1)) / assignedMembers.length;
+                                              return (
+                                                <div key={memberId} className="flex justify-between items-center text-xs text-static-text-600 dark:text-static-text-400 py-1">
+                                                  <span>↳ {member?.name}</span>
+                                                  <span>{formatCurrency(amount, currency)}</span>
+                                                </div>
+                                              );
+                                            })
+                                          )}
+                                        </div>
                                       </div>
                                     );
                                   })}
                                   
                                   {/* Show suggested tax/tip if present */}
-                                  {expenseWithReceipt.receiptDetails.tax && (
-                                    <div className="text-xs text-static-text-500 italic pt-2 border-t border-gray-100 dark:border-gray-800">
-                                      Suggested tax: {formatCurrency(expenseWithReceipt.receiptDetails.tax, currency)}
-                                    </div>
-                                  )}
-                                  {expenseWithReceipt.receiptDetails.tip && (
-                                    <div className="text-xs text-static-text-500 italic">
-                                      Suggested tip: {formatCurrency(expenseWithReceipt.receiptDetails.tip, currency)}
+                                  {(expenseWithReceipt.receiptDetails.tax || expenseWithReceipt.receiptDetails.tip) && (
+                                    <div className="text-xs text-static-text-500 italic pt-3 mt-2 border-t border-gray-200 dark:border-gray-700">
+                                      Note: Tax and tip (if any) are distributed proportionally among participants.
                                     </div>
                                   )}
                                 </div>
@@ -1523,41 +1611,6 @@ export default function TripBudgetView({
                             ? 'border-static-bg-700 bg-static-bg-700 text-white'
                             : 'border-gray-300 dark:border-gray-600 text-static-text-700 dark:text-static-text-300 hover:border-static-bg-600'
                         }`}
-                      >
-                        Equal Split
-                      </button>
-                      <button
-                        onClick={() => setExpenseSplitType('custom')}
-                        className={`flex-1 px-4 py-3 rounded-lg border-2 font-medium transition-colors ${
-                          expenseSplitType === 'custom'
-                            ? 'border-static-bg-700 bg-static-bg-700 text-white'
-                            : 'border-gray-300 dark:border-gray-600 text-static-text-700 dark:text-static-text-300 hover:border-static-bg-600'
-                        }`}
-                      >
-                        Custom Amounts
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Member Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-3">
-                      Split between
-                    </label>
-                    <div className="space-y-2">
-                      {members.map(member => {
-                        const isSelected = selectedMembers.includes(member.id);
-                        const equalAmount = expenseSplitType === 'equal' && isSelected
-                          ? (parseFloat(expenseAmount) || 0) / selectedMembers.length
-                          : 0;
-                        
-                        return (
-                          <div
-                            key={member.id}
-                            className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-colors ${
-                              isSelected
-                                ? 'border-static-bg-700 bg-static-bg-700/10'
-                                : 'border-gray-300 dark:border-gray-600'
                             }`}
                           >
                             <input
@@ -1937,7 +1990,9 @@ export default function TripBudgetView({
                           {/* Show tip as suggestion only if present */}
                           {scannedReceipt.tip && (
                             <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
-                              <p className="text-xs text-static-text-500 italic mb-1">Tip suggestion (not included):</p>
+                              <p className="text-xs text-static-text-500 italic mb-1">
+                                Tip suggestion (not included):
+                              </p>
                               <div className="flex justify-between text-xs text-static-text-500">
                                 <span>Suggested tip:</span>
                                 <span>{formatCurrency(scannedReceipt.tip, currency)}</span>
@@ -1995,50 +2050,58 @@ export default function TripBudgetView({
                             key={index}
                             className={`p-4 rounded-lg border transition-all ${
                               isAssigned
-                                ? 'bg-static-bg-100 dark:bg-static-bg-800 border-gray-200 dark:border-gray-700'
-                                : 'bg-yellow-50 dark:bg-yellow-900/10 border-yellow-300 dark:border-yellow-700/50'
+                                ? 'bg-static-bg-700 text-white'
+                                : 'bg-transparent border-gray-600'
                             }`}
                           >
                             <div className="flex justify-between items-start mb-3">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <div className="font-medium text-static-text-900 dark:text-static-text-50">
-                                    {item.name}
-                                  </div>
-                                  {!isAssigned && (
-                                    <span className="px-2 py-0.5 bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 text-xs rounded-full">
-                                      Unassigned
-                                    </span>
-                                  )}
-                                </div>
+                              <div>
+                                <h4 className="font-semibold text-static-text-900 dark:text-static-text-50">
+                                  {item.name}
+                                </h4>
                                 {item.quantity && item.quantity > 1 && (
-                                  <div className="text-sm text-static-text-500 mt-1">
+                                  <p className="text-sm text-static-text-500">
                                     Quantity: {item.quantity}
-                                  </div>
+                                  </p>
                                 )}
                               </div>
-                              <div className="font-semibold text-static-text-900 dark:text-static-text-50 ml-4">
-                                {formatCurrency(item.price * (item.quantity || 1), currency)}
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-lg text-static-text-900 dark:text-static-text-50">
+                                  {formatCurrency(item.price * (item.quantity || 1), currency)}
+                                </span>
+                                {!isAssigned && (
+                                  <span className="px-2 py-0.5 text-xs font-medium bg-transparent text-white border border-white rounded-full">
+                                      Unassigned
+                                    </span>
+                                )}
                               </div>
                             </div>
-                            <div className="flex flex-wrap gap-2">
-                              {members.map((member) => {
-                                const isSelected = itemAssignments[index]?.includes(member.id);
-                                return (
-                                  <button
-                                    key={member.id}
-                                    type="button"
-                                    onClick={() => toggleItemAssignment(index, member.id)}
-                                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                                      isSelected
-                                        ? 'bg-static-bg-700 text-white'
-                                        : 'bg-gray-200 dark:bg-gray-700 text-static-text-700 dark:text-static-text-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                                    }`}
-                                  >
-                                    {member.name}
-                                  </button>
-                                );
-                              })}
+
+                            {item.quantity && item.quantity > 1 && !isAssigned && (
+                              <div className="mt-2 flex justify-end">
+                                <button
+                                  onClick={() => setSplittingItemIndex(index)}
+                                  className="text-sm font-medium text-static-accent-500 hover:text-static-accent-400"
+                                >
+                                  Split Item
+                                </button>
+                              </div>
+                            )}
+
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              {members.map((member) => (
+                                <button
+                                  key={member.id}
+                                  onClick={() => toggleItemAssignment(index, member.id)}
+                                  className={`px-3 py-1.5 rounded-full border-2 text-sm font-medium transition-all ${
+                                    itemAssignments[index]?.includes(member.id)
+                                      ? 'border-static-bg-700 bg-static-bg-700/20 text-static-text-50'
+                                      : 'border-gray-600 hover:border-gray-500 text-static-text-400'
+                                  }`}
+                                >
+                                  {member.name}
+                                </button>
+                              ))}
                             </div>
                             {isAssigned ? (
                               <div className="mt-2 text-sm text-static-text-600 dark:text-static-text-400">
@@ -2098,6 +2161,93 @@ export default function TripBudgetView({
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Item Split Modal */}
+      {splittingItemIndex !== null && scannedReceipt && (
+        <div
+          className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/50"
+          onClick={() => setSplittingItemIndex(null)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {(() => {
+              const item = scannedReceipt.items[splittingItemIndex];
+              if (!item) return null;
+
+              const currentSplits = itemSplits[splittingItemIndex] || {};
+              const totalAssigned = Object.values(currentSplits).reduce((sum, qty) => sum + qty, 0);
+              const remainingToAssign = (item.quantity || 1) - totalAssigned;
+
+              return (
+                <>
+                  <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
+                    Split "{item.name}"
+                  </h2>
+                  <p className="text-static-text-600 dark:text-static-text-400 mb-6">
+                    Assign quantities to each member. Total quantity: {item.quantity}.
+                  </p>
+
+                  <div className="space-y-3 mb-6">
+                    {members.map((member) => {
+                      const assignedQty = currentSplits[member.id] || 0;
+                      return (
+                        <div key={member.id} className="flex items-center justify-between p-3 bg-static-bg-100 dark:bg-gray-700 rounded-lg">
+                          <p className="font-medium text-static-text-900 dark:text-static-text-50">{member.name}</p>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => handleSplitChange(splittingItemIndex, member.id, Math.max(0, assignedQty - 1))}
+                              className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 text-lg font-bold text-static-text-700 dark:text-static-text-300 hover:bg-gray-300 dark:hover:bg-gray-500"
+                            >
+                              -
+                            </button>
+                            <span className="text-lg font-bold w-8 text-center text-static-text-900 dark:text-static-text-50">{assignedQty}</span>
+                            <button
+                              onClick={() => handleSplitChange(splittingItemIndex, member.id, assignedQty + 1)}
+                              className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 text-lg font-bold text-static-text-700 dark:text-static-text-300 hover:bg-gray-300 dark:hover:bg-gray-500"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className={`p-4 rounded-lg mb-6 ${
+                    remainingToAssign === 0
+                      ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700'
+                      : 'bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700'
+                  }`}>
+                    <p className="font-medium text-center text-static-text-900 dark:text-static-text-50">
+                      {remainingToAssign} of {item.quantity} remaining to assign
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSplittingItemIndex(null)}
+                      className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-600 text-static-text-900 dark:text-static-text-50 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveSplit}
+                      disabled={remainingToAssign !== 0}
+                      className="flex-1 px-4 py-3 bg-static-bg-700 hover:bg-static-bg-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+                    >
+                      Save Split
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
