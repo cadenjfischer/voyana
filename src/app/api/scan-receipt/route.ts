@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import vision from '@google-cloud/vision';
+import { createClient } from '@/lib/supabase/server';
 
 // Initialize the Vision API client
 const getVisionClient = () => {
@@ -35,6 +36,16 @@ const getVisionClient = () => {
 export async function POST(request: NextRequest) {
   try {
     const client = getVisionClient();
+    const supabase = await createClient();
+    
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
     
     const formData = await request.formData();
     const file = formData.get('image') as File;
@@ -49,6 +60,30 @@ export async function POST(request: NextRequest) {
     // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+
+    // Upload to Supabase Storage
+    const fileName = `${user.id}/${Date.now()}-${file.name}`;
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('receipts')
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error('Error uploading to Supabase Storage:', uploadError);
+      // Continue with OCR even if upload fails
+    }
+
+    // Get public URL for the uploaded image
+    let imageUrl: string | null = null;
+    if (uploadData) {
+      const { data: { publicUrl } } = supabase.storage
+        .from('receipts')
+        .getPublicUrl(fileName);
+      imageUrl = publicUrl;
+    }
 
     // Call Vision API for text extraction
     const [result] = await client.textDetection(buffer);
@@ -78,6 +113,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       fullText,
+      imageUrl, // Include the Supabase image URL
       ...parsedReceipt,
     });
 

@@ -53,6 +53,7 @@ export default function TripBudgetView({
     tax?: number;
     tip?: number;
     total?: number;
+    imageUrl?: string; // Add imageUrl field
   } | null>(null);
   const [receiptImage, setReceiptImage] = useState<string | null>(null);
   const [itemAssignments, setItemAssignments] = useState<Record<number, string[]>>({});
@@ -387,6 +388,7 @@ export default function TripBudgetView({
       createdBy: currentUserId,
       createdAt: new Date().toISOString(),
       receiptDetails, // Store receipt breakdown for expandable view
+      receiptImageUrl: scannedReceipt.imageUrl, // Store the receipt image URL
     } as any;
 
     // Update trip with new expense
