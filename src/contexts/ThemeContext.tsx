@@ -12,15 +12,25 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>(() => {
+    // Initialize from localStorage immediately if available (client-side only)
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme') as Theme | null;
+      if (savedTheme) return savedTheme;
+      
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return prefersDark ? 'dark' : 'light';
+    }
+    return 'light';
+  });
   const [mounted, setMounted] = useState(false);
 
+  // Apply theme immediately on mount (before first render)
   useEffect(() => {
-    setMounted(true);
-    // Get theme from localStorage or default to light
     const savedTheme = localStorage.getItem('theme') as Theme | null;
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    
     setTheme(initialTheme);
     
     // Set both data-theme attribute AND dark class for compatibility
@@ -30,6 +40,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else {
       document.documentElement.classList.remove('dark');
     }
+    
+    setMounted(true);
   }, []);
 
   const toggleTheme = () => {

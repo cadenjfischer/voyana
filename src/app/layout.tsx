@@ -27,6 +27,23 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Prevent theme flash - runs before page render */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const theme = localStorage.getItem('theme') || 
+                    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                  document.documentElement.setAttribute('data-theme', theme);
+                  if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
         <Script
           id="travelpayouts-init"
           strategy="afterInteractive"

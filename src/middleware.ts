@@ -38,8 +38,12 @@ export async function middleware(request: NextRequest) {
   // Refresh session if expired - required for Server Components
   const {
     data: { user },
+    error
   } = await supabase.auth.getUser()
 
+  // Add cache headers to prevent excessive re-fetching
+  response.headers.set('Cache-Control', 'private, no-cache, no-store, max-age=0, must-revalidate')
+  
   const isProtectedRoute = protectedRoutes.some(route => 
     request.nextUrl.pathname.startsWith(route)
   )
@@ -48,12 +52,14 @@ export async function middleware(request: NextRequest) {
   )
 
   // Redirect to sign-in if accessing protected route without auth
-  if (isProtectedRoute && !user) {
-    return NextResponse.redirect(new URL('/sign-in', request.url))
+  if (isProtectedRoute && (!user || error)) {
+    const redirectUrl = new URL('/sign-in', request.url)
+    redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
+    return NextResponse.redirect(redirectUrl)
   }
 
   // Redirect to dashboard if accessing auth routes while authenticated
-  if (isAuthRoute && user) {
+  if (isAuthRoute && user && !error) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 

@@ -46,6 +46,25 @@ export default function ItineraryPage() {
   const [loading, setLoading] = useState(true);
   const [tripToDelete, setTripToDelete] = useState<LocalTrip | null>(null);
 
+  // Load trips immediately from localStorage (optimistic)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Try to load trips from any existing user session first
+      const keys = Object.keys(localStorage);
+      const tripKeys = keys.filter(key => key.startsWith('voyana_trips_'));
+      if (tripKeys.length > 0) {
+        try {
+          const savedTrips = localStorage.getItem(tripKeys[0]);
+          if (savedTrips) {
+            setTrips(JSON.parse(savedTrips));
+          }
+        } catch (error) {
+          console.error('Error loading trips:', error);
+        }
+      }
+    }
+  }, []);
+
   // Get user on mount
   useEffect(() => {
     const supabase = createBrowserClient(
@@ -57,6 +76,15 @@ export default function ItineraryPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         setUser(user);
+        
+        // Load user-specific trips after auth
+        if (user) {
+          const savedTrips = localStorage.getItem(`voyana_trips_${user.id}`);
+          if (savedTrips) {
+            setTrips(JSON.parse(savedTrips));
+          }
+        }
+        
         setLoading(false);
       } catch (error) {
         console.error('Error getting user:', error);
@@ -66,20 +94,6 @@ export default function ItineraryPage() {
 
     getUser();
   }, []);
-
-  // Load trips from localStorage on component mount
-  useEffect(() => {
-    if (user) {
-      try {
-        const savedTrips = localStorage.getItem(`voyana_trips_${user.id}`);
-        if (savedTrips) {
-          setTrips(JSON.parse(savedTrips));
-        }
-      } catch (error) {
-        console.error('Error loading trips:', error);
-      }
-    }
-  }, [user]);
 
   // Save trips to localStorage whenever trips change
   useEffect(() => {
