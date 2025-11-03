@@ -966,46 +966,36 @@ export default function TripBudgetView({
                                   </button>
                                 )}
                                 
-                                <div className="space-y-3">
+                                <div className="space-y-0">
                                   {expenseWithReceipt.receiptDetails.items.map((item: any, idx: number) => {
                                     const assignedMembers = item.assignedTo || [];
                                     const splits = item.splits || {};
                                     const hasSplits = Object.keys(splits).length > 0 && Object.values(splits).some(qty => (qty as number) > 0);
 
                                     return (
-                                      <div key={idx} className="text-sm p-3 bg-static-bg-100 dark:bg-gray-900/50 rounded-lg">
-                                        <div className="flex justify-between items-center font-semibold">
-                                          <span className="text-static-text-800 dark:text-static-text-200">{item.name}</span>
-                                          <span className="text-static-text-900 dark:text-static-text-50">
+                                      <div key={idx} className="text-xs py-1 px-2 border-b border-gray-200 dark:border-gray-800 last:border-b-0">
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-static-text-800 dark:text-static-text-200 font-medium">
+                                            {item.name}
+                                            <span className="text-static-text-500 dark:text-static-text-500 ml-2">
+                                              {hasSplits ? (
+                                                Object.entries(splits).map(([memberId, qty]) => {
+                                                  const qtyNum = qty as number;
+                                                  if (qtyNum <= 0) return null;
+                                                  const member = members.find(m => m.id === memberId);
+                                                  return `${member?.name || 'Unknown'} (${qtyNum})`;
+                                                }).filter(Boolean).join(', ')
+                                              ) : (
+                                                assignedMembers.map((memberId: string) => {
+                                                  const member = members.find(m => m.id === memberId);
+                                                  return member?.name || 'Unknown';
+                                                }).join(', ')
+                                              )}
+                                            </span>
+                                          </span>
+                                          <span className="text-static-text-900 dark:text-static-text-50 font-semibold ml-2">
                                             {formatCurrency(item.price * (item.quantity || 1), currency)}
                                           </span>
-                                        </div>
-                                        
-                                        <div className="mt-2 pl-2 border-l-2 border-gray-300 dark:border-gray-600">
-                                          {hasSplits ? (
-                                            Object.entries(splits).map(([memberId, qty]) => {
-                                              const qtyNum = qty as number;
-                                              if (qtyNum <= 0) return null;
-                                              const member = members.find(m => m.id === memberId);
-                                              return (
-                                                <div key={memberId} className="flex justify-between items-center text-xs text-static-text-600 dark:text-static-text-400 py-1">
-                                                  <span>↳ {member?.name} (Qty: {qtyNum})</span>
-                                                  <span>{formatCurrency(item.price * qtyNum, currency)}</span>
-                                                </div>
-                                              );
-                                            })
-                                          ) : (
-                                            assignedMembers.map((memberId: string) => {
-                                              const member = members.find(m => m.id === memberId);
-                                              const amount = (item.price * (item.quantity || 1)) / assignedMembers.length;
-                                              return (
-                                                <div key={memberId} className="flex justify-between items-center text-xs text-static-text-600 dark:text-static-text-400 py-1">
-                                                  <span>↳ {member?.name}</span>
-                                                  <span>{formatCurrency(amount, currency)}</span>
-                                                </div>
-                                              );
-                                            })
-                                          )}
                                         </div>
                                       </div>
                                     );
@@ -1013,7 +1003,7 @@ export default function TripBudgetView({
                                   
                                   {/* Show suggested tax/tip if present */}
                                   {(expenseWithReceipt.receiptDetails.tax || expenseWithReceipt.receiptDetails.tip) && (
-                                    <div className="text-xs text-static-text-500 italic pt-3 mt-2 border-t border-gray-200 dark:border-gray-700">
+                                    <div className="text-xs text-static-text-500 italic px-2 py-1 border-t border-gray-200 dark:border-gray-800">
                                       Note: Tax and tip (if any) are distributed proportionally among participants.
                                     </div>
                                   )}
