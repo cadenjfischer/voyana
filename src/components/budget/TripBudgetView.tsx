@@ -2078,7 +2078,7 @@ export default function TripBudgetView({
                           })()}
                           
                           {/* Show tip as suggestion only if present */}
-                          {scannedReceipt.tip && (
+                          {scannedReceipt.tip && !manualTip && (
                             <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
                               <p className="text-xs text-static-text-500 italic mb-1">
                                 Tip suggestion (not included):
@@ -2090,38 +2090,86 @@ export default function TripBudgetView({
                             </div>
                           )}
 
-                          {/* Manual Tip Input */}
+                          {/* Manual Tip Input - Conditional Display */}
                           <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700">
-                            <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
-                              Add Tip (Optional)
-                            </label>
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-static-text-600 dark:text-static-text-400">
-                                {currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '£'}
-                              </span>
-                              <input
-                                type="number"
-                                value={manualTip}
-                                onChange={(e) => setManualTip(e.target.value)}
-                                placeholder="0.00"
-                                step="0.01"
-                                min="0"
-                                className="w-full pl-8 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder:text-static-text-500 focus:outline-none focus:border-static-bg-700 transition-colors"
-                              />
-                            </div>
-                            {manualTip && parseFloat(manualTip) > 0 && (
-                              <div className="mt-2 flex justify-between text-sm font-semibold text-green-600 dark:text-green-400">
-                                <span>Total with tip:</span>
-                                <span>
-                                  {formatCurrency(
-                                    (scannedReceipt.total || 
-                                      (scannedReceipt.subtotal && scannedReceipt.tax 
-                                        ? scannedReceipt.subtotal + scannedReceipt.tax 
-                                        : scannedReceipt.items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0)
-                                      )) + parseFloat(manualTip), 
-                                    currency
-                                  )}
-                                </span>
+                            {!manualTip ? (
+                              // Show input when no tip is set
+                              <>
+                                <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                                  Add Tip (Optional)
+                                </label>
+                                <div className="flex gap-2">
+                                  <div className="relative flex-1">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-static-text-600 dark:text-static-text-400">
+                                      {currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '£'}
+                                    </span>
+                                    <input
+                                      type="number"
+                                      id="tip-input"
+                                      placeholder="0.00"
+                                      step="0.01"
+                                      min="0"
+                                      className="w-full pl-8 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder:text-static-text-500 focus:outline-none focus:border-static-bg-700 transition-colors"
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          const value = (e.target as HTMLInputElement).value;
+                                          if (value && parseFloat(value) > 0) {
+                                            setManualTip(value);
+                                          }
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const input = document.getElementById('tip-input') as HTMLInputElement;
+                                      if (input.value && parseFloat(input.value) > 0) {
+                                        setManualTip(input.value);
+                                      }
+                                    }}
+                                    className="px-4 py-2 bg-static-bg-700 hover:bg-static-bg-600 text-white rounded-lg font-medium transition-colors whitespace-nowrap"
+                                  >
+                                    Set Tip
+                                  </button>
+                                </div>
+                              </>
+                            ) : (
+                              // Show final amount with tip when set
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm font-medium text-static-text-900 dark:text-static-text-50">
+                                    Tip Added:
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+                                      {formatCurrency(parseFloat(manualTip), currency)}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setManualTip('')}
+                                      className="text-xs text-static-text-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                      title="Remove tip"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="flex justify-between text-base font-bold text-static-text-900 dark:text-static-text-50 pt-2 border-t border-gray-300 dark:border-gray-600">
+                                  <span>Total with Tip:</span>
+                                  <span className="text-green-600 dark:text-green-400">
+                                    {formatCurrency(
+                                      (scannedReceipt.total || 
+                                        (scannedReceipt.subtotal && scannedReceipt.tax 
+                                          ? scannedReceipt.subtotal + scannedReceipt.tax 
+                                          : scannedReceipt.items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0)
+                                        )) + parseFloat(manualTip), 
+                                      currency
+                                    )}
+                                  </span>
+                                </div>
                               </div>
                             )}
                           </div>
