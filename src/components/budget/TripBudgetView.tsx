@@ -61,6 +61,7 @@ export default function TripBudgetView({
   const [itemSplits, setItemSplits] = useState<Record<number, Record<string, number>>>({});
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
   const [viewingReceiptImageUrl, setViewingReceiptImageUrl] = useState<string | null>(null);
+  const [manualTip, setManualTip] = useState<string>(''); // For manual tip entry
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -292,12 +293,16 @@ export default function TripBudgetView({
 
     // Determine the actual total paid
     // Priority: 1) Detected total, 2) Subtotal + Tax, 3) Items total
-    const actualTotal = scannedReceipt.total || 
+    let actualTotal = scannedReceipt.total || 
       (scannedReceipt.subtotal && scannedReceipt.tax 
         ? scannedReceipt.subtotal + scannedReceipt.tax 
         : itemsTotal);
+    
+    // Add manual tip if provided
+    const tipAmount = manualTip && parseFloat(manualTip) > 0 ? parseFloat(manualTip) : 0;
+    actualTotal += tipAmount;
 
-    // Calculate the difference (anything not captured in items)
+    // Calculate the difference (anything not captured in items + tip)
     const difference = actualTotal - itemsTotal;
 
     // Calculate who owes what based on item assignments
@@ -370,7 +375,7 @@ export default function TripBudgetView({
       })),
       subtotal: scannedReceipt.subtotal,
       tax: scannedReceipt.tax,
-      tip: scannedReceipt.tip,
+      tip: tipAmount > 0 ? tipAmount : scannedReceipt.tip, // Use manual tip if provided
       total: actualTotal,
     };
 
@@ -419,6 +424,7 @@ export default function TripBudgetView({
     setIsScanning(false);
     setSplittingItemIndex(null);
     setItemSplits({});
+    setManualTip(''); // Reset manual tip
   };
 
   // Handle quantity change in split modal
@@ -2083,6 +2089,42 @@ export default function TripBudgetView({
                               </div>
                             </div>
                           )}
+
+                          {/* Manual Tip Input */}
+                          <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700">
+                            <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                              Add Tip (Optional)
+                            </label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-static-text-600 dark:text-static-text-400">
+                                {currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '£'}
+                              </span>
+                              <input
+                                type="number"
+                                value={manualTip}
+                                onChange={(e) => setManualTip(e.target.value)}
+                                placeholder="0.00"
+                                step="0.01"
+                                min="0"
+                                className="w-full pl-8 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder:text-static-text-500 focus:outline-none focus:border-static-bg-700 transition-colors"
+                              />
+                            </div>
+                            {manualTip && parseFloat(manualTip) > 0 && (
+                              <div className="mt-2 flex justify-between text-sm font-semibold text-green-600 dark:text-green-400">
+                                <span>Total with tip:</span>
+                                <span>
+                                  {formatCurrency(
+                                    (scannedReceipt.total || 
+                                      (scannedReceipt.subtotal && scannedReceipt.tax 
+                                        ? scannedReceipt.subtotal + scannedReceipt.tax 
+                                        : scannedReceipt.items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0)
+                                      )) + parseFloat(manualTip), 
+                                    currency
+                                  )}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
