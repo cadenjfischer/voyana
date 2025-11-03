@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
@@ -12,12 +12,24 @@ export default function SignUpPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
   const router = useRouter();
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
+
+  // Check if already signed in
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        // Already signed in, redirect
+        router.push('/dashboard');
+      }
+      setInitialCheckDone(true);
+    });
+  }, [router, supabase.auth]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +63,9 @@ export default function SignUpPage() {
 
       // Check if the user is confirmed (email confirmation disabled) or needs confirmation
       if (data.user) {
+        // Wait a bit for session to be fully established
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         // Check if user is already confirmed (this happens when email confirmation is disabled)
         const { data: { session } } = await supabase.auth.getSession();
         
@@ -61,20 +76,31 @@ export default function SignUpPage() {
         } else {
           // User needs to confirm email
           setSuccess(true);
+          setLoading(false);
         }
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to sign up');
-    } finally {
       setLoading(false);
     }
   };
 
+  if (!initialCheckDone) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
-          <div className="rounded-md bg-green-50 p-4">
+          <div className="rounded-md bg-green-50 dark:bg-green-900/20 p-4">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -82,10 +108,10 @@ export default function SignUpPage() {
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-green-800">
+                <h3 className="text-sm font-medium text-green-800 dark:text-green-200">
                   Check your email!
                 </h3>
-                <div className="mt-2 text-sm text-green-700">
+                <div className="mt-2 text-sm text-green-700 dark:text-green-300">
                   <p>We&apos;ve sent you a confirmation email. Please click the link in the email to activate your account.</p>
                   <p className="mt-2">After confirming, you can sign in to your account.</p>
                 </div>
@@ -133,7 +159,7 @@ export default function SignUpPage() {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-600 focus:border-primary-600 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 rounded-t-md focus:outline-none focus:ring-accent-600 focus:border-accent-600 focus:z-10 sm:text-sm"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -149,7 +175,7 @@ export default function SignUpPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-600 focus:border-primary-600 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 focus:outline-none focus:ring-accent-600 focus:border-accent-600 focus:z-10 sm:text-sm"
                 placeholder="Password (min 6 characters)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -165,7 +191,7 @@ export default function SignUpPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-600 focus:border-primary-600 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 rounded-b-md focus:outline-none focus:ring-accent-600 focus:border-accent-600 focus:z-10 sm:text-sm"
                 placeholder="Confirm password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -177,7 +203,7 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-accent-600 hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating account...' : 'Sign up'}
             </button>
