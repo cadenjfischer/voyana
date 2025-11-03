@@ -65,6 +65,7 @@ export default function TripBudgetView({
   const [tipSplitType, setTipSplitType] = useState<'proportional' | 'equal' | 'custom'>('proportional'); // How to split tip
   const [tipAssignedMembers, setTipAssignedMembers] = useState<string[]>([]); // Members who pay tip (for custom)
   const [showTipSplitModal, setShowTipSplitModal] = useState(false); // Modal for tip split options
+  const [showTipInput, setShowTipInput] = useState(false); // Show/hide tip input bubble
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -471,6 +472,7 @@ export default function TripBudgetView({
     setManualTip(''); // Reset manual tip
     setTipSplitType('proportional'); // Reset tip split type
     setTipAssignedMembers([]); // Reset tip assigned members
+    setShowTipInput(false); // Reset tip input visibility
   };
 
   // Handle quantity change in split modal
@@ -2123,49 +2125,81 @@ export default function TripBudgetView({
                             );
                           })()}
 
-                          {/* Manual Tip Input - Conditional Display */}
-                          <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700">
+                          {/* Manual Tip Input - iOS Bubble Style */}
+                          <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700 relative">
                             {!manualTip ? (
-                              // Show input when no tip is set
+                              // Show button to open tip input
                               <>
-                                <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowTipInput(!showTipInput)}
+                                  className="w-full px-4 py-2.5 bg-static-bg-100 dark:bg-gray-800 hover:bg-static-bg-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-static-text-900 dark:text-static-text-50 transition-colors flex items-center justify-center gap-2"
+                                >
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                  </svg>
                                   Add Tip (Optional)
-                                </label>
-                                <div className="flex gap-2">
-                                  <div className="relative flex-1">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-static-text-600 dark:text-static-text-400">
-                                      {currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '£'}
-                                    </span>
-                                    <input
-                                      type="number"
-                                      id="tip-input"
-                                      placeholder="0.00"
-                                      step="0.01"
-                                      min="0"
-                                      className="w-full pl-8 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 placeholder:text-static-text-500 focus:outline-none focus:border-static-bg-700 transition-colors"
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                          const value = (e.target as HTMLInputElement).value;
-                                          if (value && parseFloat(value) > 0) {
-                                            setManualTip(value);
-                                          }
-                                        }
-                                      }}
+                                </button>
+
+                                {/* iOS-style bubble popup */}
+                                {showTipInput && (
+                                  <>
+                                    {/* Backdrop */}
+                                    <div
+                                      className="fixed inset-0 z-[9999]"
+                                      onClick={() => setShowTipInput(false)}
                                     />
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const input = document.getElementById('tip-input') as HTMLInputElement;
-                                      if (input.value && parseFloat(input.value) > 0) {
-                                        setManualTip(input.value);
-                                      }
-                                    }}
-                                    className="px-4 py-2 bg-static-bg-700 hover:bg-static-bg-600 text-white rounded-lg font-medium transition-colors whitespace-nowrap"
-                                  >
-                                    Set Tip
-                                  </button>
-                                </div>
+                                    
+                                    {/* Bubble */}
+                                    <div className="absolute left-0 right-0 top-full mt-2 z-[10000] animate-in fade-in slide-in-from-top-2 duration-200">
+                                      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 mx-2">
+                                        <label className="block text-xs font-medium text-static-text-600 dark:text-static-text-400 mb-2">
+                                          Tip Amount
+                                        </label>
+                                        <div className="flex gap-2">
+                                          <div className="relative flex-1">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-static-text-600 dark:text-static-text-400 font-medium">
+                                              {currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '£'}
+                                            </span>
+                                            <input
+                                              type="number"
+                                              id="tip-input-bubble"
+                                              placeholder="0.00"
+                                              step="0.01"
+                                              min="0"
+                                              autoFocus
+                                              className="w-full pl-8 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-static-text-900 dark:text-static-text-50 placeholder:text-static-text-400 focus:outline-none focus:ring-2 focus:ring-static-bg-700 focus:border-transparent transition-all"
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                  const value = (e.target as HTMLInputElement).value;
+                                                  if (value && parseFloat(value) > 0) {
+                                                    setManualTip(value);
+                                                    setShowTipInput(false);
+                                                  }
+                                                } else if (e.key === 'Escape') {
+                                                  setShowTipInput(false);
+                                                }
+                                              }}
+                                            />
+                                          </div>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              const input = document.getElementById('tip-input-bubble') as HTMLInputElement;
+                                              if (input.value && parseFloat(input.value) > 0) {
+                                                setManualTip(input.value);
+                                                setShowTipInput(false);
+                                              }
+                                            }}
+                                            className="px-4 py-2.5 bg-static-bg-700 hover:bg-static-bg-600 text-white rounded-xl font-medium transition-colors whitespace-nowrap"
+                                          >
+                                            Add
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
                               </>
                             ) : (
                               // Show final amount with tip when set
@@ -2450,7 +2484,7 @@ export default function TripBudgetView({
                 <button
                   type="button"
                   onClick={handleCreateExpensesFromReceipt}
-                  disabled={!expensePaidBy || Object.values(itemAssignments).every(arr => !arr || arr.length === 0)}
+                  disabled={!expensePaidBy}
                   className="flex-1 px-4 py-3 bg-static-bg-700 dark:bg-static-bg-700 hover:bg-static-bg-600 dark:hover:bg-static-bg-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:text-static-text-700"
                 >
                   Create Expenses ({scannedReceipt.items.filter((_, i) => itemAssignments[i]?.length > 0).length} assigned)
