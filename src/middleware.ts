@@ -52,10 +52,20 @@ export async function middleware(request: NextRequest) {
   )
 
   // Redirect to sign-in if accessing protected route without auth
-  if (isProtectedRoute && (!user || error)) {
-    const redirectUrl = new URL('/sign-in', request.url)
-    redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
-    return NextResponse.redirect(redirectUrl)
+  // But only if we're certain there's no user (not just a loading state)
+  if (isProtectedRoute && !user) {
+    // Check if we have any Supabase auth cookies
+    const authCookies = request.cookies.getAll().filter(cookie => 
+      cookie.name.includes('sb-') && cookie.name.includes('auth-token')
+    )
+    
+    // If we have auth cookies, let the page handle auth (might be loading)
+    // Only redirect if we truly have no auth cookies
+    if (authCookies.length === 0) {
+      const redirectUrl = new URL('/sign-in', request.url)
+      redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
+      return NextResponse.redirect(redirectUrl)
+    }
   }
 
   // Redirect to dashboard if accessing auth routes while authenticated
