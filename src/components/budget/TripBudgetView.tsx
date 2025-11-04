@@ -74,9 +74,13 @@ export default function TripBudgetView({
     imageUrl?: string; // Add imageUrl field
   } | null>(null);
   const [receiptImage, setReceiptImage] = useState<string | null>(null);
+  // itemAssignments: For items with quantity=1, array of { memberId, amount }
+  // For items with quantity>1, this represents the "parent" level (not used for calculation, just for UI state)
   const [itemAssignments, setItemAssignments] = useState<Record<number, string[]>>({});
   const [splittingItemIndex, setSplittingItemIndex] = useState<number | null>(null);
-  const [itemSplits, setItemSplits] = useState<Record<number, Record<string, number>>>({});
+  // itemSplits: For quantity items - structure: { itemIndex: { 0: ['memberId1', 'memberId2'], 1: ['memberId3'], ... } }
+  // Each sub-item (0, 1, 2...) can have multiple members assigned (for shared expenses)
+  const [itemSplits, setItemSplits] = useState<Record<number, Record<number, string[]>>>({});
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
   const [quickAssignMemberId, setQuickAssignMemberId] = useState<string | null>(null); // For quick assign mode
   const [openItemDropdownIndex, setOpenItemDropdownIndex] = useState<number | string | null>(null); // For item dropdown menus (can be number or "itemIndex-qtyIndex")
@@ -505,43 +509,96 @@ export default function TripBudgetView({
     setShowTipInput(false); // Reset tip input visibility
   };
 
-  // Handle quantity change in split modal
-  const handleSplitChange = (itemIndex: number, memberId: string, newQuantity: number) => {
-    const item = scannedReceipt?.items[itemIndex];
-    if (!item) return;
-
-    const currentSplits = itemSplits[itemIndex] || {};
-    const otherSplitsTotal = Object.entries(currentSplits)
-      .filter(([id]) => id !== memberId)
-      .reduce((sum, [, qty]) => sum + qty, 0);
-
-    const maxAllowed = (item.quantity || 1) - otherSplitsTotal;
-    const finalQuantity = Math.max(0, Math.min(newQuantity, maxAllowed));
-
-    setItemSplits(prev => ({
-      ...prev,
-      [itemIndex]: {
-        ...prev[itemIndex],
-        [memberId]: finalQuantity,
-      },
-    }));
+  // Helper: Toggle member assignment for a specific quantity sub-item
+  const toggleMemberForSubItem = (itemIndex: number, qtyIndex: number, memberId: string) => {
+    setItemSplits(prev => {
+      const itemSplit = prev[itemIndex] || {};
+      const subItemAssignments = itemSplit[qtyIndex] || [];
+      
+      const isAssigned = subItemAssignments.includes(memberId);
+      
+      return {
+        ...prev,
+        [itemIndex]: {
+          ...itemSplit,
+          [qtyIndex]: isAssigned
+            ? subItemAssignments.filter(id => id !== memberId)
+            : [...subItemAssignments, memberId]
+        }
+      };
+    });
   };
 
-  // Save the split and assign items accordingly
-  const handleSaveSplit = () => {
-    if (splittingItemIndex === null) return;
+  // Helper: Assign a member to ALL sub-items of a quantity item (parent-level assignment)
+  const assignMemberToAllSubItems = (itemIndex: number, memberId: string, quantity: number) => {
+    setItemSplits(prev => {
+      const itemSplit = prev[itemIndex] || {};
+      const newItemSplit: Record<number, string[]> = {};
+      
+      // For each quantity sub-item, add this member if not already present
+      for (let i = 0; i < quantity; i++) {
+        const currentAssignments = itemSplit[i] || [];
+        if (!currentAssignments.includes(memberId)) {
+          newItemSplit[i] = [...currentAssignments, memberId];
+        } else {
+          newItemSplit[i] = currentAssignments;
+        }
+      }
+      
+      return {
+        ...prev,
+        [itemIndex]: newItemSplit
+      };
+    });
+  };
 
-    const splits = itemSplits[splittingItemIndex] || {};
-    const assignedMembers = Object.entries(splits)
-      .filter(([, qty]) => qty > 0)
-      .map(([id]) => id);
+  // Helper: Remove a member from ALL sub-items (parent-level unassignment)
+  const removeMemberFromAllSubItems = (itemIndex: number, memberId: string, quantity: number) => {
+    setItemSplits(prev => {
+      const itemSplit = prev[itemIndex] || {};
+      const newItemSplit: Record<number, string[]> = {};
+      
+      // For each quantity sub-item, remove this member
+      for (let i = 0; i < quantity; i++) {
+        const currentAssignments = itemSplit[i] || [];
+        newItemSplit[i] = currentAssignments.filter(id => id !== memberId);
+      }
+      
+      return {
+        ...prev,
+        [itemIndex]: newItemSplit
+      };
+    });
+  };
 
-    setItemAssignments(prev => ({
-      ...prev,
-      [splittingItemIndex]: assignedMembers,
-    }));
+  // Helper: Check if a member is assigned to ALL sub-items (for parent checkbox state)
+  const isMemberAssignedToAllSubItems = (itemIndex: number, memberId: string, quantity: number): boolean => {
+    const itemSplit = itemSplits[itemIndex] || {};
+    for (let i = 0; i < quantity; i++) {
+      const subItemAssignments = itemSplit[i] || [];
+      if (!subItemAssignments.includes(memberId)) {
+        return false;
+      }
+    }
+    return true;
+  };
 
-    setSplittingItemIndex(null);
+  // Helper: Check if a member is assigned to SOME (but not all) sub-items
+  const isMemberAssignedToSomeSubItems = (itemIndex: number, memberId: string, quantity: number): boolean => {
+    const itemSplit = itemSplits[itemIndex] || {};
+    let hasAny = false;
+    let hasAll = true;
+    
+    for (let i = 0; i < quantity; i++) {
+      const subItemAssignments = itemSplit[i] || [];
+      if (subItemAssignments.includes(memberId)) {
+        hasAny = true;
+      } else {
+        hasAll = false;
+      }
+    }
+    
+    return hasAny && !hasAll;
   };
 
   // Handle add expense
@@ -2065,7 +2122,7 @@ export default function TripBudgetView({
           >
             {/* Main Modal */}
             <div 
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col min-w-0 w-full max-w-2xl"
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col min-w-0 w-full max-w-2xl max-h-[90vh]"
             >
             {/* Header */}
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -2078,7 +2135,7 @@ export default function TripBudgetView({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 min-h-0 overflow-y-auto p-6">
               {!receiptImage && !isScanning && (
                 <div className="space-y-4">
                   <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-600 dark:border-gray-600 rounded-lg cursor-pointer hover:border-gray-500 dark:hover:border-gray-500 transition-colors">
@@ -2575,8 +2632,25 @@ export default function TripBudgetView({
                       {scannedReceipt.items.map((item, itemIndex) => {
                         if (!item) return null;
                         const assignments = itemAssignments[itemIndex] || [];
-                        const isFullyAssigned = assignments.length > 0;
                         const showItemDropdown = openItemDropdownIndex === itemIndex;
+                        
+                        // For items with quantity > 1, get all unique members assigned across sub-items
+                        let allAssignedMembers: string[] = [];
+                        if (item.quantity && item.quantity > 1) {
+                          const itemSplit = itemSplits[itemIndex] || {};
+                          const allMemberIds = new Set<string>();
+                          for (let i = 0; i < item.quantity; i++) {
+                            const subItemAssignments = itemSplit[i] || [];
+                            subItemAssignments.forEach(id => allMemberIds.add(id));
+                          }
+                          allAssignedMembers = Array.from(allMemberIds);
+                        } else {
+                          // For single items, use direct assignments
+                          allAssignedMembers = assignments.map((a: any) => a?.memberId).filter(Boolean);
+                        }
+                        
+                        const isFullyAssigned = allAssignedMembers.length > 0;
+                        const firstMemberId = allAssignedMembers[0];
                         
                         return (
                           <div
@@ -2587,44 +2661,50 @@ export default function TripBudgetView({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (quickAssignMemberId) {
-                                  // Quick assign mode - toggle assignment
-                                  const isAssigned = assignments.some((a: any) => a?.memberId === quickAssignMemberId);
-                                  if (isAssigned) {
-                                    setItemAssignments(prev => ({
-                                      ...prev,
-                                      [itemIndex]: (prev[itemIndex] || []).filter((a: any) => a?.memberId !== quickAssignMemberId)
-                                    }));
+                                  // Quick assign mode
+                                  if (item.quantity && item.quantity > 1) {
+                                    // For quantity items: check if assigned to ALL sub-items
+                                    const isFullyAssignedToMember = isMemberAssignedToAllSubItems(itemIndex, quickAssignMemberId, item.quantity);
+                                    if (isFullyAssignedToMember) {
+                                      removeMemberFromAllSubItems(itemIndex, quickAssignMemberId, item.quantity);
+                                    } else {
+                                      assignMemberToAllSubItems(itemIndex, quickAssignMemberId, item.quantity);
+                                    }
                                   } else {
-                                    const splitCount = (assignments.length || 0) + 1;
-                                    const splitAmount = (item.price || 0) / splitCount;
-                                    const updatedAssignments = [
-                                      ...assignments.map((a: any) => ({
-                                        ...a,
-                                        amount: splitAmount
-                                      })),
-                                      {
-                                        memberId: quickAssignMemberId,
-                                        memberName: members.find(m => m.id === quickAssignMemberId)?.name || 'Unknown',
-                                        amount: splitAmount
-                                      }
-                                    ];
-                                    setItemAssignments(prev => ({
-                                      ...prev,
-                                      [itemIndex]: updatedAssignments
-                                    }));
+                                    // For single items: toggle direct assignment
+                                    const isAssigned = assignments.some((a: any) => a?.memberId === quickAssignMemberId);
+                                    if (isAssigned) {
+                                      setItemAssignments(prev => ({
+                                        ...prev,
+                                        [itemIndex]: (prev[itemIndex] || []).filter((a: any) => a?.memberId !== quickAssignMemberId)
+                                      }));
+                                    } else {
+                                      const splitCount = (assignments.length || 0) + 1;
+                                      const splitAmount = (item.price || 0) / splitCount;
+                                      const updatedAssignments = [
+                                        ...assignments.map((a: any) => ({
+                                          ...a,
+                                          amount: splitAmount
+                                        })),
+                                        {
+                                          memberId: quickAssignMemberId,
+                                          memberName: members.find(m => m.id === quickAssignMemberId)?.name || 'Unknown',
+                                          amount: splitAmount
+                                        }
+                                      ];
+                                      setItemAssignments(prev => ({
+                                        ...prev,
+                                        [itemIndex]: updatedAssignments
+                                      }));
+                                    }
                                   }
                                 }
                               }}
                               className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg transition-all border ${
-                                isFullyAssigned && (assignments[0] as any)?.memberId
+                                isFullyAssigned && firstMemberId
                                   ? (() => {
-                                      // Extract color from the member's gradient and map to Tailwind classes
-                                      const firstMemberId = (assignments[0] as any)?.memberId;
                                       const gradient = getMemberColor(firstMemberId, members);
-                                      // Parse "from-pink-500 to-rose-600" to get "pink"
-                                      const colorName = gradient.split('-')[1]; // Gets "pink" from "from-pink-500"
-                                      
-                                      // Map to complete Tailwind classes (needed for purging)
+                                      const colorName = gradient.split('-')[1];
                                       const colorMap: Record<string, string> = {
                                         'blue': 'bg-blue-50/30 dark:bg-blue-900/10 border-blue-300 dark:border-blue-700',
                                         'pink': 'bg-pink-50/30 dark:bg-pink-900/10 border-pink-300 dark:border-pink-700',
@@ -2638,7 +2718,6 @@ export default function TripBudgetView({
                                         'fuchsia': 'bg-fuchsia-50/30 dark:bg-fuchsia-900/10 border-fuchsia-300 dark:border-fuchsia-700',
                                         'purple': 'bg-purple-50/30 dark:bg-purple-900/10 border-purple-300 dark:border-purple-700',
                                       };
-                                      
                                       return `border-2 ${colorMap[colorName] || 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700'}`;
                                     })()
                                   : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-750'
@@ -2655,22 +2734,22 @@ export default function TripBudgetView({
                                     </span>
                                   )}
                                 </div>
-                                {assignments.length > 0 && (
+                                {allAssignedMembers.length > 0 && (
                                   <div className="flex items-center gap-1">
-                                    {assignments.slice(0, 3).map((assignment: any, idx: number) => {
-                                      const member = members.find(m => m.id === assignment.memberId);
+                                    {allAssignedMembers.slice(0, 3).map((memberId, idx) => {
+                                      const member = members.find(m => m.id === memberId);
                                       return (
                                         <div
                                           key={idx}
-                                          className={`w-5 h-5 rounded-full bg-gradient-to-br ${assignment.memberId ? getMemberColor(assignment.memberId, members) : 'from-gray-400 to-gray-500'} flex items-center justify-center text-white text-[10px] font-bold`}
+                                          className={`w-5 h-5 rounded-full bg-gradient-to-br ${getMemberColor(memberId, members)} flex items-center justify-center text-white text-[10px] font-bold`}
                                           title={member?.name || 'Unknown'}
                                         >
                                           {member?.name?.[0]?.toUpperCase() || '?'}
                                         </div>
                                       );
                                     })}
-                                    {assignments.length > 3 && (
-                                      <span className="text-xs text-static-text-500">+{assignments.length - 3}</span>
+                                    {allAssignedMembers.length > 3 && (
+                                      <span className="text-xs text-static-text-500">+{allAssignedMembers.length - 3}</span>
                                     )}
                                   </div>
                                 )}
@@ -2736,42 +2815,69 @@ export default function TripBudgetView({
                               >
                                 {members.map((member) => {
                                   if (!member) return null;
-                                  const isAssigned = assignments.some((a: any) => a?.memberId === member.id);
+                                  
+                                  // For items with quantity > 1, check assignment to sub-items
+                                  // For items with quantity = 1, check direct assignment
+                                  let isFullyAssigned = false;
+                                  let isPartiallyAssigned = false;
+                                  
+                                  if (item.quantity && item.quantity > 1) {
+                                    isFullyAssigned = isMemberAssignedToAllSubItems(itemIndex, member.id, item.quantity);
+                                    isPartiallyAssigned = !isFullyAssigned && isMemberAssignedToSomeSubItems(itemIndex, member.id, item.quantity);
+                                  } else {
+                                    // For single quantity items, use direct assignment
+                                    isFullyAssigned = assignments.some((a: any) => a?.memberId === member.id);
+                                  }
+                                  
                                   return (
                                     <button
                                       key={member.id}
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        if (isAssigned) {
-                                          setItemAssignments(prev => ({
-                                            ...prev,
-                                            [itemIndex]: (prev[itemIndex] || []).filter((a: any) => a?.memberId !== member.id)
-                                          }));
+                                        
+                                        if (item.quantity && item.quantity > 1) {
+                                          // For quantity items: toggle assignment to ALL sub-items
+                                          if (isFullyAssigned) {
+                                            removeMemberFromAllSubItems(itemIndex, member.id, item.quantity);
+                                          } else {
+                                            assignMemberToAllSubItems(itemIndex, member.id, item.quantity);
+                                          }
                                         } else {
-                                          const splitCount = (assignments.length || 0) + 1;
-                                          const splitAmount = (item.price || 0) / splitCount;
-                                          const updatedAssignments = [
-                                            ...assignments.map((a: any) => ({
-                                              ...a,
-                                              amount: splitAmount
-                                            })),
-                                            {
-                                              memberId: member.id,
-                                              memberName: member.name || 'Unknown',
-                                              amount: splitAmount
-                                            }
-                                          ];
-                                          setItemAssignments(prev => ({
-                                            ...prev,
-                                            [itemIndex]: updatedAssignments
-                                          }));
+                                          // For single quantity items: use direct assignment with split logic
+                                          if (isFullyAssigned) {
+                                            setItemAssignments(prev => ({
+                                              ...prev,
+                                              [itemIndex]: (prev[itemIndex] || []).filter((a: any) => a?.memberId !== member.id)
+                                            }));
+                                          } else {
+                                            const splitCount = (assignments.length || 0) + 1;
+                                            const splitAmount = (item.price || 0) / splitCount;
+                                            const updatedAssignments = [
+                                              ...assignments.map((a: any) => ({
+                                                ...a,
+                                                amount: splitAmount
+                                              })),
+                                              {
+                                                memberId: member.id,
+                                                memberName: member.name || 'Unknown',
+                                                amount: splitAmount
+                                              }
+                                            ];
+                                            setItemAssignments(prev => ({
+                                              ...prev,
+                                              [itemIndex]: updatedAssignments
+                                            }));
+                                          }
                                         }
+                                        
                                         // Auto-close dropdown after selection
                                         setOpenItemDropdownIndex(null);
                                       }}
                                       className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${
-                                        isAssigned
+                                        isFullyAssigned
                                           ? 'bg-blue-100 dark:bg-blue-900/50 text-static-text-900 dark:text-static-text-50'
+                                          : isPartiallyAssigned
+                                          ? 'bg-blue-50 dark:bg-blue-900/20 text-static-text-900 dark:text-static-text-50'
                                           : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-static-text-700 dark:text-static-text-300'
                                       }`}
                                     >
@@ -2779,9 +2885,14 @@ export default function TripBudgetView({
                                         {member.name?.[0]?.toUpperCase() || '?'}
                                       </div>
                                       <span className="flex-1 font-medium">{member.name || 'Unknown'}</span>
-                                      {isAssigned && (
+                                      {isFullyAssigned && (
                                         <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                      )}
+                                      {isPartiallyAssigned && (
+                                        <svg className="w-4 h-4 text-blue-500 dark:text-blue-300" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                                         </svg>
                                       )}
                                     </button>
@@ -2795,13 +2906,8 @@ export default function TripBudgetView({
                               <div className="mt-2 ml-4 space-y-1.5 border-l-2 border-gray-300 dark:border-gray-600 pl-3">
                                 {Array.from({ length: item.quantity }, (_, qtyIndex) => {
                                   const currentSplits = itemSplits[itemIndex] || {};
-                                  const assignedMemberId = Object.entries(currentSplits).find(([_, qty]) => 
-                                    Array.isArray(qty) ? (qty as any)[qtyIndex] : false
-                                  )?.[0];
-                                  
-                                  // Use a simpler structure: itemSplits[itemIndex] = { 0: 'memberId1', 1: 'memberId2', etc }
-                                  const assignedId = (currentSplits as any)[qtyIndex];
-                                  const assignedMember = members.find(m => m.id === assignedId);
+                                  const assignedIds = currentSplits[qtyIndex] || []; // Array of member IDs assigned to this sub-item
+                                  const isSharedExpense = assignedIds.length > 1;
                                   
                                   return (
                                     <div
@@ -2812,20 +2918,15 @@ export default function TripBudgetView({
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           if (quickAssignMemberId) {
-                                            // Quick assign to this sub-item
-                                            setItemSplits(prev => ({
-                                              ...prev,
-                                              [itemIndex]: {
-                                                ...prev[itemIndex],
-                                                [qtyIndex]: quickAssignMemberId
-                                              }
-                                            }));
+                                            // Quick assign - toggle this member for this sub-item
+                                            toggleMemberForSubItem(itemIndex, qtyIndex, quickAssignMemberId);
                                           }
                                         }}
                                         className={`flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg transition-all border ${
-                                          assignedId
+                                          assignedIds.length > 0
                                             ? (() => {
-                                                const gradient = getMemberColor(assignedId, members);
+                                                const firstMemberId = assignedIds[0];
+                                                const gradient = getMemberColor(firstMemberId, members);
                                                 const colorName = gradient.split('-')[1];
                                                 const colorMap: Record<string, string> = {
                                                   'blue': 'bg-blue-50/30 dark:bg-blue-900/10 border-blue-300 dark:border-blue-700',
@@ -2849,17 +2950,28 @@ export default function TripBudgetView({
                                           <span className="text-sm text-static-text-700 dark:text-static-text-400">
                                             #{qtyIndex + 1}
                                           </span>
-                                          {assignedMember && (
-                                            <div className="flex items-center gap-1.5">
-                                              <div 
-                                                className={`w-4 h-4 rounded-full bg-gradient-to-br ${getMemberColor(assignedId, members)} flex items-center justify-center text-white text-[9px] font-bold`}
-                                                title={assignedMember.name || 'Unknown'}
-                                              >
-                                                {assignedMember.name?.[0]?.toUpperCase() || '?'}
-                                              </div>
-                                              <span className="text-xs text-static-text-600 dark:text-static-text-400">
-                                                {assignedMember.name}
-                                              </span>
+                                          {assignedIds.length > 0 && (
+                                            <div className="flex items-center gap-1">
+                                              {assignedIds.slice(0, 3).map((memberId, idx) => {
+                                                const member = members.find(m => m.id === memberId);
+                                                return (
+                                                  <div
+                                                    key={idx}
+                                                    className={`w-4 h-4 rounded-full bg-gradient-to-br ${getMemberColor(memberId, members)} flex items-center justify-center text-white text-[9px] font-bold`}
+                                                    title={member?.name || 'Unknown'}
+                                                  >
+                                                    {member?.name?.[0]?.toUpperCase() || '?'}
+                                                  </div>
+                                                );
+                                              })}
+                                              {assignedIds.length > 3 && (
+                                                <span className="text-xs text-static-text-500">+{assignedIds.length - 3}</span>
+                                              )}
+                                              {isSharedExpense && (
+                                                <span className="text-xs text-purple-600 dark:text-purple-400 font-medium ml-1">
+                                                  Shared
+                                                </span>
+                                              )}
                                             </div>
                                           )}
                                         </div>
@@ -2898,31 +3010,15 @@ export default function TripBudgetView({
                                         >
                                           {members.map((member) => {
                                             if (!member) return null;
-                                            const isAssigned = assignedId === member.id;
+                                            const isAssigned = assignedIds.includes(member.id);
                                             return (
                                               <button
                                                 key={member.id}
                                                 onClick={(e) => {
                                                   e.stopPropagation();
-                                                  if (isAssigned) {
-                                                    // Unassign
-                                                    const newSplits = { ...itemSplits[itemIndex] };
-                                                    delete (newSplits as any)[qtyIndex];
-                                                    setItemSplits(prev => ({
-                                                      ...prev,
-                                                      [itemIndex]: newSplits
-                                                    }));
-                                                  } else {
-                                                    // Assign to this member
-                                                    setItemSplits(prev => ({
-                                                      ...prev,
-                                                      [itemIndex]: {
-                                                        ...prev[itemIndex],
-                                                        [qtyIndex]: member.id
-                                                      }
-                                                    }));
-                                                  }
-                                                  setOpenItemDropdownIndex(null);
+                                                  // Toggle assignment for this sub-item
+                                                  toggleMemberForSubItem(itemIndex, qtyIndex, member.id);
+                                                  // Keep dropdown open for multi-select
                                                 }}
                                                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${
                                                   isAssigned
