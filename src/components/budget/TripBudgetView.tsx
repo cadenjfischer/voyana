@@ -2117,12 +2117,14 @@ export default function TripBudgetView({
           onClick={resetScanReceiptModal}
         >
           <div 
-            className="flex gap-4 w-full max-h-[90vh] justify-center"
+            className="relative flex w-full max-w-5xl items-start justify-center mx-auto overflow-visible"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Main Modal */}
             <div 
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col min-w-0 w-full max-w-2xl max-h-[90vh]"
+              className={`bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col min-w-0 w-full max-w-2xl max-h-[85vh] transition-transform duration-300 ease-out ${
+                openDropdownIndex === -1 || openDropdownIndex === -2 ? '-translate-x-52' : 'translate-x-0'
+              }`}
             >
             {/* Header */}
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -2454,7 +2456,8 @@ export default function TripBudgetView({
           {/* Separate Side Panel */}
           {scannedReceipt && (openDropdownIndex === -1 || openDropdownIndex === -2) && (
             <div 
-              className="assign-items-side-panel bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-96 flex flex-col max-h-[90vh] overflow-hidden"
+              className="assign-items-side-panel absolute right-0 top-0 bottom-0 bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-96 flex flex-col overflow-hidden min-h-0 z-40 transition-all duration-300 ease-out animate-in slide-in-from-right-4 fade-in"
+              style={{ animationDelay: '150ms', animationFillMode: 'both' }}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Side Panel Header */}
@@ -2474,7 +2477,7 @@ export default function TripBudgetView({
 
               {/* Side Panel Content */}
               <div 
-                className="flex-1 overflow-y-auto p-4"
+                className="flex-1 min-h-0 overflow-y-auto p-4"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Member Selection Panel */}
