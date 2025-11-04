@@ -21,6 +21,24 @@ export default function TripBudgetView({
   currentUserId,
   currentUserEmail 
 }: TripBudgetViewProps) {
+  // Color palette for member avatars
+  const getMemberColor = (memberId: string, members: GroupMember[]) => {
+    const colors = [
+      'from-blue-500 to-purple-600',
+      'from-pink-500 to-rose-600',
+      'from-green-500 to-emerald-600',
+      'from-orange-500 to-amber-600',
+      'from-cyan-500 to-teal-600',
+      'from-violet-500 to-purple-600',
+      'from-red-500 to-pink-600',
+      'from-indigo-500 to-blue-600',
+      'from-lime-500 to-green-600',
+      'from-fuchsia-500 to-purple-600',
+    ];
+    const memberIndex = members.findIndex(m => m.id === memberId);
+    return colors[memberIndex % colors.length];
+  };
+
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -60,6 +78,9 @@ export default function TripBudgetView({
   const [splittingItemIndex, setSplittingItemIndex] = useState<number | null>(null);
   const [itemSplits, setItemSplits] = useState<Record<number, Record<string, number>>>({});
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
+  const [quickAssignMemberId, setQuickAssignMemberId] = useState<string | null>(null); // For quick assign mode
+  const [openItemDropdownIndex, setOpenItemDropdownIndex] = useState<number | string | null>(null); // For item dropdown menus (can be number or "itemIndex-qtyIndex")
+  const [expandedQtyItemIndex, setExpandedQtyItemIndex] = useState<number | null>(null); // For inline quantity split
   const [viewingReceiptImageUrl, setViewingReceiptImageUrl] = useState<string | null>(null);
   const [manualTip, setManualTip] = useState<string>(''); // For manual tip entry
   const [tipSplitType, setTipSplitType] = useState<'proportional' | 'equal' | 'custom'>('proportional'); // How to split tip
@@ -84,17 +105,28 @@ export default function TripBudgetView({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      // Check if click is outside dropdown
+      
+      // Check if click is outside item dropdown
+      if (openItemDropdownIndex !== null && !target.closest('.item-dropdown-container')) {
+        setOpenItemDropdownIndex(null);
+      }
+      
+      // Don't close main dropdown if clicking inside the side panel (but item dropdown is handled above)
+      if (target.closest('.assign-items-side-panel')) {
+        return;
+      }
+      
+      // Check if click is outside main dropdown
       if (openDropdownIndex !== null && !target.closest('.member-dropdown-container')) {
         setOpenDropdownIndex(null);
       }
     };
 
-    if (openDropdownIndex !== null) {
+    if (openDropdownIndex !== null || openItemDropdownIndex !== null) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [openDropdownIndex]);
+  }, [openDropdownIndex, openItemDropdownIndex]);
 
   // Initialize budget data from trip if not exists
   const expenses: Expense[] = (trip as any).expenses || [];
@@ -317,18 +349,15 @@ export default function TripBudgetView({
       const itemTotal = item.price * (item.quantity || 1);
       const splits = itemSplits[index];
 
-      if (splits && Object.keys(splits).length > 0) {
-        // Item was manually split
-        const totalSplitQuantity = Object.values(splits).reduce((sum, qty) => sum + qty, 0);
-        if (totalSplitQuantity > 0) {
-          const pricePerUnit = item.price;
-          Object.entries(splits).forEach(([memberId, quantity]) => {
-            if (quantity > 0) {
-              allParticipants.add(memberId);
-              memberTotals[memberId] = (memberTotals[memberId] || 0) + (pricePerUnit * quantity);
-            }
-          });
-        }
+      if (splits && Object.keys(splits).length > 0 && item.quantity && item.quantity > 1) {
+        // Item was split by quantity (new format: splits[qtyIndex] = memberId)
+        Object.entries(splits).forEach(([qtyIndexStr, memberId]) => {
+          const qtyIndex = parseInt(qtyIndexStr);
+          if (typeof memberId === 'string' && memberId) {
+            allParticipants.add(memberId);
+            memberTotals[memberId] = (memberTotals[memberId] || 0) + item.price;
+          }
+        });
       } else {
         // Item was assigned as a whole or left unassigned
         const assignedMembers = finalAssignments[index];
@@ -1029,9 +1058,11 @@ export default function TripBudgetView({
                                     return (
                                       <div key={idx} className="text-xs py-1 px-2 border-b border-gray-200 dark:border-gray-800 last:border-b-0">
                                         <div className="flex justify-between items-center">
-                                          <span className="text-static-text-800 dark:text-static-text-200 font-medium">
-                                            {item.name}
-                                            <span className="text-static-text-500 dark:text-static-text-500 ml-2">
+                                          <div className="flex items-center gap-2 min-w-0">
+                                            <span className="text-static-text-800 dark:text-static-text-200 font-medium truncate">
+                                              {item.name}
+                                            </span>
+                                            <span className="text-static-text-500 dark:text-static-text-500 ml-2 truncate">
                                               {hasSplits ? (
                                                 Object.entries(splits).map(([memberId, qty]) => {
                                                   const qtyNum = qty as number;
@@ -1046,8 +1077,8 @@ export default function TripBudgetView({
                                                 }).join(', ')
                                               )}
                                             </span>
-                                          </span>
-                                          <span className="text-static-text-900 dark:text-static-text-50 font-semibold ml-2">
+                                          </div>
+                                          <span className="text-static-text-900 dark:text-static-text-50 font-semibold ml-2 whitespace-nowrap tabular-nums">
                                             {formatCurrency(item.price * (item.quantity || 1), currency)}
                                           </span>
                                         </div>
@@ -2024,13 +2055,17 @@ export default function TripBudgetView({
       {/* Scan Receipt Modal */}
       {showScanReceiptModal && (
         <div 
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40"
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4"
           onClick={resetScanReceiptModal}
         >
           <div 
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col"
+            className="flex gap-4 w-full max-h-[90vh] justify-center"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Main Modal */}
+            <div 
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col min-w-0 w-full max-w-2xl"
+            >
             {/* Header */}
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50">
@@ -2269,7 +2304,7 @@ export default function TripBudgetView({
                       <button
                         type="button"
                         onClick={() => setOpenDropdownIndex(openDropdownIndex === -1 ? null : -1)}
-                        className={`w-full px-4 py-3 rounded-lg border-2 transition-all flex items-center justify-between ${
+                        className={`w-full px-4 py-3 rounded-lg border-2 transition-all flex items-center gap-3 ${
                           openDropdownIndex === -1
                             ? 'border-static-bg-700 bg-static-bg-700/10'
                             : expensePaidBy
@@ -2277,20 +2312,6 @@ export default function TripBudgetView({
                             : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                         }`}
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                          <div className="text-left min-w-0 flex-1">
-                            <div className="text-xs text-static-text-500 dark:text-static-text-400">Paid by</div>
-                            <div className="font-medium text-static-text-900 dark:text-static-text-50 truncate">
-                              {expensePaidBy 
-                                ? members.find(m => m.id === expensePaidBy)?.name 
-                                : 'Choose who paid'
-                              }
-                            </div>
-                          </div>
-                        </div>
                         <svg 
                           className="w-5 h-5 text-static-text-400 flex-shrink-0" 
                           fill="none" 
@@ -2299,35 +2320,30 @@ export default function TripBudgetView({
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
+                        <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <div className="text-left min-w-0 flex-1">
+                          <div className="text-xs text-static-text-500 dark:text-static-text-400">Paid by</div>
+                          <div className="font-medium text-static-text-900 dark:text-static-text-50 truncate">
+                            {expensePaidBy 
+                              ? members.find(m => m.id === expensePaidBy)?.name 
+                              : 'Choose who paid'
+                            }
+                          </div>
+                        </div>
                       </button>
 
                       {/* Split button */}
                       <button
                         type="button"
                         onClick={() => setOpenDropdownIndex(openDropdownIndex === -2 ? null : -2)}
-                        className={`w-full px-4 py-3 rounded-lg border-2 transition-all flex items-center justify-between ${
+                        className={`w-full px-4 py-3 rounded-lg border-2 transition-all flex items-center gap-3 ${
                           openDropdownIndex === -2
                             ? 'border-static-bg-700 bg-static-bg-700/10'
                             : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                         }`}
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                          <div className="text-left min-w-0 flex-1">
-                            <div className="text-xs text-static-text-500 dark:text-static-text-400">Split</div>
-                            <div className="font-medium text-static-text-900 dark:text-static-text-50 truncate">
-                              {(() => {
-                                const assignedCount = scannedReceipt.items.filter((_, i) => itemAssignments[i]?.length > 0).length;
-                                const totalCount = scannedReceipt.items.length;
-                                if (assignedCount === 0) return 'Assign items';
-                                if (assignedCount === totalCount) return `All ${totalCount} assigned`;
-                                return `${assignedCount}/${totalCount} assigned`;
-                              })()}
-                            </div>
-                          </div>
-                        </div>
                         <svg 
                           className="w-5 h-5 text-static-text-400 flex-shrink-0" 
                           fill="none" 
@@ -2336,214 +2352,23 @@ export default function TripBudgetView({
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
+                        <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <div className="text-left min-w-0 flex-1">
+                          <div className="text-xs text-static-text-500 dark:text-static-text-400">Split</div>
+                          <div className="font-medium text-static-text-900 dark:text-static-text-50 truncate">
+                            {(() => {
+                              const assignedCount = scannedReceipt.items.filter((_, i) => itemAssignments[i]?.length > 0).length;
+                              const totalCount = scannedReceipt.items.length;
+                              if (assignedCount === 0) return 'Assign items';
+                              if (assignedCount === totalCount) return `All ${totalCount} assigned`;
+                              return `${assignedCount}/${totalCount} assigned`;
+                            })()}
+                          </div>
+                        </div>
                       </button>
                     </div>
-
-                    {/* Right side - Details panel */}
-                    {(openDropdownIndex === -1 || openDropdownIndex === -2) && (
-                      <div className="flex-1 min-w-0 animate-in fade-in slide-in-from-right-2 duration-200">
-                        <div className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 h-full max-h-[400px] overflow-y-auto">
-                          {/* Paid by panel */}
-                          {openDropdownIndex === -1 && (
-                            <div className="space-y-2">
-                              <h3 className="text-sm font-semibold text-static-text-900 dark:text-static-text-50 mb-3">
-                                Who paid?
-                              </h3>
-                              {members.map((member) => (
-                                <button
-                                  key={member.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setExpensePaidBy(member.id);
-                                    setOpenDropdownIndex(null);
-                                  }}
-                                  className={`w-full px-3 py-2.5 rounded-lg flex items-center gap-3 transition-colors ${
-                                    expensePaidBy === member.id
-                                      ? 'bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-500 dark:border-blue-600'
-                                      : 'border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'
-                                  }`}
-                                >
-                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                                    {member.name.charAt(0).toUpperCase()}
-                                  </div>
-                                  <span className="flex-1 text-left font-medium text-static-text-900 dark:text-static-text-50">
-                                    {member.name}
-                                  </span>
-                                  {expensePaidBy === member.id && (
-                                    <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                    </svg>
-                                  )}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Split panel - Items list */}
-                          {openDropdownIndex === -2 && scannedReceipt.items && scannedReceipt.items.length > 0 && (
-                            <div className="space-y-2">
-                              <div className="mb-3">
-                                <h3 className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
-                                  Assign items
-                                </h3>
-                                <p className="text-xs text-static-text-500 dark:text-static-text-400 mt-1">
-                                  Unassigned items split equally
-                                </p>
-                              </div>
-                        {scannedReceipt.items.map((item, index) => {
-                        const isAssigned = itemAssignments[index] && itemAssignments[index].length > 0;
-                        const assignedMembers = itemAssignments[index] || [];
-                        const showMemberDropdown = openDropdownIndex === index;
-                        
-                        return (
-                          <div
-                            key={index}
-                            className={`relative p-3 rounded-lg border transition-all member-dropdown-container ${
-                              isAssigned
-                                ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800'
-                                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              {/* Item name and quantity */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <h4 className="font-medium text-static-text-900 dark:text-static-text-50 truncate">
-                                    {item.name}
-                                  </h4>
-                                  {item.quantity && item.quantity > 1 && (
-                                    <span className="text-xs text-static-text-500 dark:text-static-text-400 flex-shrink-0">
-                                      Qty: {item.quantity}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Price */}
-                              <div className="font-semibold text-static-text-900 dark:text-static-text-50 flex-shrink-0">
-                                {formatCurrency(item.price * (item.quantity || 1), currency)}
-                              </div>
-
-                              {/* Status badge */}
-                              {!isAssigned && (
-                                <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 dark:bg-gray-700 text-static-text-600 dark:text-static-text-400 rounded-full flex-shrink-0">
-                                  Unassigned
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Assigned members or assignment button */}
-                            <div className="mt-2 flex items-center gap-2">
-                              {isAssigned ? (
-                                <>
-                                  {/* Show assigned members as compact chips */}
-                                  <div className="flex items-center gap-1 flex-wrap flex-1">
-                                    {assignedMembers.map((memberId) => {
-                                      const member = members.find(m => m.id === memberId);
-                                      if (!member) return null;
-                                      return (
-                                        <div
-                                          key={memberId}
-                                          className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 border border-blue-300 dark:border-blue-700 rounded-full"
-                                        >
-                                          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold">
-                                            {member.name.charAt(0).toUpperCase()}
-                                          </div>
-                                          <span className="text-xs font-medium text-static-text-700 dark:text-static-text-300">
-                                            {member.name}
-                                          </span>
-                                          <button
-                                            onClick={() => toggleItemAssignment(index, memberId)}
-                                            className="ml-0.5 text-static-text-500 hover:text-static-text-700 dark:hover:text-static-text-200"
-                                          >
-                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                          </button>
-                                        </div>
-                                      );
-                                    })}
-                                    <button
-                                      onClick={() => setOpenDropdownIndex(showMemberDropdown ? null : index)}
-                                      className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center text-static-text-600 dark:text-static-text-400"
-                                    >
-                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                      </svg>
-                                    </button>
-                                  </div>
-                                  <div className="text-xs text-static-text-600 dark:text-static-text-400 flex-shrink-0">
-                                    {formatCurrency(
-                                      (item.price * (item.quantity || 1)) / assignedMembers.length,
-                                      currency
-                                    )}/person
-                                  </div>
-                                </>
-                              ) : (
-                                <button
-                                  onClick={() => setOpenDropdownIndex(showMemberDropdown ? null : index)}
-                                  className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                  </svg>
-                                  Assign members
-                                </button>
-                              )}
-
-                              {/* Split item button for quantities > 1 */}
-                              {item.quantity && item.quantity > 1 && (
-                                <button
-                                  onClick={() => setSplittingItemIndex(index)}
-                                  className="text-xs font-medium text-static-text-600 dark:text-static-text-400 hover:text-static-text-900 dark:hover:text-static-text-100 flex items-center gap-1 flex-shrink-0"
-                                >
-                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                                  </svg>
-                                  Split
-                                </button>
-                              )}
-                            </div>
-
-                            {/* Member dropdown */}
-                            {showMemberDropdown && (
-                              <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-2">
-                                {members.map((member) => {
-                                  const isSelected = assignedMembers.includes(member.id);
-                                  return (
-                                    <button
-                                      key={member.id}
-                                      onClick={() => {
-                                        toggleItemAssignment(index, member.id);
-                                      }}
-                                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${
-                                        isSelected
-                                          ? 'bg-blue-100 dark:bg-blue-900/50 text-static-text-900 dark:text-static-text-50'
-                                          : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-static-text-700 dark:text-static-text-300'
-                                      }`}
-                                    >
-                                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                        {member.name.charAt(0).toUpperCase()}
-                                      </div>
-                                      <span className="flex-1 font-medium">{member.name}</span>
-                                      {isSelected && (
-                                        <svg className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                        </svg>
-                                      )}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -2570,93 +2395,572 @@ export default function TripBudgetView({
               )}
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Item Split Modal */}
-      {splittingItemIndex !== null && scannedReceipt && (
-        <div
-          className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/50"
-          onClick={() => setSplittingItemIndex(null)}
-        >
-          <div
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full mx-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {(() => {
-              const item = scannedReceipt.items[splittingItemIndex];
-              if (!item) return null;
+          {/* Separate Side Panel */}
+          {scannedReceipt && (openDropdownIndex === -1 || openDropdownIndex === -2) && (
+            <div 
+              className="assign-items-side-panel bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-96 flex flex-col max-h-[90vh] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Side Panel Header */}
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-static-text-900 dark:text-static-text-50">
+                  {openDropdownIndex === -1 ? 'Who paid?' : 'Assign items'}
+                </h3>
+                <button
+                  onClick={() => setOpenDropdownIndex(null)}
+                  className="text-static-text-500 hover:text-static-text-700 dark:text-static-text-400 dark:hover:text-static-text-200"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
 
-              const currentSplits = itemSplits[splittingItemIndex] || {};
-              const totalAssigned = Object.values(currentSplits).reduce((sum, qty) => sum + qty, 0);
-              const remainingToAssign = (item.quantity || 1) - totalAssigned;
-
-              return (
-                <>
-                  <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
-                    Split "{item.name}"
-                  </h2>
-                  <p className="text-static-text-600 dark:text-static-text-400 mb-6">
-                    Assign quantities to each member. Total quantity: {item.quantity}.
-                  </p>
-
-                  <div className="space-y-3 mb-6">
-                    {members.map((member) => {
-                      const assignedQty = currentSplits[member.id] || 0;
-                      return (
-                        <div key={member.id} className="flex items-center justify-between p-3 bg-static-bg-100 dark:bg-gray-700 rounded-lg">
-                          <p className="font-medium text-static-text-900 dark:text-static-text-50">{member.name}</p>
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => handleSplitChange(splittingItemIndex, member.id, Math.max(0, assignedQty - 1))}
-                              className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 text-lg font-bold text-static-text-700 dark:text-static-text-300 hover:bg-gray-300 dark:hover:bg-gray-500"
-                            >
-                              -
-                            </button>
-                            <span className="text-lg font-bold w-8 text-center text-static-text-900 dark:text-static-text-50">{assignedQty}</span>
-                            <button
-                              onClick={() => handleSplitChange(splittingItemIndex, member.id, assignedQty + 1)}
-                              className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 text-lg font-bold text-static-text-700 dark:text-static-text-300 hover:bg-gray-300 dark:hover:bg-gray-500"
-                            >
-                              +
-                            </button>
-                          </div>
+              {/* Side Panel Content */}
+              <div 
+                className="flex-1 overflow-y-auto p-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Member Selection Panel */}
+                {openDropdownIndex === -1 && (
+                  <div className="space-y-2">
+                    {members.map((member) => (
+                      <button
+                        key={member.id}
+                        onClick={() => {
+                          setExpensePaidBy(member.id);
+                          setOpenDropdownIndex(null);
+                        }}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                          expensePaidBy === member.id
+                            ? 'bg-static-bg-100 dark:bg-static-bg-700 ring-2 ring-static-bg-500'
+                            : 'hover:bg-static-bg-50 dark:hover:bg-static-bg-800'
+                        }`}
+                      >
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                          {member.name[0].toUpperCase()}
                         </div>
-                      );
-                    })}
+                        <span className="text-static-text-900 dark:text-static-text-50 font-medium">
+                          {member.name}
+                        </span>
+                      </button>
+                    ))}
                   </div>
+                )}
 
-                  <div className={`p-4 rounded-lg mb-6 ${
-                    remainingToAssign === 0
-                      ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700'
-                      : 'bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700'
-                  }`}>
-                    <p className="font-medium text-center text-static-text-900 dark:text-static-text-50">
-                      {remainingToAssign} of {item.quantity} remaining to assign
-                    </p>
-                  </div>
+                {/* Items Assignment Panel */}
+                {openDropdownIndex === -2 && scannedReceipt && scannedReceipt.items && scannedReceipt.items.length > 0 && members && members.length > 0 && (
+                  <div className="space-y-4">
+                    {/* Quick Assign Mode - Member Selector */}
+                    <div>
+                      <div className="text-xs font-medium text-static-text-500 dark:text-static-text-400 mb-2">
+                        Quick assign mode
+                      </div>
+                      
+                      {/* Show buttons if 4 or fewer members, otherwise show dropdown */}
+                      {members.length <= 4 ? (
+                        <div className="flex gap-2 flex-wrap">
+                          {members.map((member) => (
+                            <button
+                              key={member.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setQuickAssignMemberId(quickAssignMemberId === member.id ? null : member.id);
+                              }}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                                quickAssignMemberId === member.id
+                                  ? 'bg-blue-600 text-white ring-2 ring-blue-300 dark:ring-blue-500'
+                                  : 'bg-gray-100 dark:bg-gray-700 text-static-text-700 dark:text-static-text-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                              }`}
+                            >
+                              <div className={`w-5 h-5 rounded-full bg-gradient-to-br ${getMemberColor(member.id, members)} flex items-center justify-center text-white text-xs font-semibold`}>
+                                {member.name?.[0]?.toUpperCase() || '?'}
+                              </div>
+                              <span>{member.name?.split(' ')[0] || 'Unknown'}</span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenItemDropdownIndex(openItemDropdownIndex === -99 ? null : -99);
+                            }}
+                            className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border transition-all ${
+                              quickAssignMemberId
+                                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-600'
+                                : 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-750'
+                            }`}
+                          >
+                            {quickAssignMemberId ? (
+                              <div className="flex items-center gap-2">
+                                <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${getMemberColor(quickAssignMemberId, members)} flex items-center justify-center text-white text-xs font-semibold`}>
+                                  {members.find(m => m.id === quickAssignMemberId)?.name?.[0]?.toUpperCase() || '?'}
+                                </div>
+                                <span className="text-static-text-900 dark:text-static-text-50 font-medium">
+                                  {members.find(m => m.id === quickAssignMemberId)?.name || 'Unknown'}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-static-text-600 dark:text-static-text-400">Select a member...</span>
+                            )}
+                            <svg className="w-4 h-4 text-static-text-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          
+                          {/* Dropdown menu */}
+                          {openItemDropdownIndex === -99 && (
+                            <div 
+                              className="item-dropdown-container absolute left-0 right-0 top-full mt-1 z-10"
+                              onClick={(e) => e.stopPropagation()}
+                              onWheel={(e) => e.stopPropagation()}
+                            >
+                              <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-[280px] overflow-y-auto overscroll-contain fancy-scrollbar pr-1">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setQuickAssignMemberId(null);
+                                    setOpenItemDropdownIndex(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700"
+                                >
+                                  <span className="text-static-text-600 dark:text-static-text-400 text-sm">Clear selection</span>
+                                </button>
+                                {members.map((member) => (
+                                  <button
+                                    key={member.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setQuickAssignMemberId(member.id);
+                                      setOpenItemDropdownIndex(null);
+                                    }}
+                                    className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
+                                      quickAssignMemberId === member.id
+                                        ? 'bg-blue-100 dark:bg-blue-900/50'
+                                        : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    }`}
+                                  >
+                                    <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${getMemberColor(member.id, members)} flex items-center justify-center text-white text-xs font-semibold`}>
+                                      {member.name?.[0]?.toUpperCase() || '?'}
+                                    </div>
+                                    <span className="text-static-text-900 dark:text-static-text-50 font-medium">
+                                      {member.name || 'Unknown'}
+                                    </span>
+                                    {quickAssignMemberId === member.id && (
+                                      <svg className="w-4 h-4 text-blue-600 dark:text-blue-400 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                      </svg>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {quickAssignMemberId && (
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                          Click items below to assign to {members.find(m => m.id === quickAssignMemberId)?.name || 'selected member'}
+                        </p>
+                      )}
+                    </div>
 
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setSplittingItemIndex(null)}
-                      className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-600 text-static-text-900 dark:text-static-text-50 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSaveSplit}
-                      disabled={remainingToAssign !== 0}
-                      className="flex-1 px-4 py-3 bg-static-bg-700 hover:bg-static-bg-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
-                    >
-                      Save Split
-                    </button>
+                    {/* Divider */}
+                    <div className="border-t border-gray-200 dark:border-gray-700"></div>
+
+                    {/* Items List - Scrollable container */}
+                    <div className="space-y-1.5 max-h-[calc(100vh-400px)] overflow-y-auto pr-1">
+                      {scannedReceipt.items.map((item, itemIndex) => {
+                        if (!item) return null;
+                        const assignments = itemAssignments[itemIndex] || [];
+                        const isFullyAssigned = assignments.length > 0;
+                        const showItemDropdown = openItemDropdownIndex === itemIndex;
+                        
+                        return (
+                          <div
+                            key={itemIndex}
+                            className="relative"
+                          >
+                            <div
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (quickAssignMemberId) {
+                                  // Quick assign mode - toggle assignment
+                                  const isAssigned = assignments.some((a: any) => a?.memberId === quickAssignMemberId);
+                                  if (isAssigned) {
+                                    setItemAssignments(prev => ({
+                                      ...prev,
+                                      [itemIndex]: (prev[itemIndex] || []).filter((a: any) => a?.memberId !== quickAssignMemberId)
+                                    }));
+                                  } else {
+                                    const splitCount = (assignments.length || 0) + 1;
+                                    const splitAmount = (item.price || 0) / splitCount;
+                                    const updatedAssignments = [
+                                      ...assignments.map((a: any) => ({
+                                        ...a,
+                                        amount: splitAmount
+                                      })),
+                                      {
+                                        memberId: quickAssignMemberId,
+                                        memberName: members.find(m => m.id === quickAssignMemberId)?.name || 'Unknown',
+                                        amount: splitAmount
+                                      }
+                                    ];
+                                    setItemAssignments(prev => ({
+                                      ...prev,
+                                      [itemIndex]: updatedAssignments
+                                    }));
+                                  }
+                                }
+                              }}
+                              className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg transition-all border ${
+                                isFullyAssigned && (assignments[0] as any)?.memberId
+                                  ? (() => {
+                                      // Extract color from the member's gradient and map to Tailwind classes
+                                      const firstMemberId = (assignments[0] as any)?.memberId;
+                                      const gradient = getMemberColor(firstMemberId, members);
+                                      // Parse "from-pink-500 to-rose-600" to get "pink"
+                                      const colorName = gradient.split('-')[1]; // Gets "pink" from "from-pink-500"
+                                      
+                                      // Map to complete Tailwind classes (needed for purging)
+                                      const colorMap: Record<string, string> = {
+                                        'blue': 'bg-blue-50/30 dark:bg-blue-900/10 border-blue-300 dark:border-blue-700',
+                                        'pink': 'bg-pink-50/30 dark:bg-pink-900/10 border-pink-300 dark:border-pink-700',
+                                        'green': 'bg-green-50/30 dark:bg-green-900/10 border-green-300 dark:border-green-700',
+                                        'orange': 'bg-orange-50/30 dark:bg-orange-900/10 border-orange-300 dark:border-orange-700',
+                                        'cyan': 'bg-cyan-50/30 dark:bg-cyan-900/10 border-cyan-300 dark:border-cyan-700',
+                                        'violet': 'bg-violet-50/30 dark:bg-violet-900/10 border-violet-300 dark:border-violet-700',
+                                        'red': 'bg-red-50/30 dark:bg-red-900/10 border-red-300 dark:border-red-700',
+                                        'indigo': 'bg-indigo-50/30 dark:bg-indigo-900/10 border-indigo-300 dark:border-indigo-700',
+                                        'lime': 'bg-lime-50/30 dark:bg-lime-900/10 border-lime-300 dark:border-lime-700',
+                                        'fuchsia': 'bg-fuchsia-50/30 dark:bg-fuchsia-900/10 border-fuchsia-300 dark:border-fuchsia-700',
+                                        'purple': 'bg-purple-50/30 dark:bg-purple-900/10 border-purple-300 dark:border-purple-700',
+                                      };
+                                      
+                                      return `border-2 ${colorMap[colorName] || 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700'}`;
+                                    })()
+                                  : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-750'
+                              } ${quickAssignMemberId ? 'cursor-pointer' : 'cursor-default'}`}
+                            >
+                              <div className="flex-1 min-w-0 flex items-center gap-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="font-medium text-static-text-900 dark:text-static-text-50 truncate">
+                                    {item.name}
+                                  </span>
+                                  {item.quantity && item.quantity > 1 && (
+                                    <span className="flex-shrink-0 px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 text-xs font-medium text-static-text-700 dark:text-static-text-300 rounded">
+                                      ×{item.quantity}
+                                    </span>
+                                  )}
+                                </div>
+                                {assignments.length > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    {assignments.slice(0, 3).map((assignment: any, idx: number) => {
+                                      const member = members.find(m => m.id === assignment.memberId);
+                                      return (
+                                        <div
+                                          key={idx}
+                                          className={`w-5 h-5 rounded-full bg-gradient-to-br ${assignment.memberId ? getMemberColor(assignment.memberId, members) : 'from-gray-400 to-gray-500'} flex items-center justify-center text-white text-[10px] font-bold`}
+                                          title={member?.name || 'Unknown'}
+                                        >
+                                          {member?.name?.[0]?.toUpperCase() || '?'}
+                                        </div>
+                                      );
+                                    })}
+                                    {assignments.length > 3 && (
+                                      <span className="text-xs text-static-text-500">+{assignments.length - 3}</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                {/* Split by quantity button - fixed position on left */}
+                                <div className="w-6 flex-shrink-0">
+                                  {item.quantity && item.quantity > 1 && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setExpandedQtyItemIndex(expandedQtyItemIndex === itemIndex ? null : itemIndex);
+                                      }}
+                                      className={`p-1 rounded transition-colors ${
+                                        expandedQtyItemIndex === itemIndex 
+                                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                                          : 'hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                                      }`}
+                                      title="Split by quantity"
+                                      aria-label="Split by quantity"
+                                    >
+                                      <svg 
+                                        className={`w-4 h-4 transition-transform ${expandedQtyItemIndex === itemIndex ? 'rotate-180' : ''}`} 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                      </svg>
+                                    </button>
+                                  )}
+                                </div>
+
+                                {/* Price with fixed width */}
+                                <span className="font-semibold text-static-text-900 dark:text-static-text-50 whitespace-nowrap tabular-nums text-right w-16">
+                                  ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                                </span>
+
+                                {/* Assign button */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenItemDropdownIndex(showItemDropdown ? null : itemIndex);
+                                  }}
+                                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                  title="Assign to member"
+                                  aria-label="Assign to member"
+                                >
+                                  <svg className="w-4 h-4 text-static-text-600 dark:text-static-text-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h7m0 0h7m-7 0v-3m0 3l3-3" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Dropdown for individual item assignment */}
+                            {showItemDropdown && (
+                              <div 
+                                className="item-dropdown-container absolute right-0 top-full mt-1 z-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-2 min-w-[200px] max-h-[280px] overflow-y-auto overscroll-contain fancy-scrollbar pr-1"
+                                onClick={(e) => e.stopPropagation()}
+                                onWheel={(e) => e.stopPropagation()}
+                              >
+                                {members.map((member) => {
+                                  if (!member) return null;
+                                  const isAssigned = assignments.some((a: any) => a?.memberId === member.id);
+                                  return (
+                                    <button
+                                      key={member.id}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (isAssigned) {
+                                          setItemAssignments(prev => ({
+                                            ...prev,
+                                            [itemIndex]: (prev[itemIndex] || []).filter((a: any) => a?.memberId !== member.id)
+                                          }));
+                                        } else {
+                                          const splitCount = (assignments.length || 0) + 1;
+                                          const splitAmount = (item.price || 0) / splitCount;
+                                          const updatedAssignments = [
+                                            ...assignments.map((a: any) => ({
+                                              ...a,
+                                              amount: splitAmount
+                                            })),
+                                            {
+                                              memberId: member.id,
+                                              memberName: member.name || 'Unknown',
+                                              amount: splitAmount
+                                            }
+                                          ];
+                                          setItemAssignments(prev => ({
+                                            ...prev,
+                                            [itemIndex]: updatedAssignments
+                                          }));
+                                        }
+                                        // Auto-close dropdown after selection
+                                        setOpenItemDropdownIndex(null);
+                                      }}
+                                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${
+                                        isAssigned
+                                          ? 'bg-blue-100 dark:bg-blue-900/50 text-static-text-900 dark:text-static-text-50'
+                                          : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-static-text-700 dark:text-static-text-300'
+                                      }`}
+                                    >
+                                      <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${getMemberColor(member.id, members)} flex items-center justify-center text-white text-xs font-bold`}>
+                                        {member.name?.[0]?.toUpperCase() || '?'}
+                                      </div>
+                                      <span className="flex-1 font-medium">{member.name || 'Unknown'}</span>
+                                      {isAssigned && (
+                                        <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Inline Quantity Split UI - Expand into sub-items */}
+                            {expandedQtyItemIndex === itemIndex && item.quantity && item.quantity > 1 && (
+                              <div className="mt-2 ml-4 space-y-1.5 border-l-2 border-gray-300 dark:border-gray-600 pl-3">
+                                {Array.from({ length: item.quantity }, (_, qtyIndex) => {
+                                  const currentSplits = itemSplits[itemIndex] || {};
+                                  const assignedMemberId = Object.entries(currentSplits).find(([_, qty]) => 
+                                    Array.isArray(qty) ? (qty as any)[qtyIndex] : false
+                                  )?.[0];
+                                  
+                                  // Use a simpler structure: itemSplits[itemIndex] = { 0: 'memberId1', 1: 'memberId2', etc }
+                                  const assignedId = (currentSplits as any)[qtyIndex];
+                                  const assignedMember = members.find(m => m.id === assignedId);
+                                  
+                                  return (
+                                    <div
+                                      key={qtyIndex}
+                                      className="relative"
+                                    >
+                                      <div
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (quickAssignMemberId) {
+                                            // Quick assign to this sub-item
+                                            setItemSplits(prev => ({
+                                              ...prev,
+                                              [itemIndex]: {
+                                                ...prev[itemIndex],
+                                                [qtyIndex]: quickAssignMemberId
+                                              }
+                                            }));
+                                          }
+                                        }}
+                                        className={`flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg transition-all border ${
+                                          assignedId
+                                            ? (() => {
+                                                const gradient = getMemberColor(assignedId, members);
+                                                const colorName = gradient.split('-')[1];
+                                                const colorMap: Record<string, string> = {
+                                                  'blue': 'bg-blue-50/30 dark:bg-blue-900/10 border-blue-300 dark:border-blue-700',
+                                                  'pink': 'bg-pink-50/30 dark:bg-pink-900/10 border-pink-300 dark:border-pink-700',
+                                                  'green': 'bg-green-50/30 dark:bg-green-900/10 border-green-300 dark:border-green-700',
+                                                  'orange': 'bg-orange-50/30 dark:bg-orange-900/10 border-orange-300 dark:border-orange-700',
+                                                  'cyan': 'bg-cyan-50/30 dark:bg-cyan-900/10 border-cyan-300 dark:border-cyan-700',
+                                                  'violet': 'bg-violet-50/30 dark:bg-violet-900/10 border-violet-300 dark:border-violet-700',
+                                                  'red': 'bg-red-50/30 dark:bg-red-900/10 border-red-300 dark:border-red-700',
+                                                  'indigo': 'bg-indigo-50/30 dark:bg-indigo-900/10 border-indigo-300 dark:border-indigo-700',
+                                                  'lime': 'bg-lime-50/30 dark:bg-lime-900/10 border-lime-300 dark:border-lime-700',
+                                                  'fuchsia': 'bg-fuchsia-50/30 dark:bg-fuchsia-900/10 border-fuchsia-300 dark:border-fuchsia-700',
+                                                  'purple': 'bg-purple-50/30 dark:bg-purple-900/10 border-purple-300 dark:border-purple-700',
+                                                };
+                                                return `border ${colorMap[colorName] || 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700'}`;
+                                              })()
+                                            : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-750'
+                                        } ${quickAssignMemberId ? 'cursor-pointer' : 'cursor-default'}`}
+                                      >
+                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                          <span className="text-sm text-static-text-700 dark:text-static-text-400">
+                                            #{qtyIndex + 1}
+                                          </span>
+                                          {assignedMember && (
+                                            <div className="flex items-center gap-1.5">
+                                              <div 
+                                                className={`w-4 h-4 rounded-full bg-gradient-to-br ${getMemberColor(assignedId, members)} flex items-center justify-center text-white text-[9px] font-bold`}
+                                                title={assignedMember.name || 'Unknown'}
+                                              >
+                                                {assignedMember.name?.[0]?.toUpperCase() || '?'}
+                                              </div>
+                                              <span className="text-xs text-static-text-600 dark:text-static-text-400">
+                                                {assignedMember.name}
+                                              </span>
+                                            </div>
+                                          )}
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                          <span className="text-sm font-medium text-static-text-900 dark:text-static-text-50 whitespace-nowrap tabular-nums">
+                                            ${(item.price || 0).toFixed(2)}
+                                          </span>
+                                          
+                                          {/* Assign button for this sub-item */}
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              const subItemKey = `${itemIndex}-${qtyIndex}`;
+                                              setOpenItemDropdownIndex(
+                                                openItemDropdownIndex === subItemKey ? null : (subItemKey as any)
+                                              );
+                                            }}
+                                            className="p-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                            title="Assign to member"
+                                            aria-label="Assign to member"
+                                          >
+                                            <svg className="w-3.5 h-3.5 text-static-text-600 dark:text-static-text-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h7m0 0h7m-7 0v-3m0 3l3-3" />
+                                            </svg>
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                      {/* Dropdown for sub-item assignment */}
+                                      {openItemDropdownIndex === `${itemIndex}-${qtyIndex}` && (
+                                        <div 
+                                          className="item-dropdown-container absolute right-0 top-full mt-1 z-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-2 min-w-[200px] max-h-[280px] overflow-y-auto overscroll-contain fancy-scrollbar pr-1"
+                                          onWheel={(e) => e.stopPropagation()}
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          {members.map((member) => {
+                                            if (!member) return null;
+                                            const isAssigned = assignedId === member.id;
+                                            return (
+                                              <button
+                                                key={member.id}
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  if (isAssigned) {
+                                                    // Unassign
+                                                    const newSplits = { ...itemSplits[itemIndex] };
+                                                    delete (newSplits as any)[qtyIndex];
+                                                    setItemSplits(prev => ({
+                                                      ...prev,
+                                                      [itemIndex]: newSplits
+                                                    }));
+                                                  } else {
+                                                    // Assign to this member
+                                                    setItemSplits(prev => ({
+                                                      ...prev,
+                                                      [itemIndex]: {
+                                                        ...prev[itemIndex],
+                                                        [qtyIndex]: member.id
+                                                      }
+                                                    }));
+                                                  }
+                                                  setOpenItemDropdownIndex(null);
+                                                }}
+                                                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${
+                                                  isAssigned
+                                                    ? 'bg-blue-100 dark:bg-blue-900/50 text-static-text-900 dark:text-static-text-50'
+                                                    : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-static-text-700 dark:text-static-text-300'
+                                                }`}
+                                              >
+                                                <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${getMemberColor(member.id, members)} flex items-center justify-center text-white text-xs font-bold`}>
+                                                  {member.name?.[0]?.toUpperCase() || '?'}
+                                                </div>
+                                                <span className="flex-1 font-medium">{member.name || 'Unknown'}</span>
+                                                {isAssigned && (
+                                                  <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                  </svg>
+                                                )}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </>
-              );
-            })()}
-          </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
         </div>
       )}
 

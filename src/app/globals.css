@@ -278,6 +278,50 @@ html {
   background: oklch(0 0 0 / 0.3);
 }
 
+/* Fancy overlay scrollbar utility - inset, rounded, and theme-aware */
+.fancy-scrollbar {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-static-text-900) 28%, transparent) transparent;
+}
+
+.dark .fancy-scrollbar {
+  /* Firefox (dark theme) */
+  scrollbar-color: color-mix(in oklab, var(--color-static-text-50) 40%, transparent) transparent;
+}
+
+.fancy-scrollbar::-webkit-scrollbar {
+  width: 10px; /* pill look */
+  height: 10px;
+}
+
+.fancy-scrollbar::-webkit-scrollbar-track {
+  background: transparent; /* overlay look */
+  /* top/bottom margin shortens the visible rail so it doesn't span full height */
+  margin-top: 14px;
+  margin-bottom: 14px;
+  margin-left: 4px;
+}
+
+.fancy-scrollbar::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--color-static-text-900) 30%, transparent);
+  border-radius: 9999px; /* fully rounded pill */
+  border: 3px solid transparent; /* creates inset gap */
+  background-clip: content-box; /* keep the thumb inset */
+}
+
+.fancy-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-static-text-900) 45%, transparent);
+}
+
+.dark .fancy-scrollbar::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--color-static-text-50) 35%, transparent);
+}
+
+.dark .fancy-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-static-text-50) 55%, transparent);
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.6;
