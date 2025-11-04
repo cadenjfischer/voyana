@@ -86,12 +86,13 @@ export default function TripBudgetView({
   const [tipSplitType, setTipSplitType] = useState<'proportional' | 'equal' | 'custom'>('proportional'); // How to split tip
   const [tipAssignedMembers, setTipAssignedMembers] = useState<string[]>([]); // Members who pay tip (for custom)
   const [showTipSplitModal, setShowTipSplitModal] = useState(false); // Modal for tip split options
+  const [showTipMemberSelectModal, setShowTipMemberSelectModal] = useState(false); // Modal for selecting who pays tip
   const [showTipInput, setShowTipInput] = useState(false); // Show/hide tip input bubble
 
   // Lock body scroll when modal is open
   useEffect(() => {
     const prev = document.body.style.overflow;
-    if (showAddExpenseModal || showScanReceiptModal || splittingItemIndex !== null || showTipSplitModal) {
+    if (showAddExpenseModal || showScanReceiptModal || splittingItemIndex !== null || showTipSplitModal || showTipMemberSelectModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = prev || '';
@@ -99,7 +100,7 @@ export default function TripBudgetView({
     return () => {
       document.body.style.overflow = prev || '';
     };
-  }, [showAddExpenseModal, showScanReceiptModal, splittingItemIndex, showTipSplitModal]);
+  }, [showAddExpenseModal, showScanReceiptModal, splittingItemIndex, showTipSplitModal, showTipMemberSelectModal]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -667,7 +668,7 @@ export default function TripBudgetView({
 
     if (selectedMembers.length === 0) {
       alert('Please select at least one member');
-      return;
+     
     }
 
     const totalAmount = parseFloat(expenseAmount);
@@ -2160,82 +2161,79 @@ export default function TripBudgetView({
                             );
                           })()}
 
-                          {/* Manual Tip Input - iOS Bubble Style */}
-                          <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700 relative">
+                          {/* Manual Tip Input - iOS Toggle Style */}
+                          <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700">
                             {!manualTip ? (
-                              // Show button to open tip input
-                              <>
+                              // Show toggle slider with inline input
+                              <div className="flex items-center gap-2.5">
+                                {/* iOS-style Toggle - Compact */}
                                 <button
                                   type="button"
                                   onClick={() => setShowTipInput(!showTipInput)}
-                                  className="w-full px-4 py-2.5 bg-static-bg-100 dark:bg-gray-800 hover:bg-static-bg-200 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-static-text-900 dark:text-static-text-50 transition-colors flex items-center justify-center gap-2"
+                                  className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-static-bg-700 focus:ring-offset-1 ${
+                                    showTipInput
+                                      ? 'bg-static-bg-700'
+                                      : 'bg-gray-300 dark:bg-gray-600'
+                                  }`}
+                                  role="switch"
+                                  aria-checked={showTipInput}
                                 >
-                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                  </svg>
-                                  Add Tip (Optional)
+                                  <span
+                                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                      showTipInput ? 'translate-x-4' : 'translate-x-0'
+                                    }`}
+                                  />
                                 </button>
 
-                                {/* iOS-style bubble popup */}
+                                {/* Label */}
+                                <span className="text-sm font-medium text-static-text-900 dark:text-static-text-50">
+                                  Add Tip (Optional)
+                                </span>
+
+                                {/* Inline Input - appears when toggle is on */}
                                 {showTipInput && (
-                                  <>
-                                    {/* Backdrop */}
-                                    <div
-                                      className="fixed inset-0 z-[9999]"
-                                      onClick={() => setShowTipInput(false)}
-                                    />
-                                    
-                                    {/* Bubble */}
-                                    <div className="absolute left-0 right-0 top-full mt-2 z-[10000] animate-in fade-in slide-in-from-top-2 duration-200">
-                                      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 mx-2">
-                                        <label className="block text-xs font-medium text-static-text-600 dark:text-static-text-400 mb-2">
-                                          Tip Amount
-                                        </label>
-                                        <div className="flex gap-2">
-                                          <div className="relative flex-1">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-static-text-600 dark:text-static-text-400 font-medium">
-                                              {currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '£'}
-                                            </span>
-                                            <input
-                                              type="number"
-                                              id="tip-input-bubble"
-                                              placeholder="0.00"
-                                              step="0.01"
-                                              min="0"
-                                              autoFocus
-                                              className="w-full pl-8 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl text-static-text-900 dark:text-static-text-50 placeholder:text-static-text-400 focus:outline-none focus:ring-2 focus:ring-static-bg-700 focus:border-transparent transition-all"
-                                              onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
-                                                  const value = (e.target as HTMLInputElement).value;
-                                                  if (value && parseFloat(value) > 0) {
-                                                    setManualTip(value);
-                                                    setShowTipInput(false);
-                                                  }
-                                                } else if (e.key === 'Escape') {
-                                                  setShowTipInput(false);
-                                                }
-                                              }}
-                                            />
-                                          </div>
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              const input = document.getElementById('tip-input-bubble') as HTMLInputElement;
-                                              if (input.value && parseFloat(input.value) > 0) {
-                                                setManualTip(input.value);
-                                                setShowTipInput(false);
-                                              }
-                                            }}
-                                            className="px-4 py-2.5 bg-static-bg-700 hover:bg-static-bg-600 text-white rounded-xl font-medium transition-colors whitespace-nowrap"
-                                          >
-                                            Add
-                                          </button>
-                                        </div>
-                                      </div>
+                                  <div className="flex gap-2 flex-1 animate-in fade-in slide-in-from-left-2 duration-200">
+                                    <div className="relative flex-1">
+                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white text-sm font-medium">
+                                        {currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '£'}
+                                      </span>
+                                      <input
+                                        type="number"
+                                        id="tip-input-inline"
+                                        placeholder="0.00"
+                                        step="0.01"
+                                        min="0"
+                                        autoFocus
+                                        className="w-full pl-8 pr-3 py-2 bg-transparent border border-white rounded-lg text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white transition-all"
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            const value = (e.target as HTMLInputElement).value;
+                                            if (value && parseFloat(value) > 0) {
+                                              setManualTip(value);
+                                              setShowTipInput(false);
+                                            }
+                                          } else if (e.key === 'Escape') {
+                                            setShowTipInput(false);
+                                          }
+                                        }}
+                                      />
                                     </div>
-                                  </>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const input = document.getElementById('tip-input-inline') as HTMLInputElement;
+                                        if (input.value && parseFloat(input.value) > 0) {
+                                          setManualTip(input.value);
+                                          setShowTipInput(false);
+                                        }
+                                      }}
+                                      className="px-4 py-2 bg-static-bg-700 hover:bg-static-bg-600 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+                                    >
+                                      Add
+                                    </button>
+                                  </div>
                                 )}
-                              </>
+                              </div>
                             ) : (
                               // Show final amount with tip when set
                               <div className="space-y-2">
@@ -2312,14 +2310,6 @@ export default function TripBudgetView({
                             : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                         }`}
                       >
-                        <svg 
-                          className="w-5 h-5 text-static-text-400 flex-shrink-0" 
-                          fill="none" 
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
                         <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
@@ -2332,6 +2322,14 @@ export default function TripBudgetView({
                             }
                           </div>
                         </div>
+                        <svg 
+                          className="w-5 h-5 text-static-text-400 flex-shrink-0" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
                       </button>
 
                       {/* Split button */}
@@ -2344,14 +2342,6 @@ export default function TripBudgetView({
                             : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                         }`}
                       >
-                        <svg 
-                          className="w-5 h-5 text-static-text-400 flex-shrink-0" 
-                          fill="none" 
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
                         <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
@@ -2367,6 +2357,14 @@ export default function TripBudgetView({
                             })()}
                           </div>
                         </div>
+                        <svg 
+                          className="w-5 h-5 text-static-text-400 flex-shrink-0" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
                       </button>
                     </div>
                   </div>
@@ -2971,171 +2969,233 @@ export default function TripBudgetView({
           onClick={() => setShowTipSplitModal(false)}
         >
           <div
-            className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto"
+            className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md relative overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-static-text-900 dark:text-static-text-50">
-                How to Split Tip?
-              </h3>
-              <button
-                onClick={() => setShowTipSplitModal(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              >
-                <svg className="w-6 h-6 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+            <div className="max-h-[85vh] overflow-y-auto">
+              {/* Header */}
+              <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-static-text-900 dark:text-static-text-50">
+                  How to Split Tip?
+                </h3>
+                <button
+                  onClick={() => setShowTipSplitModal(false)}
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                >
+                  <svg className="w-6 h-6 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
 
-            {/* Content */}
-            <div className="p-6 space-y-4">
-              {/* Proportional */}
-              <label className="flex items-start gap-4 cursor-pointer p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-2 border-transparent">
-                <input
-                  type="radio"
-                  name="tip-split-modal"
-                  checked={tipSplitType === 'proportional'}
-                  onChange={() => setTipSplitType('proportional')}
-                  className="mt-1"
-                />
-                <div className="flex-1">
-                  <div className="text-base font-semibold text-static-text-900 dark:text-static-text-50 mb-1">
-                    Proportional (Recommended)
-                  </div>
-                  <div className="text-sm text-static-text-600 dark:text-static-text-400">
-                    Each person pays tip based on their bill amount. Fair and automatic.
-                  </div>
-                </div>
-              </label>
-
-              {/* Equal */}
-              <label className="flex items-start gap-4 cursor-pointer p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-2 border-transparent">
-                <input
-                  type="radio"
-                  name="tip-split-modal"
-                  checked={tipSplitType === 'equal'}
-                  onChange={() => setTipSplitType('equal')}
-                  className="mt-1"
-                />
-                <div className="flex-1">
-                  <div className="text-base font-semibold text-static-text-900 dark:text-static-text-50 mb-1">
-                    Split Equally
-                  </div>
-                  <div className="text-sm text-static-text-600 dark:text-static-text-400">
-                    Everyone pays the same tip amount regardless of their bill.
-                  </div>
-                </div>
-              </label>
-
-              {/* Custom */}
-              <label className="flex items-start gap-4 cursor-pointer p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-2 border-transparent">
-                <input
-                  type="radio"
-                  name="tip-split-modal"
-                  checked={tipSplitType === 'custom'}
-                  onChange={() => setTipSplitType('custom')}
-                  className="mt-1"
-                />
-                <div className="flex-1">
-                  <div className="text-base font-semibold text-static-text-900 dark:text-static-text-50 mb-1">
-                    Select Who Pays Tip
-                  </div>
-                  <div className="text-sm text-static-text-600 dark:text-static-text-400 mb-3">
-                    Choose specific people to split the tip proportionally.
-                  </div>
-
-                  {/* Custom member selection */}
-                  {tipSplitType === 'custom' && (
-                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
-                      <p className="text-xs font-medium text-static-text-700 dark:text-static-text-300 mb-2">
-                        Select members:
-                      </p>
-                      {members.map((member) => (
-                        <label key={member.id} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={tipAssignedMembers.includes(member.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setTipAssignedMembers([...tipAssignedMembers, member.id]);
-                              } else {
-                                setTipAssignedMembers(tipAssignedMembers.filter(id => id !== member.id));
-                              }
-                            }}
-                            className="w-4 h-4 rounded"
-                          />
-                          <span className="text-sm font-medium text-static-text-900 dark:text-static-text-50">
-                            {member.name}
-                          </span>
-                        </label>
-                      ))}
+              {/* Content */}
+              <div className="p-6 space-y-4">
+                {/* Proportional */}
+                <label className="flex items-start gap-4 cursor-pointer p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-2 border-transparent">
+                  <input
+                    type="radio"
+                    name="tip-split-modal"
+                    checked={tipSplitType === 'proportional'}
+                    onChange={() => setTipSplitType('proportional')}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <div className="text-base font-semibold text-static-text-900 dark:text-static-text-50 mb-1">
+                      Proportional (Recommended)
                     </div>
-                  )}
-                </div>
-              </label>
+                    <div className="text-sm text-static-text-600 dark:text-static-text-400">
+                      Each person pays tip based on their bill amount. Fair and automatic.
+                    </div>
+                  </div>
+                </label>
+
+                {/* Equal */}
+                <label className="flex items-start gap-4 cursor-pointer p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-2 border-transparent">
+                  <input
+                    type="radio"
+                    name="tip-split-modal"
+                    checked={tipSplitType === 'equal'}
+                    onChange={() => setTipSplitType('equal')}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <div className="text-base font-semibold text-static-text-900 dark:text-static-text-50 mb-1">
+                      Split Equally
+                    </div>
+                    <div className="text-sm text-static-text-600 dark:text-static-text-400">
+                      Everyone pays the same tip amount regardless of their bill.
+                    </div>
+                  </div>
+                </label>
+
+                {/* Custom */}
+                <label className="flex items-start gap-4 cursor-pointer p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-2 border-transparent">
+                  <input
+                    type="radio"
+                    name="tip-split-modal"
+                    checked={tipSplitType === 'custom'}
+                    onChange={() => {
+                      setTipSplitType('custom');
+                      setShowTipMemberSelectModal(true);
+                    }}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <div className="text-base font-semibold text-static-text-900 dark:text-static-text-50 mb-1">
+                      Select Who Pays Tip
+                    </div>
+                    <div className="text-sm text-static-text-600 dark:text-static-text-400">
+                      Choose specific people to split the tip proportionally.
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              {/* Footer */}
+              <div className="sticky bottom-0 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-4">
+                <button
+                  onClick={() => setShowTipSplitModal(false)}
+                  className="w-full px-4 py-2.5 bg-static-bg-700 hover:bg-static-bg-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  Done
+                </button>
+              </div>
             </div>
 
-            {/* Footer */}
-            <div className="sticky bottom-0 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-4">
-              <button
-                onClick={() => setShowTipSplitModal(false)}
-                className="w-full px-4 py-2.5 bg-static-bg-700 hover:bg-static-bg-600 text-white rounded-lg font-medium transition-colors"
-              >
-                Done
-              </button>
+            {/* Inline Member Selection Screen (slides up inside this container) */}
+            <div
+              className={`absolute inset-0 bg-white dark:bg-gray-900 flex flex-col transition-transform duration-300 ease-out ${
+                showTipMemberSelectModal ? 'translate-y-0' : 'translate-y-full'
+              }`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-5 flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50">Select Who Pays Tip</h3>
+                  <p className="text-sm text-static-text-600 dark:text-static-text-400 mt-1">
+                    Choose the people who will split the tip proportionally
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* Back button */}
+                  <button
+                    onClick={() => setShowTipMemberSelectModal(false)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                    aria-label="Back"
+                  >
+                    <svg className="w-6 h-6 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 12H5m7-7l-7 7 7 7" />
+                    </svg>
+                  </button>
+                  {/* Close whole tip modal */}
+                  <button
+                    onClick={() => setShowTipSplitModal(false)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                    aria-label="Close"
+                  >
+                    <svg className="w-6 h-6 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Members List - Scrollable */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="space-y-3">
+                  {members.map((member) => {
+                    const isSelected = tipAssignedMembers.includes(member.id);
+                    return (
+                      <button
+                        key={member.id}
+                        onClick={() => {
+                          if (isSelected) {
+                            setTipAssignedMembers(tipAssignedMembers.filter((id) => id !== member.id));
+                          } else {
+                            setTipAssignedMembers([...tipAssignedMembers, member.id]);
+                          }
+                        }}
+                        className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
+                          isSelected
+                            ? 'border-static-bg-700 bg-static-bg-700/10 dark:bg-static-bg-700/20'
+                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                        }`}
+                      >
+                        {/* Checkbox */}
+                        <div
+                          className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                            isSelected ? 'border-static-bg-700 bg-static-bg-700' : 'border-gray-300 dark:border-gray-600'
+                          }`}
+                        >
+                          {isSelected && (
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+
+                        {/* Member info */}
+                        <div className="flex-1 text-left">
+                          <div className="text-base font-semibold text-static-text-900 dark:text-static-text-50">{member.name}</div>
+                          {member.email && <div className="text-xs text-static-text-500 mt-0.5">{member.email}</div>}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-4">
+                <button
+                  onClick={() => setShowTipMemberSelectModal(false)}
+                  disabled={tipAssignedMembers.length === 0}
+                  className={`w-full px-4 py-2.5 rounded-lg font-medium transition-colors ${
+                    tipAssignedMembers.length === 0
+                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed'
+                      : 'bg-static-bg-700 hover:bg-static-bg-600 text-white'
+                  }`}
+                >
+                  {tipAssignedMembers.length === 0
+                    ? 'Select at least one person'
+                    : `Done (${tipAssignedMembers.length} selected)`}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Receipt Image Modal */}
+      {/* Receipt Image Viewer */}
       {viewingReceiptImageUrl && (
         <div
-          className="fixed inset-0 z-[10002] flex items-center justify-center bg-black/80 p-4"
+          className="fixed inset-0 z-[10003] flex items-center justify-center bg-black/60 p-4"
           onClick={() => setViewingReceiptImageUrl(null)}
         >
-          <div className="relative max-w-4xl max-h-[90vh] w-full">
-            {/* Close button */}
-            <button
-              onClick={() => setViewingReceiptImageUrl(null)}
-              className="absolute -top-12 right-0 p-2 text-white hover:text-gray-300 transition-colors"
-            >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            
-            {/* Receipt image */}
-            <div 
-              className="bg-white rounded-lg overflow-hidden shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <img
-                src={viewingReceiptImageUrl}
-                alt="Receipt"
-                className="w-full h-auto max-h-[85vh] object-contain"
-              />
-              
-              {/* Download button */}
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                <p className="text-sm text-static-text-600 dark:text-static-text-400">
-                  Click outside to close
-                </p>
-                <a
-                  href={viewingReceiptImageUrl}
-                  download="receipt.jpg"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Download
-                </a>
-              </div>
+          <div
+            className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden shadow-2xl max-w-3xl w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={viewingReceiptImageUrl}
+              alt="Receipt"
+              className="w-full h-auto max-h-[85vh] object-contain"
+            />
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <p className="text-sm text-static-text-600 dark:text-static-text-400">Click outside to close</p>
+              <a
+                href={viewingReceiptImageUrl}
+                download="receipt.jpg"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download
+              </a>
             </div>
           </div>
         </div>
