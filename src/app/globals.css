@@ -291,15 +291,16 @@ html {
 }
 
 .fancy-scrollbar::-webkit-scrollbar {
-  width: 10px; /* pill look */
-  height: 10px;
+  width: 8px; /* a bit slimmer */
+  height: 8px;
 }
 
 .fancy-scrollbar::-webkit-scrollbar-track {
   background: transparent; /* overlay look */
-  /* top/bottom margin shortens the visible rail so it doesn't span full height */
-  margin-top: 14px;
-  margin-bottom: 14px;
+  /* make the rail much shorter ("super short") so it doesn't span full height */
+  /* percentages work in WebKit here; this leaves ~30% of the container as rail */
+  margin-top: 35% !important;
+  margin-bottom: 35% !important;
   margin-left: 4px;
 }
 
@@ -308,6 +309,7 @@ html {
   border-radius: 9999px; /* fully rounded pill */
   border: 3px solid transparent; /* creates inset gap */
   background-clip: content-box; /* keep the thumb inset */
+  min-height: 28px; /* keep a tasteful minimum size */
 }
 
 .fancy-scrollbar::-webkit-scrollbar-thumb:hover {
@@ -320,6 +322,44 @@ html {
 
 .dark .fancy-scrollbar::-webkit-scrollbar-thumb:hover {
   background: color-mix(in oklab, var(--color-static-text-50) 55%, transparent);
+}
+
+/* Even shorter variant, if we need extra-tight rails */
+.fancy-scrollbar--short {
+  position: relative; /* helps ensure the class applies reliably */
+}
+
+.fancy-scrollbar--short::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.fancy-scrollbar--short::-webkit-scrollbar-track {
+  background: transparent !important;
+  /* Force a very short visible rail irrespective of global styles */
+  margin-top: 40% !important;
+  margin-bottom: 40% !important;
+  margin-left: 4px !important;
+}
+
+.fancy-scrollbar--short::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+  background: color-mix(in oklab, var(--color-static-text-900) 32%, transparent);
+  min-height: 28px;
+}
+
+.fancy-scrollbar--short::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-static-text-900) 48%, transparent);
+}
+
+.dark .fancy-scrollbar--short::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--color-static-text-50) 38%, transparent);
+}
+
+.dark .fancy-scrollbar--short::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--color-static-text-50) 58%, transparent);
 }
 
 body {
