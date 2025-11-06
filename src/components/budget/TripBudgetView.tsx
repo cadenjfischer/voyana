@@ -139,13 +139,17 @@ export default function TripBudgetView({
         setOpenItemDropdownIndex(null);
       }
       
-      // Don't close main dropdown if clicking inside the side panel (but item dropdown is handled above)
-      if (target.closest('.assign-items-side-panel')) {
+      // Determine click regions
+      const clickedInSidePanel = !!target.closest('.assign-items-side-panel');
+      const clickedInMainModal = scanModalRef.current?.contains(target) ?? false; // the entire left Scan Receipt modal
+
+      // If clicking inside the side panel OR inside the main modal, do not auto-close the right panel.
+      if (clickedInSidePanel || clickedInMainModal) {
         return;
       }
-      
-      // Check if click is outside main dropdown
-      if (openDropdownIndex !== null && !target.closest('.member-dropdown-container')) {
+
+      // Otherwise, close the right panel (e.g., clicking on the dark overlay/background)
+      if (openDropdownIndex !== null) {
         setOpenDropdownIndex(null);
       }
     };
