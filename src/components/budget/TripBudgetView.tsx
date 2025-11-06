@@ -2489,15 +2489,20 @@ export default function TripBudgetView({
                   {/* Splitwise-style side-by-side layout */}
                   <div className="flex gap-4">
                     {/* Left side - Compact buttons */}
-                    <div className="flex-1 space-y-3 min-w-0">
+                    <div className="flex-1 space-y-3 min-w-0 member-dropdown-container">
                       {/* Paid by button */}
                       <button
                         type="button"
+                        onMouseDown={(e) => {
+                          // Prevent the document-level mousedown handler from firing first
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          const isCurrentlyOpen = openDropdownIndex === -1;
-                          setOpenDropdownIndex(isCurrentlyOpen ? null : -1);
+                          // Use functional update to avoid stale state/race with outside click handler
+                          setOpenDropdownIndex(prev => (prev === -1 ? null : -1));
                         }}
                         className={`w-full px-4 py-3 rounded-lg border-2 transition-all flex items-center gap-3 ${
                           openDropdownIndex === -1
@@ -2520,7 +2525,7 @@ export default function TripBudgetView({
                           </div>
                         </div>
                         <svg 
-                          className="w-5 h-5 text-static-text-400 flex-shrink-0" 
+                          className={`w-5 h-5 text-static-text-400 flex-shrink-0 transition-transform ${openDropdownIndex === -1 ? 'rotate-90' : ''}`}
                           fill="none" 
                           stroke="currentColor" 
                           viewBox="0 0 24 24"
@@ -2532,11 +2537,16 @@ export default function TripBudgetView({
                       {/* Split button */}
                       <button
                         type="button"
+                        onMouseDown={(e) => {
+                          // Prevent the document-level mousedown handler from firing first
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          const isCurrentlyOpen = openDropdownIndex === -2;
-                          setOpenDropdownIndex(isCurrentlyOpen ? null : -2);
+                          // Use functional update to avoid stale state/race with outside click handler
+                          setOpenDropdownIndex(prev => (prev === -2 ? null : -2));
                         }}
                         className={`w-full px-4 py-3 rounded-lg border-2 transition-all flex items-center gap-3 ${
                           openDropdownIndex === -2
@@ -2566,7 +2576,7 @@ export default function TripBudgetView({
                           </div>
                         </div>
                         <svg 
-                          className="w-5 h-5 text-static-text-400 flex-shrink-0" 
+                          className={`w-5 h-5 text-static-text-400 flex-shrink-0 transition-transform ${openDropdownIndex === -2 ? 'rotate-90' : ''}`}
                           fill="none" 
                           stroke="currentColor" 
                           viewBox="0 0 24 24"
