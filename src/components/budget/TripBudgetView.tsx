@@ -2207,7 +2207,14 @@ export default function TripBudgetView({
               
               {/* Split Mode Selector - Only show after receipt is scanned */}
               {scannedReceipt && (
-                <div className="mt-4">
+                <div className="mt-4"
+                  onMouseDown={(e) => {
+                    // Prevent the global outside-click (mousedown) handler from closing the right panel
+                    // when switching between split methods while the panel is open.
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                >
                   <label className="block text-sm font-medium text-static-text-700 dark:text-static-text-300 mb-2">
                     Split method
                   </label>
