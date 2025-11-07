@@ -2652,7 +2652,7 @@ export default function TripBudgetView({
 
               {/* Side Panel Content */}
               <div 
-                className="flex-1 min-h-0 overflow-y-auto p-4 fancy-scrollbar fancy-scrollbar--short pr-1"
+                className="flex-1 min-h-0 overflow-y-auto p-4 fancy-scrollbar fancy-scrollbar--short px-1"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Member Selection Panel */}
@@ -3336,30 +3336,18 @@ export default function TripBudgetView({
                           const allocated = Object.values(exactAmounts).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
                           const remaining = total - allocated;
                           return (
-                            <div className={`mt-4 p-3 rounded-lg border ${
-                              Math.abs(remaining) < 0.01
-                                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                                : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
-                            }`}>
-                              <div className="flex justify-between text-sm">
+                            <div className="mt-4 space-y-1 text-sm">
+                              <div className="flex justify-between">
                                 <span className="font-medium text-static-text-900 dark:text-static-text-50">Total:</span>
                                 <span className="font-semibold">{formatCurrency(total, currency)}</span>
                               </div>
-                              <div className="flex justify-between text-sm mt-1">
+                              <div className="flex justify-between">
                                 <span className="font-medium text-static-text-900 dark:text-static-text-50">Allocated:</span>
                                 <span className="font-semibold">{formatCurrency(allocated, currency)}</span>
                               </div>
-                              <div className={`flex justify-between text-sm mt-1 pt-1 border-t ${
-                                Math.abs(remaining) < 0.01 ? 'border-green-200 dark:border-green-800' : 'border-yellow-200 dark:border-yellow-800'
-                              }`}>
+                              <div className="flex justify-between pt-1 border-t border-gray-300 dark:border-gray-700">
                                 <span className="font-medium text-static-text-900 dark:text-static-text-50">Remaining:</span>
-                                <span className={`font-bold ${
-                                  Math.abs(remaining) < 0.01
-                                    ? 'text-green-600 dark:text-green-400'
-                                    : 'text-yellow-600 dark:text-yellow-400'
-                                }`}>
-                                  {formatCurrency(remaining, currency)}
-                                </span>
+                                <span className="font-bold text-static-text-900 dark:text-static-text-50">{formatCurrency(remaining, currency)}</span>
                               </div>
                             </div>
                           );
@@ -3412,23 +3400,13 @@ export default function TripBudgetView({
                           const totalPercent = Object.values(percentages).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
                           const remaining = 100 - totalPercent;
                           return (
-                            <div className={`mt-4 p-3 rounded-lg border ${
-                              Math.abs(remaining) < 0.01
-                                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                                : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
-                            }`}>
-                              <div className="flex justify-between text-sm">
+                            <div className="mt-4 space-y-1 text-sm">
+                              <div className="flex justify-between">
                                 <span className="font-medium text-static-text-900 dark:text-static-text-50">Total percentage:</span>
-                                <span className={`font-bold ${
-                                  Math.abs(remaining) < 0.01
-                                    ? 'text-green-600 dark:text-green-400'
-                                    : 'text-yellow-600 dark:text-yellow-400'
-                                }`}>
-                                  {totalPercent.toFixed(1)}%
-                                </span>
+                                <span className="font-bold text-static-text-900 dark:text-static-text-50">{totalPercent.toFixed(1)}%</span>
                               </div>
                               {Math.abs(remaining) >= 0.01 && (
-                                <div className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                                <div className="text-xs text-static-text-600 dark:text-static-text-400">
                                   {remaining > 0 ? `${remaining.toFixed(1)}% remaining` : `Over by ${Math.abs(remaining).toFixed(1)}%`}
                                 </div>
                               )}
