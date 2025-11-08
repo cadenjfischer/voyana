@@ -3336,18 +3336,18 @@ export default function TripBudgetView({
                           const allocated = Object.values(exactAmounts).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
                           const remaining = total - allocated;
                           return (
-                            <div className="mt-4 space-y-1 text-sm">
-                              <div className="flex justify-between">
-                                <span className="font-medium text-static-text-900 dark:text-static-text-50">Total:</span>
-                                <span className="font-semibold">{formatCurrency(total, currency)}</span>
+                            <div className="mt-6 space-y-2 text-sm">
+                              <div className="flex items-center justify-between gap-4 py-1">
+                                <span className="text-static-text-600 dark:text-static-text-400">Total:</span>
+                                <span className="font-semibold tabular-nums text-static-text-900 dark:text-static-text-50">{formatCurrency(total, currency)}</span>
                               </div>
-                              <div className="flex justify-between">
-                                <span className="font-medium text-static-text-900 dark:text-static-text-50">Allocated:</span>
-                                <span className="font-semibold">{formatCurrency(allocated, currency)}</span>
+                              <div className="flex items-center justify-between gap-4 py-1">
+                                <span className="text-static-text-600 dark:text-static-text-400">Allocated:</span>
+                                <span className="font-semibold tabular-nums text-static-text-900 dark:text-static-text-50">{formatCurrency(allocated, currency)}</span>
                               </div>
-                              <div className="flex justify-between pt-1 border-t border-gray-300 dark:border-gray-700">
-                                <span className="font-medium text-static-text-900 dark:text-static-text-50">Remaining:</span>
-                                <span className="font-bold text-static-text-900 dark:text-static-text-50">{formatCurrency(remaining, currency)}</span>
+                              <div className="flex items-center justify-between gap-4 pt-2 border-t border-gray-300 dark:border-gray-700">
+                                <span className="text-static-text-600 dark:text-static-text-400">Remaining:</span>
+                                <span className="font-bold tabular-nums text-static-text-900 dark:text-static-text-50">{formatCurrency(remaining, currency)}</span>
                               </div>
                             </div>
                           );
@@ -3400,10 +3400,10 @@ export default function TripBudgetView({
                           const totalPercent = Object.values(percentages).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
                           const remaining = 100 - totalPercent;
                           return (
-                            <div className="mt-4 space-y-1 text-sm">
-                              <div className="flex justify-between">
-                                <span className="font-medium text-static-text-900 dark:text-static-text-50">Total percentage:</span>
-                                <span className="font-bold text-static-text-900 dark:text-static-text-50">{totalPercent.toFixed(1)}%</span>
+                            <div className="mt-6 space-y-2 text-sm">
+                              <div className="flex items-center justify-between gap-4 py-1">
+                                <span className="text-static-text-600 dark:text-static-text-400">Total percentage:</span>
+                                <span className="font-semibold tabular-nums text-static-text-900 dark:text-static-text-50">{totalPercent.toFixed(1)}%</span>
                               </div>
                               {Math.abs(remaining) >= 0.01 && (
                                 <div className="text-xs text-static-text-600 dark:text-static-text-400">
