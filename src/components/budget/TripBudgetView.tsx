@@ -355,27 +355,25 @@ export default function TripBudgetView({
         ? scannedReceipt.subtotal + scannedReceipt.tax 
         : itemsTotal);
     const tipAmount = manualTip && parseFloat(manualTip) > 0 ? parseFloat(manualTip) : 0;
-    const actualTotal = baseTotal + tipAmount;
-
-    // Calculate who owes what based on split mode
-    const memberTotals: Record<string, number> = {};
+    // We'll build member totals WITHOUT tip first, then apply tip distribution according to tipSplitType.
+    const memberTotals: Record<string, number> = {}; // base (pre-tip) amounts per member
     const allParticipants = new Set<string>();
 
     if (receiptSplitMode === 'equal') {
-      // SPLIT EVENLY MODE
+      // SPLIT EVENLY MODE (base only)
       if (selectedSplitMembers.length === 0) {
         alert('Please select at least one person to split with');
         return;
       }
-      const perPerson = actualTotal / selectedSplitMembers.length;
+      const basePerPerson = baseTotal / selectedSplitMembers.length;
       selectedSplitMembers.forEach(memberId => {
         allParticipants.add(memberId);
-        memberTotals[memberId] = perPerson;
+        memberTotals[memberId] = basePerPerson;
       });
 
     } else if (receiptSplitMode === 'exact') {
-      // EXACT AMOUNTS MODE
-      const allocated = Object.entries(exactAmounts).reduce((sum, [memberId, amount]) => {
+      // EXACT AMOUNTS MODE - user provides amounts for the BASE (excluding tip)
+      const allocatedBase = Object.entries(exactAmounts).reduce((sum, [memberId, amount]) => {
         const amt = parseFloat(amount) || 0;
         if (amt > 0) {
           allParticipants.add(memberId);
@@ -385,13 +383,13 @@ export default function TripBudgetView({
         return sum;
       }, 0);
 
-      if (Math.abs(allocated - actualTotal) > 0.01) {
-        alert(`Allocated amounts must equal ${formatCurrency(actualTotal, currency)}`);
+      if (Math.abs(allocatedBase - baseTotal) > 0.01) {
+        alert(`Allocated amounts must equal the base total ${formatCurrency(baseTotal, currency)} (tip is added separately).`);
         return;
       }
 
     } else if (receiptSplitMode === 'percentage') {
-      // PERCENTAGE MODE
+      // PERCENTAGE MODE - percentages apply to the BASE
       const totalPercent = Object.values(percentages).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
       if (Math.abs(totalPercent - 100) > 0.01) {
         alert('Percentages must add up to 100%');
@@ -401,8 +399,9 @@ export default function TripBudgetView({
       Object.entries(percentages).forEach(([memberId, percent]) => {
         const pct = parseFloat(percent) || 0;
         if (pct > 0) {
+          const baseShare = (pct / 100) * baseTotal;
           allParticipants.add(memberId);
-          memberTotals[memberId] = (pct / 100) * actualTotal;
+          memberTotals[memberId] = baseShare;
         }
       });
 
@@ -466,50 +465,54 @@ export default function TripBudgetView({
         }
       }
 
-      // Distribute tip for itemized mode
-      if (tipAmount > 0) {
-        if (tipSplitType === 'proportional') {
-          const validTotal = Object.keys(memberTotals).reduce((sum, memberId) => sum + memberTotals[memberId], 0);
-          if (validTotal > 0.01) {
-            Array.from(allParticipants).forEach(memberId => {
-              const proportion = memberTotals[memberId] / validTotal;
-              memberTotals[memberId] += tipAmount * proportion;
-            });
-          }
-        } else if (tipSplitType === 'equal') {
-          const tipPerPerson = tipAmount / allParticipants.size;
-          Array.from(allParticipants).forEach(memberId => {
-            memberTotals[memberId] += tipPerPerson;
+      // Tip distribution for itemized handled below (shared logic)
+    }
+
+    // Apply tip distribution (all modes) AFTER base shares computed
+    if (tipAmount > 0) {
+      // Determine who pays the tip
+      let tipPayers: string[];
+      if (tipSplitType === 'custom') {
+        tipPayers = tipAssignedMembers.length > 0 ? tipAssignedMembers : Array.from(allParticipants);
+      } else {
+        tipPayers = Array.from(allParticipants);
+      }
+
+      // Ensure tip payers are part of participants set
+      tipPayers.forEach(id => allParticipants.add(id));
+
+      // Sum of base amounts for proportional split among tip payers
+      const baseTotalForTip = tipPayers.reduce((sum, id) => sum + (memberTotals[id] || 0), 0);
+
+      if (tipSplitType === 'equal') {
+        const perPersonTip = tipAmount / tipPayers.length;
+        tipPayers.forEach(id => {
+          memberTotals[id] = (memberTotals[id] || 0) + perPersonTip;
+        });
+      } else {
+        // proportional or custom (proportional among selected)
+        if (baseTotalForTip > 0.01) {
+          tipPayers.forEach(id => {
+            const proportion = (memberTotals[id] || 0) / baseTotalForTip;
+            memberTotals[id] = (memberTotals[id] || 0) + (tipAmount * proportion);
           });
-        } else if (tipSplitType === 'custom') {
-          const selectedTipPayers = tipAssignedMembers.length > 0 ? tipAssignedMembers : Array.from(allParticipants);
-          if (selectedTipPayers.length > 0) {
-            const selectedMemberTotal = selectedTipPayers.reduce((sum, memberId) => 
-              sum + (memberTotals[memberId] || 0), 0);
-            
-            if (selectedMemberTotal > 0.01) {
-              selectedTipPayers.forEach(memberId => {
-                const proportion = (memberTotals[memberId] || 0) / selectedMemberTotal;
-                memberTotals[memberId] = (memberTotals[memberId] || 0) + (tipAmount * proportion);
-                allParticipants.add(memberId);
-              });
-            } else {
-              const tipPerPerson = tipAmount / selectedTipPayers.length;
-              selectedTipPayers.forEach(memberId => {
-                memberTotals[memberId] = (memberTotals[memberId] || 0) + tipPerPerson;
-                allParticipants.add(memberId);
-              });
-            }
-          }
+        } else {
+          // Fall back to equal if all zero
+            const fallbackTip = tipAmount / tipPayers.length;
+            tipPayers.forEach(id => {
+              memberTotals[id] = (memberTotals[id] || 0) + fallbackTip;
+            });
         }
       }
     }
+
+    const actualTotal = baseTotal + tipAmount; // recompute after distribution logic (for percentage display)
 
     // Create shares
     const shares: ExpenseShare[] = Array.from(allParticipants).map(memberId => ({
       memberId,
       amount: memberTotals[memberId],
-      percentage: (memberTotals[memberId] / actualTotal) * 100,
+      percentage: actualTotal > 0.01 ? (memberTotals[memberId] / actualTotal) * 100 : 0,
     }));
 
     // Simple description - just "Receipt" (expandable dropdown can show details later)
