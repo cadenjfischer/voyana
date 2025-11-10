@@ -32,7 +32,19 @@ export default function TripDetailPage() {
   const [showAddActivityModal, setShowAddActivityModal] = useState(false);
   const [showEditTripModal, setShowEditTripModal] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<TabType>('plan');
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    // Try to initialize from localStorage synchronously to avoid first-render flash
+    if (typeof window === 'undefined') return 'plan';
+    try {
+      const id = (typeof params?.id === 'string') ? (params.id as string) : '';
+      if (!id) return 'plan';
+      const saved = localStorage.getItem(`voyana_last_tab_${id}`) as TabType | null;
+      if (saved && ['plan','discover','budget','flights','hotels'].includes(saved)) {
+        return saved as TabType;
+      }
+    } catch {}
+    return 'plan';
+  });
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -50,6 +62,15 @@ export default function TripDetailPage() {
 
     getUserData();
   }, []);
+
+  // Persist active tab when it changes
+  useEffect(() => {
+    if (!tripId || typeof window === 'undefined') return;
+    try { localStorage.setItem(`voyana_last_tab_${tripId}`, activeTab); } catch {}
+  }, [activeTab, tripId]);
+
+  // Helper to change tab (persistence handled in effect)
+  const persistAndSetTab = (tab: TabType) => setActiveTab(tab);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -536,7 +557,7 @@ export default function TripDetailPage() {
         trip={trip}
         user={user}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={persistAndSetTab}
         onEditTrip={() => setShowEditTripModal(true)}
         onSignOut={handleSignOut}
       >
