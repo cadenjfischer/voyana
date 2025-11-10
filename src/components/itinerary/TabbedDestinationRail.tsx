@@ -194,12 +194,13 @@ export default function TabbedDestinationRail({
   const getCurrentColor = (destination: Destination) => {
     if (destination.customColor) {
       const colorData = PREMIUM_COLOR_PALETTE.find(c => c.id === destination.customColor);
-      return colorData ? `light-dark(${colorData.hex}, ${colorData.hexDark || colorData.hex})` : undefined;
+      // Palette entries don't have a separate dark hex; use the same value for light/dark.
+      return colorData ? `light-dark(${colorData.hex}, ${colorData.hex})` : undefined;
     }
     // For default colors, we need to get the hex value from our palette
     const defaultColorIndex = destinations.findIndex(d => d.id === destination.id) % PREMIUM_COLOR_PALETTE.length;
     const defaultColor = PREMIUM_COLOR_PALETTE[defaultColorIndex];
-    return defaultColor ? `light-dark(${defaultColor.hex}, ${defaultColor.hexDark || defaultColor.hex})` : 'oklch(58.54% 0.2041 277.12)';
+    return defaultColor ? `light-dark(${defaultColor.hex}, ${defaultColor.hex})` : 'oklch(58.54% 0.2041 277.12)';
   };
 
   // Handle adding lodging
