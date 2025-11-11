@@ -531,6 +531,32 @@ export default function TripBudgetView({
 
     const actualTotal = baseTotal + tipAmount; // recompute after distribution logic (for percentage display)
 
+    // Calculate per-person breakdown of items, tax, and tip
+    const memberBreakdowns: Record<string, { items: number; tax: number; tip: number; total: number }> = {};
+    const itemsSubtotal = scannedReceipt.subtotal || scannedReceipt.items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+    const taxAmount = scannedReceipt.tax || 0;
+    
+    Array.from(allParticipants).forEach(memberId => {
+      const totalForMember = memberTotals[memberId];
+      
+      // Calculate proportion of member's total to actualTotal to determine their tax/tip share
+      const memberProportion = actualTotal > 0 ? totalForMember / actualTotal : 0;
+      
+      // Tax and tip are distributed proportionally based on the member's share
+      const memberTax = taxAmount * memberProportion;
+      const memberTip = tipAmount * memberProportion;
+      
+      // Items amount is total minus tax and tip
+      const memberItems = totalForMember - memberTax - memberTip;
+      
+      memberBreakdowns[memberId] = {
+        items: memberItems,
+        tax: memberTax,
+        tip: memberTip,
+        total: totalForMember
+      };
+    });
+
     // Create shares
     const shares: ExpenseShare[] = Array.from(allParticipants).map(memberId => ({
       memberId,
@@ -561,6 +587,7 @@ export default function TripBudgetView({
       tip: tipAmount, // Only store manual tip (OCR tips are ignored)
       total: actualTotal,
       splitMode: receiptSplitMode, // Store which split mode was used
+      memberBreakdowns, // Store per-person breakdown of items/tax/tip
     };
 
     // Create single consolidated expense
@@ -1225,6 +1252,8 @@ export default function TripBudgetView({
                                     <div className="space-y-0">
                                       {expense.shares.map((share, shareIdx) => {
                                         const member = members.find(m => m.id === share.memberId);
+                                        const breakdown = expenseWithReceipt.receiptDetails?.memberBreakdowns?.[share.memberId];
+                                        
                                         // Debug: log what we're looking for
                                         if (!member) {
                                           console.log('❌ Cannot find member:', {
@@ -1232,14 +1261,37 @@ export default function TripBudgetView({
                                             availableMembers: members.map(m => ({ id: m.id, name: m.name }))
                                           });
                                         }
+                                        
                                         return (
-                                          <div key={`${expense.id}-share-${shareIdx}`} className="flex justify-between items-center py-1.5 px-2 border-b border-gray-200 dark:border-gray-800 last:border-b-0">
-                                            <span className="text-xs font-medium text-static-text-800 dark:text-static-text-200">
-                                              {member?.name || `Unknown (${share.memberId})`}
-                                            </span>
-                                            <span className="text-xs font-bold text-static-text-900 dark:text-static-text-50 tabular-nums">
-                                              {formatCurrency(share.amount, currency)}
-                                            </span>
+                                          <div key={`${expense.id}-share-${shareIdx}`} className="py-1.5 px-2 border-b border-gray-200 dark:border-gray-800 last:border-b-0">
+                                            <div className="flex justify-between items-center">
+                                              <span className="text-xs font-medium text-static-text-800 dark:text-static-text-200">
+                                                {member?.name || `Unknown (${share.memberId})`}
+                                              </span>
+                                              <span className="text-xs font-bold text-static-text-900 dark:text-static-text-50 tabular-nums">
+                                                {formatCurrency(share.amount, currency)}
+                                              </span>
+                                            </div>
+                                            {breakdown && (breakdown.tax > 0 || breakdown.tip > 0) && (
+                                              <div className="mt-1 text-[10px] text-static-text-500 dark:text-static-text-400 space-y-0.5">
+                                                <div className="flex justify-between">
+                                                  <span>Items:</span>
+                                                  <span className="tabular-nums">{formatCurrency(breakdown.items, currency)}</span>
+                                                </div>
+                                                {breakdown.tax > 0 && (
+                                                  <div className="flex justify-between">
+                                                    <span>Tax:</span>
+                                                    <span className="tabular-nums">{formatCurrency(breakdown.tax, currency)}</span>
+                                                  </div>
+                                                )}
+                                                {breakdown.tip > 0 && (
+                                                  <div className="flex justify-between">
+                                                    <span>Tip:</span>
+                                                    <span className="tabular-nums">{formatCurrency(breakdown.tip, currency)}</span>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            )}
                                           </div>
                                         );
                                       })}
@@ -3848,9 +3900,53 @@ export default function TripBudgetView({
                     </div>
                   </div>
                   
+                  {/* Per-person tax and tip breakdown */}
+                  {expenseWithReceipt.receiptDetails.memberBreakdowns && 
+                   (expenseWithReceipt.receiptDetails.tax > 0 || expenseWithReceipt.receiptDetails.tip > 0) && (
+                    <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <div className="text-xs font-semibold text-static-text-700 dark:text-static-text-300 mb-2">
+                        Per-Person Tax & Tip Breakdown:
+                      </div>
+                      <div className="space-y-2">
+                        {Object.entries(expenseWithReceipt.receiptDetails.memberBreakdowns).map(([memberId, breakdown]: [string, any]) => {
+                          const member = members.find(m => m.id === memberId);
+                          return (
+                            <div key={memberId} className="text-xs">
+                              <div className="font-medium text-static-text-800 dark:text-static-text-200 mb-1">
+                                {member?.name || 'Unknown'}
+                              </div>
+                              <div className="ml-2 space-y-0.5 text-static-text-600 dark:text-static-text-400">
+                                <div className="flex justify-between">
+                                  <span>Items:</span>
+                                  <span className="tabular-nums">{formatCurrency(breakdown.items, currency)}</span>
+                                </div>
+                                {breakdown.tax > 0 && (
+                                  <div className="flex justify-between">
+                                    <span>Tax:</span>
+                                    <span className="tabular-nums">{formatCurrency(breakdown.tax, currency)}</span>
+                                  </div>
+                                )}
+                                {breakdown.tip > 0 && (
+                                  <div className="flex justify-between">
+                                    <span>Tip:</span>
+                                    <span className="tabular-nums">{formatCurrency(breakdown.tip, currency)}</span>
+                                  </div>
+                                )}
+                                <div className="flex justify-between font-semibold text-static-text-800 dark:text-static-text-200 pt-0.5 border-t border-gray-300 dark:border-gray-600">
+                                  <span>Total:</span>
+                                  <span className="tabular-nums">{formatCurrency(breakdown.total, currency)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Show note about distribution */}
                   {(expenseWithReceipt.receiptDetails.tax || expenseWithReceipt.receiptDetails.tip) && (
-                    <div className="text-sm text-static-text-500 italic mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-xs text-static-text-500 italic mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       Note: Tax and tip are distributed proportionally among participants based on their items.
                     </div>
                   )}
