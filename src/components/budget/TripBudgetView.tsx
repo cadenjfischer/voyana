@@ -1795,34 +1795,56 @@ export default function TripBudgetView({
                   </div>
                 </div>
 
-                {/* Paid by and split - Inline like Splitwise */}
-                <div className="text-center text-sm text-static-text-600 dark:text-static-text-400">
-                  Paid by{' '}
-                  <button
-                    onClick={() => {
-                      setShowSplitPanel(false);
-                      setShowPayerPanel(true);
-                    }}
-                    className="font-medium text-static-accent-500 hover:text-static-accent-600 underline"
-                  >
-                    {expensePaidBy ? members.find(m => m.id === expensePaidBy)?.name || 'you' : 'you'}
-                  </button>
-                  {' '}and split{' '}
-                  <button
-                    onClick={() => {
-                      setShowPayerPanel(false);
-                      setShowSplitPanel(true);
-                    }}
-                    className="font-medium text-static-accent-500 hover:text-static-accent-600 underline"
-                  >
-                    {expenseSplitType === 'equal' ? 'equally' : 'unequally'}
-                  </button>
-                  .
-                  {(expenseSplitType === 'equal' ? selectedMembers : Object.keys(customSplits).filter(id => customSplits[id] && parseFloat(customSplits[id]) > 0)).length > 0 && (
-                    <div className="mt-1 text-xs">
-                      ({formatCurrency(parseFloat(expenseAmount || '0') / Math.max(1, (expenseSplitType === 'equal' ? selectedMembers : Object.keys(customSplits).filter(id => customSplits[id] && parseFloat(customSplits[id]) > 0)).length), currency)}/person)
-                    </div>
-                  )}
+                {/* Paid by and split - Button style */}
+                <div className="space-y-2">
+                  {/* Paid by button */}
+                  <div>
+                    <label className="block text-xs font-medium text-static-text-600 dark:text-static-text-400 mb-1.5">
+                      Paid by
+                    </label>
+                    <button
+                      onClick={() => {
+                        setShowSplitPanel(false);
+                        setShowPayerPanel(true);
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-static-bg-700 dark:hover:border-static-bg-700 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all text-left"
+                    >
+                      <span className="text-sm text-static-text-900 dark:text-static-text-50 font-medium">
+                        {expensePaidBy ? members.find(m => m.id === expensePaidBy)?.name || 'Select member' : 'Select member'}
+                      </span>
+                      <svg className="w-4 h-4 text-static-text-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Split between button */}
+                  <div>
+                    <label className="block text-xs font-medium text-static-text-600 dark:text-static-text-400 mb-1.5">
+                      Split between
+                    </label>
+                    <button
+                      onClick={() => {
+                        setShowPayerPanel(false);
+                        setShowSplitPanel(true);
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-static-bg-700 dark:hover:border-static-bg-700 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all text-left"
+                    >
+                      <span className="text-sm text-static-text-900 dark:text-static-text-50 font-medium">
+                        {expenseSplitType === 'equal' 
+                          ? `${selectedMembers.length} ${selectedMembers.length === 1 ? 'person' : 'people'} equally`
+                          : 'Custom amounts'}
+                      </span>
+                      <svg className="w-4 h-4 text-static-text-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                    {(expenseSplitType === 'equal' ? selectedMembers : Object.keys(customSplits).filter(id => customSplits[id] && parseFloat(customSplits[id]) > 0)).length > 0 && (
+                      <p className="text-xs text-static-text-500 dark:text-static-text-400 mt-1">
+                        {formatCurrency(parseFloat(expenseAmount || '0') / Math.max(1, (expenseSplitType === 'equal' ? selectedMembers : Object.keys(customSplits).filter(id => customSplits[id] && parseFloat(customSplits[id]) > 0)).length), currency)} per person
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Divider */}
