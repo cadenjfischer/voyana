@@ -2189,65 +2189,85 @@ export default function TripBudgetView({
                       {/* Info Message */}
                       <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                         <p className="text-xs text-blue-800 dark:text-blue-200">
-                          The last person's percentage is automatically calculated to reach 100%
+                          💡 Last person auto-fills to 100%
                         </p>
                       </div>
                     </div>
                   ) : (
                     /* Custom Split - Amount Inputs */
                     <div className="space-y-3">
-                      {members.map((member) => (
-                        <div key={member.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                            {member.name?.[0]?.toUpperCase() || '?'}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-static-text-900 dark:text-static-text-50 text-sm truncate">
-                              {member.name}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-600">
-                            <span className="text-xs text-static-text-500">{currency}</span>
-                            <input
-                              type="number"
-                              value={customSplits[member.id] || ''}
-                              onChange={(e) => {
-                                setCustomSplits({
-                                  ...customSplits,
-                                  [member.id]: e.target.value
-                                });
-                              }}
-                              placeholder="0.00"
-                              step="0.01"
-                              min="0"
-                              className="w-20 bg-transparent text-static-text-900 dark:text-static-text-50 focus:outline-none text-sm"
-                            />
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* Validation Message */}
-                      {(() => {
-                        const total = Object.values(customSplits).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-                        const expenseTotal = parseFloat(expenseAmount) || 0;
-                        const difference = Math.abs(total - expenseTotal);
+                      {members.map((member, index) => {
+                        // Calculate auto-amount for last member
+                        const isLastMember = index === members.length - 1;
+                        const totalExpense = parseFloat(expenseAmount) || 0;
+                        const otherMembersTotal = members
+                          .filter((_, i) => i !== index)
+                          .reduce((sum, m) => sum + (parseFloat(customSplits[m.id]) || 0), 0);
+                        const autoAmount = isLastMember && otherMembersTotal < totalExpense 
+                          ? Math.max(0, totalExpense - otherMembersTotal)
+                          : undefined;
                         
-                        if (difference > 0.01 && expenseTotal > 0) {
-                          return (
-                            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg mt-4">
-                              <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                                <span className="font-semibold">Total: {formatCurrency(total, currency)} / {formatCurrency(expenseTotal, currency)}</span>
-                                <br />
-                                {total < expenseTotal 
-                                  ? `${formatCurrency(expenseTotal - total, currency)} remaining`
-                                  : `${formatCurrency(total - expenseTotal, currency)} over`
-                                }
-                              </p>
+                        const displayValue = autoAmount !== undefined 
+                          ? autoAmount.toFixed(2)
+                          : customSplits[member.id] || '';
+
+                        return (
+                          <div key={member.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                              {member.name?.[0]?.toUpperCase() || '?'}
                             </div>
-                          );
-                        }
-                        return null;
-                      })()}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-static-text-900 dark:text-static-text-50 text-sm truncate">
+                                {member.name}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-600">
+                              <span className="text-xs text-static-text-500">{currency}</span>
+                              <input
+                                type="number"
+                                value={displayValue}
+                                onChange={(e) => {
+                                  const newValue = e.target.value;
+                                  const newAmount = parseFloat(newValue) || 0;
+                                  
+                                  if (newAmount <= totalExpense) {
+                                    const newSplits = {
+                                      ...customSplits,
+                                      [member.id]: newValue
+                                    };
+                                    
+                                    // Auto-calculate last member
+                                    if (!isLastMember) {
+                                      const totalOthers = members
+                                        .filter((_, i) => i !== index && i !== members.length - 1)
+                                        .reduce((sum, m) => sum + (parseFloat(newSplits[m.id]) || 0), 0);
+                                      const remaining = totalExpense - newAmount - totalOthers;
+                                      if (remaining >= 0) {
+                                        const lastMember = members[members.length - 1];
+                                        newSplits[lastMember.id] = remaining.toFixed(2);
+                                      }
+                                    }
+                                    
+                                    setCustomSplits(newSplits);
+                                  }
+                                }}
+                                disabled={isLastMember && otherMembersTotal < totalExpense}
+                                placeholder="0.00"
+                                step="0.01"
+                                min="0"
+                                className="w-20 bg-transparent text-static-text-900 dark:text-static-text-50 focus:outline-none text-sm disabled:opacity-50"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {/* Info Message */}
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <p className="text-xs text-blue-800 dark:text-blue-200">
+                          💡 Last person auto-fills to match total
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
