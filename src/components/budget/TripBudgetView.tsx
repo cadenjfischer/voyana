@@ -60,9 +60,10 @@ export default function TripBudgetView({
   const [expenseCategory, setExpenseCategory] = useState('');
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
   const [expensePaidBy, setExpensePaidBy] = useState('');
-  const [expenseSplitType, setExpenseSplitType] = useState<'equal' | 'custom'>('equal');
+  const [expenseSplitType, setExpenseSplitType] = useState<'equal' | 'percentage' | 'custom'>('equal');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([currentUserId]);
   const [customSplits, setCustomSplits] = useState<Record<string, string>>({});
+  const [percentageSplits, setPercentageSplits] = useState<Record<string, string>>({});
 
   // Scan receipt state
   const [showScanReceiptModal, setShowScanReceiptModal] = useState(false);
@@ -1833,6 +1834,8 @@ export default function TripBudgetView({
                       <span className="text-sm text-static-text-900 dark:text-static-text-50 font-medium">
                         {expenseSplitType === 'equal' 
                           ? `${selectedMembers.length} ${selectedMembers.length === 1 ? 'person' : 'people'} equally`
+                          : expenseSplitType === 'percentage'
+                          ? 'By percentage'
                           : 'Custom amounts'}
                       </span>
                       <svg className="w-4 h-4 text-static-text-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2010,34 +2013,36 @@ export default function TripBudgetView({
 
                 {/* Toolbar with split type options */}
                 <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700 px-6 py-3">
-                  <div className="flex items-center gap-2 text-xs">
-                    <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                      <span>=</span>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setExpenseSplitType('equal')}
+                      className={`flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                        expenseSplitType === 'equal'
+                          ? 'bg-static-bg-700 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-static-text-700 dark:text-static-text-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      Equally
                     </button>
-                    <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                      <span>1.23</span>
+                    <button 
+                      onClick={() => setExpenseSplitType('percentage')}
+                      className={`flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                        expenseSplitType === 'percentage'
+                          ? 'bg-static-bg-700 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-static-text-700 dark:text-static-text-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      Percentage
                     </button>
-                    <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                      <span>%</span>
-                    </button>
-                    <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                      </svg>
-                    </button>
-                    <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                      <span>+/-</span>
-                    </button>
-                    <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </button>
-                    <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                      </svg>
+                    <button 
+                      onClick={() => setExpenseSplitType('custom')}
+                      className={`flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                        expenseSplitType === 'custom'
+                          ? 'bg-static-bg-700 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-static-text-700 dark:text-static-text-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      Custom
                     </button>
                   </div>
                 </div>
@@ -2045,7 +2050,7 @@ export default function TripBudgetView({
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6">
                   <h4 className="text-sm font-semibold text-static-text-900 dark:text-static-text-50 mb-3">
-                    Split equally
+                    {expenseSplitType === 'equal' ? 'Split equally' : expenseSplitType === 'percentage' ? 'Split by percentage' : 'Custom amounts'}
                   </h4>
                   
                   {expenseSplitType === 'equal' ? (
@@ -2089,6 +2094,62 @@ export default function TripBudgetView({
                           </button>
                         );
                       })}
+                    </div>
+                  ) : expenseSplitType === 'percentage' ? (
+                    /* Percentage Split - Percentage Inputs */
+                    <div className="space-y-3">
+                      {members.map((member) => (
+                        <div key={member.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                            {member.name?.[0]?.toUpperCase() || '?'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-static-text-900 dark:text-static-text-50 text-sm truncate">
+                              {member.name}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-600">
+                            <input
+                              type="number"
+                              value={percentageSplits[member.id] || ''}
+                              onChange={(e) => {
+                                setPercentageSplits({
+                                  ...percentageSplits,
+                                  [member.id]: e.target.value
+                                });
+                              }}
+                              placeholder="0"
+                              step="1"
+                              min="0"
+                              max="100"
+                              className="w-16 bg-transparent text-static-text-900 dark:text-static-text-50 focus:outline-none text-sm"
+                            />
+                            <span className="text-xs text-static-text-500">%</span>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Validation Message */}
+                      {(() => {
+                        const totalPercentage = Object.values(percentageSplits).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+                        const expenseTotal = parseFloat(expenseAmount) || 0;
+                        
+                        if (Math.abs(totalPercentage - 100) > 0.1 && totalPercentage > 0) {
+                          return (
+                            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg mt-4">
+                              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                                <span className="font-semibold">Total: {totalPercentage.toFixed(1)}% / 100%</span>
+                                <br />
+                                {totalPercentage < 100 
+                                  ? `${(100 - totalPercentage).toFixed(1)}% remaining`
+                                  : `${(totalPercentage - 100).toFixed(1)}% over`
+                                }
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   ) : (
                     /* Custom Split - Amount Inputs */
