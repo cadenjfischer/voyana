@@ -40,6 +40,8 @@ export default function TripBudgetView({
   };
 
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
+  const [showPayerPanel, setShowPayerPanel] = useState(false);
+  const [showSplitPanel, setShowSplitPanel] = useState(false);
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'expenses' | 'balance' | 'settlements'>('expenses');
@@ -1720,20 +1722,24 @@ export default function TripBudgetView({
       {/* Add Expense Modal */}
       {showAddExpenseModal && (
         <div 
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4 overflow-hidden overscroll-none"
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4"
           onClick={() => {
             resetExpenseForm();
             setShowAddExpenseModal(false);
           }}
         >
           <div 
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="flex items-start gap-4 w-full justify-center"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Main Modal */}
+            <div 
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col"
+            >
             {/* Header */}
-            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between rounded-t-2xl">
-              <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50">
-                {editingExpenseId ? 'Edit Expense' : 'Add Expense'}
+            <div className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-static-text-900 dark:text-static-text-50">
+                Add an expense
               </h2>
               <button
                 onClick={() => {
@@ -1741,7 +1747,7 @@ export default function TripBudgetView({
                   setEditingExpenseId(null);
                   setShowAddExpenseModal(false);
                 }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
               >
                 <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1749,347 +1755,389 @@ export default function TripBudgetView({
               </button>
             </div>
 
-            {/* Step Indicator */}
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setExpenseStep('details')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                    expenseStep === 'details'
-                      ? 'bg-static-bg-700 text-white'
-                      : 'text-static-text-600 dark:text-static-text-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${
-                    expenseStep === 'details' ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'
-                  }`}>
-                    1
-                  </span>
-                  Details
-                </button>
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-                <button
-                  onClick={() => {
-                    if (expenseDescription && expenseAmount) {
-                      setExpenseStep('split');
-                    }
-                  }}
-                  disabled={!expenseDescription || !expenseAmount}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                    expenseStep === 'split'
-                      ? 'bg-static-bg-700 text-white'
-                      : 'text-static-text-600 dark:text-static-text-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                  }`}
-                >
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${
-                    expenseStep === 'split' ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'
-                  }`}>
-                    2
-                  </span>
-                  Split
-                </button>
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-5 space-y-3">
+                {/* Description with icon */}
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg mt-0.5">
+                    <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={expenseDescription}
+                      onChange={(e) => setExpenseDescription(e.target.value)}
+                      placeholder="Enter a description"
+                      className="w-full px-0 py-1 bg-transparent border-0 border-b border-gray-300 dark:border-gray-600 text-static-text-900 dark:text-static-text-50 placeholder:text-static-text-400 focus:outline-none focus:border-static-accent-500 transition-colors text-base"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                {/* Amount - Large centered */}
+                <div className="py-2">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-3xl font-light text-static-text-500">
+                      {currency}
+                    </span>
+                    <input
+                      type="number"
+                      value={expenseAmount}
+                      onChange={(e) => setExpenseAmount(e.target.value)}
+                      placeholder="0.00"
+                      step="0.01"
+                      min="0"
+                      className="w-32 bg-transparent text-static-text-900 dark:text-static-text-50 placeholder:text-static-text-400 focus:outline-none text-4xl font-light text-center"
+                    />
+                  </div>
+                </div>
+
+                {/* Paid by and split - Inline like Splitwise */}
+                <div className="text-center text-sm text-static-text-600 dark:text-static-text-400">
+                  Paid by{' '}
+                  <button
+                    onClick={() => {
+                      setShowSplitPanel(false);
+                      setShowPayerPanel(true);
+                    }}
+                    className="font-medium text-static-accent-500 hover:text-static-accent-600 underline"
+                  >
+                    {expensePaidBy ? members.find(m => m.id === expensePaidBy)?.name || 'you' : 'you'}
+                  </button>
+                  {' '}and split{' '}
+                  <button
+                    onClick={() => {
+                      setShowPayerPanel(false);
+                      setShowSplitPanel(true);
+                    }}
+                    className="font-medium text-static-accent-500 hover:text-static-accent-600 underline"
+                  >
+                    {expenseSplitType === 'equal' ? 'equally' : 'unequally'}
+                  </button>
+                  .
+                  {(expenseSplitType === 'equal' ? selectedMembers : Object.keys(customSplits).filter(id => customSplits[id] && parseFloat(customSplits[id]) > 0)).length > 0 && (
+                    <div className="mt-1 text-xs">
+                      ({formatCurrency(parseFloat(expenseAmount || '0') / Math.max(1, (expenseSplitType === 'equal' ? selectedMembers : Object.keys(customSplits).filter(id => customSplits[id] && parseFloat(customSplits[id]) > 0)).length), currency)}/person)
+                    </div>
+                  )}
+                </div>
+
+                {/* Divider */}
+                <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+
+                {/* Compact fields */}
+                <div className="space-y-2">
+                  {/* Date */}
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                  >
+                    <span className="text-sm text-static-text-900 dark:text-static-text-50">
+                      {new Date(expenseDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  </button>
+
+                  {/* Category */}
+                  <select
+                    value={expenseCategory}
+                    onChange={(e) => setExpenseCategory(e.target.value)}
+                    className={`w-full px-3 py-2 bg-transparent rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none transition-colors appearance-none cursor-pointer text-sm ${
+                      expenseCategory ? 'text-static-text-900 dark:text-static-text-50' : 'text-static-text-500'
+                    }`}
+                    style={{ 
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                      backgroundPosition: 'right 0.75rem center',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: '1rem'
+                    }}
+                  >
+                    <option value="">Select category</option>
+                    <option value="Food">🍽️ Food & Drink</option>
+                    <option value="Lodging">🛏️ Lodging</option>
+                    <option value="Transport">🚗 Transport</option>
+                    <option value="Activities">📸 See & Do</option>
+                    <option value="Shopping">🛍️ Shopping</option>
+                    <option value="Other">⋯ Other</option>
+                  </select>
+                </div>
               </div>
             </div>
 
-            {/* Content */}
-            <div className="relative p-6">
-              {expenseStep === 'details' ? (
-                <div className="space-y-4">
-                  {/* Show Payer Selection First if not selected */}
-                  {!expensePaidBy ? (
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-static-text-900 dark:text-static-text-50 mb-2">
-                          Who paid for this expense?
-                        </h3>
-                        <p className="text-sm text-static-text-600 dark:text-static-text-400 mb-4">
-                          Select the person who paid
-                        </p>
+            {/* Footer Button */}
+            <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 p-4">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    resetExpenseForm();
+                    setShowAddExpenseModal(false);
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-static-text-900 dark:text-static-text-50 rounded-lg font-medium transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddExpense}
+                  disabled={!expenseDescription.trim() || !expenseAmount || parseFloat(expenseAmount) <= 0 || !expensePaidBy || (expenseSplitType === 'equal' && selectedMembers.length === 0) || (expenseSplitType === 'custom' && (() => {
+                    const total = Object.values(customSplits).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+                    return Math.abs(total - (parseFloat(expenseAmount) || 0)) > 0.01;
+                  })())}
+                  className="flex-1 px-4 py-2.5 bg-static-bg-700 hover:bg-static-bg-600 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed text-sm"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+
+            {/* Payer Selection Side Panel */}
+            {showPayerPanel && (
+              <div 
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-sm max-h-[90vh] flex flex-col"
+              >
+                {/* Header */}
+                <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-bold text-static-text-900 dark:text-static-text-50">
+                    Choose payer
+                  </h3>
+                  <button
+                    onClick={() => setShowPayerPanel(false)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6">
+                  <div className="space-y-2">
+                    {members.map((member) => {
+                      const isSelected = expensePaidBy === member.id;
+                      return (
+                        <button
+                          key={member.id}
+                          onClick={() => {
+                            setExpensePaidBy(member.id);
+                            setShowPayerPanel(false);
+                          }}
+                          className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+                            isSelected
+                              ? 'border-static-bg-700 bg-static-bg-700/10 dark:bg-static-bg-700/20'
+                              : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                          }`}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                            {member.name?.[0]?.toUpperCase() || '?'}
+                          </div>
+                          <span className="flex-1 text-left font-medium text-static-text-900 dark:text-static-text-50">
+                            {member.name}
+                            {member.id === currentUserId && (
+                              <span className="ml-2 text-sm text-static-text-500">(You)</span>
+                            )}
+                          </span>
+                          {isSelected && (
+                            <svg className="w-5 h-5 text-static-bg-700 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    })}
+                    
+                    {/* Multiple people option */}
+                    <button
+                      className="w-full flex items-center gap-3 p-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                        </svg>
                       </div>
-                      
-                      {/* Member List */}
-                      <div className="space-y-3">
-                        {members.map((member) => (
+                      <span className="flex-1 text-left font-medium text-static-text-900 dark:text-static-text-50">
+                        Multiple people
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Split Options Side Panel */}
+            {showSplitPanel && (
+              <div 
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-sm max-h-[90vh] flex flex-col"
+              >
+                {/* Header */}
+                <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-bold text-static-text-900 dark:text-static-text-50">
+                    Choose split options
+                  </h3>
+                  <button
+                    onClick={() => setShowSplitPanel(false)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Toolbar with split type options */}
+                <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700 px-6 py-3">
+                  <div className="flex items-center gap-2 text-xs">
+                    <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                      <span>=</span>
+                    </button>
+                    <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                      <span>1.23</span>
+                    </button>
+                    <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                      <span>%</span>
+                    </button>
+                    <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                    </button>
+                    <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                      <span>+/-</span>
+                    </button>
+                    <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </button>
+                    <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6">
+                  <h4 className="text-sm font-semibold text-static-text-900 dark:text-static-text-50 mb-3">
+                    Split equally
+                  </h4>
+                  
+                  {expenseSplitType === 'equal' ? (
+                    /* Equal Split - Member Selection */
+                    <div className="space-y-2">
+                      {members.map((member) => {
+                        const isSelected = selectedMembers.includes(member.id);
+                        return (
                           <button
                             key={member.id}
-                            type="button"
-                            onClick={() => setExpensePaidBy(member.id)}
-                            className="w-full flex items-center gap-3 p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 hover:border-static-accent-500 dark:hover:border-static-accent-500 transition-colors bg-transparent"
-                          >
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                              {member.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="flex-1 text-left">
-                              <p className="font-medium text-static-text-900 dark:text-static-text-50">
-                                {member.name}
-                                {member.id === currentUserId && (
-                                  <span className="ml-2 text-sm text-static-text-500">(You)</span>
-                                )}
-                              </p>
-                              {member.email && (
-                                <p className="text-sm text-static-text-600 dark:text-static-text-400">
-                                  {member.email}
-                                </p>
-                              )}
-                            </div>
-                            <svg className="w-5 h-5 text-static-text-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Back button to change payer */}
-                      <button
-                        type="button"
-                        onClick={() => setExpensePaidBy('')}
-                        className="flex items-center gap-2 text-sm text-static-text-600 dark:text-static-text-400 hover:text-static-text-900 dark:hover:text-static-text-50 transition-colors mb-4"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                        Change payer ({payer?.name})
-                      </button>
-
-                      {/* Description */}
-                      <div>
-                        <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
-                          Description <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={expenseDescription}
-                          onChange={(e) => setExpenseDescription(e.target.value)}
-                          placeholder="e.g., Dinner at restaurant"
-                          className="w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg text-static-text-50 placeholder:text-static-text-700 dark:placeholder:text-static-text-600 focus:outline-none focus:border-static-accent-500 transition-colors"
-                          autoFocus
-                        />
-                      </div>
-
-                      {/* Amount */}
-                      <div>
-                        <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
-                          Amount <span className="text-red-500">*</span>
-                        </label>
-                        <div className="flex items-center gap-3 border border-gray-600 dark:border-gray-600 rounded-lg focus-within:border-static-accent-500 transition-colors px-4 py-3">
-                          <span className="text-sm font-medium text-static-text-500">
-                            {currency}
-                          </span>
-                          <input
-                            type="number"
-                            value={expenseAmount}
-                            onChange={(e) => setExpenseAmount(e.target.value)}
-                            placeholder="0.00"
-                            step="0.01"
-                            min="0"
-                            className="flex-1 bg-transparent text-static-text-50 placeholder:text-static-text-700 dark:placeholder:text-static-text-600 focus:outline-none text-xl"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Category */}
-                      <div>
-                        <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
-                          Category
-                        </label>
-                        <select
-                          value={expenseCategory}
-                          onChange={(e) => setExpenseCategory(e.target.value)}
-                          className={`w-full px-4 py-3 bg-transparent border border-gray-600 dark:border-gray-600 rounded-lg focus:outline-none focus:border-static-accent-500 transition-colors appearance-none cursor-pointer ${
-                            expenseCategory ? 'text-static-text-50' : 'text-static-text-600 dark:text-static-text-500'
-                          }`}
-                          style={{ 
-                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-                            backgroundPosition: 'right 0.75rem center',
-                            backgroundRepeat: 'no-repeat',
-                            backgroundSize: '1.25rem'
-                          }}
-                        >
-                          <option value="">Select category</option>
-                          <option value="Food">🍽️ Food & Drink</option>
-                          <option value="Lodging">🛏️ Lodging</option>
-                          <option value="Transport">🚗 Transport</option>
-                          <option value="Activities">📸 See & Do</option>
-                          <option value="Shopping">🛍️ Shopping</option>
-                          <option value="Other">⋯ Other</option>
-                        </select>
-                      </div>
-
-                      {/* Date */}
-                      <div>
-                        <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
-                          Date
-                        </label>
-                        <AirlineDatePicker
-                          startDate={expenseDate}
-                          endDate=""
-                          onStartDateChange={(date) => setExpenseDate(date)}
-                          onEndDateChange={() => {}}
-                          single={true}
-                        />
-                      </div>
-
-                      {/* Next Button */}
-                      <div className="pt-4">
-                        <button
-                          onClick={() => setExpenseStep('split')}
-                          disabled={!expenseDescription.trim() || !expenseAmount || parseFloat(expenseAmount) <= 0}
-                          className="w-full px-4 py-3 bg-static-bg-700 hover:bg-static-bg-600 disabled:bg-gray-400 text-white disabled:text-static-text-700 rounded-lg font-medium transition-colors"
-                        >
-                          Next: Split Expense
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Split Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-3">
-                      How should this be split?
-                    </label>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => {
-                          setExpenseSplitType('equal');
-                          setCustomSplits({});
-                        }}
-                        className={`flex-1 px-4 py-3 rounded-lg border-2 font-medium transition-colors ${
-                          expenseSplitType === 'equal'
-                            ? 'border-static-bg-700 bg-static-bg-700 text-white'
-                            : 'border-gray-300 dark:border-gray-600 text-static-text-700 dark:text-static-text-300 hover:border-static-bg-600'
-                        }`}
-                      >
-                        Equal Split
-                      </button>
-                      <button
-                        onClick={() => setExpenseSplitType('custom')}
-                        className={`flex-1 px-4 py-3 rounded-lg border-2 font-medium transition-colors ${
-                          expenseSplitType === 'custom'
-                            ? 'border-static-bg-700 bg-static-bg-700 text-white'
-                            : 'border-gray-300 dark:border-gray-600 text-static-text-700 dark:text-static-text-300 hover:border-static-bg-600'
-                        }`}
-                      >
-                        Custom Amounts
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Member Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-3">
-                      Split between
-                    </label>
-                    <div className="space-y-2">
-                      {members.map(member => {
-                        const isSelected = selectedMembers.includes(member.id);
-                        const equalAmount = expenseSplitType === 'equal' && isSelected
-                          ? (parseFloat(expenseAmount) || 0) / selectedMembers.length
-                          : 0;
-                        
-                        return (
-                          <div
-                            key={member.id}
-                            className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-colors ${
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedMembers(selectedMembers.filter(id => id !== member.id));
+                              } else {
+                                setSelectedMembers([...selectedMembers, member.id]);
+                              }
+                            }}
+                            className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
                               isSelected
-                                ? 'border-static-bg-700 bg-static-bg-700/10'
-                                : 'border-gray-300 dark:border-gray-600'
+                                ? 'border-static-bg-700 bg-static-bg-700/10 dark:bg-static-bg-700/20'
+                                : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                             }`}
                           >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleExpenseMember(member.id)}
-                              className="w-5 h-5 rounded border-gray-300 text-static-bg-700 focus:ring-static-accent-500"
-                            />
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-bold">
-                              {member.name.charAt(0).toUpperCase()}
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                              {member.name?.[0]?.toUpperCase() || '?'}
                             </div>
-                            <div className="flex-1">
-                              <p className="font-medium text-static-text-900 dark:text-static-text-50">
-                                {member.name}
-                                {member.id === currentUserId && (
-                                  <span className="ml-2 text-xs text-static-text-500">(You)</span>
-                                )}
-                              </p>
-                            </div>
+                            <span className="flex-1 text-left font-medium text-static-text-900 dark:text-static-text-50">
+                              {member.name}
+                              {member.id === currentUserId && (
+                                <span className="ml-2 text-sm text-static-text-500">(You)</span>
+                              )}
+                            </span>
+                            <span className="text-sm text-static-text-600 dark:text-static-text-400">
+                              {formatCurrency(parseFloat(expenseAmount || '0') / Math.max(1, selectedMembers.length), currency)}
+                            </span>
                             {isSelected && (
-                              <div className="flex items-center gap-2">
-                                {expenseSplitType === 'custom' ? (
-                                  <div className="flex items-center gap-2 px-3 py-2 border border-gray-600 dark:border-gray-600 rounded-lg focus-within:border-static-accent-500 transition-colors">
-                                    <span className="text-sm text-static-text-500">
-                                      {currency}
-                                    </span>
-                                    <input
-                                      type="number"
-                                      value={customSplits[member.id] || ''}
-                                      onChange={(e) => handleCustomSplitChange(member.id, e.target.value)}
-                                      onBlur={autoFillRemaining}
-                                      placeholder="0.00"
-                                      step="0.01"
-                                      min="0"
-                                      className="w-24 bg-transparent text-static-text-900 dark:text-static-text-50 placeholder:text-static-text-600 dark:placeholder:text-static-text-500 focus:outline-none text-right"
-                                    />
-                                  </div>
-                                ) : (
-                                  <span className="text-lg font-bold text-static-text-900 dark:text-static-text-50">
-                                    {formatCurrency(equalAmount, currency)}
-                                  </span>
-                                )}
-                              </div>
+                              <svg className="w-5 h-5 text-static-bg-700 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
                             )}
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
-                  </div>
+                  ) : (
+                    /* Custom Split - Amount Inputs */
+                    <div className="space-y-3">
+                      {members.map((member) => (
+                        <div key={member.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                            {member.name?.[0]?.toUpperCase() || '?'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-static-text-900 dark:text-static-text-50 text-sm truncate">
+                              {member.name}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-600">
+                            <span className="text-xs text-static-text-500">{currency}</span>
+                            <input
+                              type="number"
+                              value={customSplits[member.id] || ''}
+                              onChange={(e) => {
+                                setCustomSplits({
+                                  ...customSplits,
+                                  [member.id]: e.target.value
+                                });
+                              }}
+                              placeholder="0.00"
+                              step="0.01"
+                              min="0"
+                              className="w-20 bg-transparent text-static-text-900 dark:text-static-text-50 focus:outline-none text-sm"
+                            />
+                          </div>
+                        </div>
+                      ))}
 
-                  {/* Remaining Amount Indicator for Custom Split */}
-                  {expenseSplitType === 'custom' && selectedMembers.length > 0 && (
-                    <div className={`p-4 rounded-lg ${
-                      Math.abs(calculateRemainingAmount()) < 0.01
-                        ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700'
-                        : 'bg-static-accent-100 dark:bg-static-accent-900/30 border border-static-accent-300 dark:border-static-accent-700'
-                    }`}>
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-static-text-900 dark:text-static-text-50">
-                          {Math.abs(calculateRemainingAmount()) < 0.01 ? '✓ Split complete' : 'Remaining to allocate'}
-                        </span>
-                        <span className={`text-lg font-bold ${
-                          Math.abs(calculateRemainingAmount()) < 0.01
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-static-accent-700 dark:text-static-accent-400'
-                        }`}>
-                          {formatCurrency(Math.max(0, calculateRemainingAmount()), currency)}
-                        </span>
-                      </div>
+                      {/* Validation Message */}
+                      {(() => {
+                        const total = Object.values(customSplits).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+                        const expenseTotal = parseFloat(expenseAmount) || 0;
+                        const difference = Math.abs(total - expenseTotal);
+                        
+                        if (difference > 0.01 && expenseTotal > 0) {
+                          return (
+                            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg mt-4">
+                              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                                <span className="font-semibold">Total: {formatCurrency(total, currency)} / {formatCurrency(expenseTotal, currency)}</span>
+                                <br />
+                                {total < expenseTotal 
+                                  ? `${formatCurrency(expenseTotal - total, currency)} remaining`
+                                  : `${formatCurrency(total - expenseTotal, currency)} over`
+                                }
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   )}
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      onClick={() => setExpenseStep('details')}
-                      className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-static-text-900 dark:text-static-text-50 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                    >
-                      Back
-                    </button>
-                    <button
-                      onClick={handleAddExpense}
-                      disabled={selectedMembers.length === 0}
-                      className="flex-1 px-4 py-3 bg-static-bg-700 hover:bg-static-bg-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white disabled:text-static-text-700 rounded-lg font-medium transition-colors"
-                    >
-                      {editingExpenseId ? 'Save Changes' : 'Add Expense'}
-                    </button>
-                  </div>
                 </div>
-              )}
-            </div>
+
+                {/* Footer */}
+                <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 p-4">
+                  <button
+                    onClick={() => setShowSplitPanel(false)}
+                    className="w-full px-4 py-3 bg-static-bg-700 hover:bg-static-bg-600 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

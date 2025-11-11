@@ -1720,7 +1720,7 @@ export default function TripBudgetView({
       {/* Add Expense Modal */}
       {showAddExpenseModal && (
         <div 
-          className="fixed inset-0 z-[10000] bg-black/40 backdrop-blur-sm"
+          className="fixed inset-0 z-[10000] bg-black/40"
           onClick={() => {
             resetExpenseForm();
             setShowAddExpenseModal(false);
@@ -1728,7 +1728,12 @@ export default function TripBudgetView({
         >
           {/* Side Panel */}
           <div 
-            className="fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-gray-900 shadow-2xl flex flex-col animate-slide-in-right"
+            className="fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-gray-900 shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+          {/* Side Panel */}
+          <div 
+            className="fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-gray-900 shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -1773,8 +1778,8 @@ export default function TripBudgetView({
                   <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
                     Amount
                   </label>
-                  <div className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 rounded-lg focus-within:border-static-accent-500 transition-colors px-4 py-2.5">
-                    <span className="text-lg font-medium text-static-text-500">
+                  <div className="flex items-center gap-3 border border-gray-300 dark:border-gray-600 rounded-lg focus-within:border-static-accent-500 transition-colors px-4 py-2.5">
+                    <span className="text-sm font-medium text-static-text-500">
                       {currency}
                     </span>
                     <input
@@ -1784,12 +1789,12 @@ export default function TripBudgetView({
                       placeholder="0.00"
                       step="0.01"
                       min="0"
-                      className="flex-1 bg-transparent text-static-text-900 dark:text-static-text-50 placeholder:text-static-text-500 focus:outline-none text-2xl font-bold"
+                      className="flex-1 bg-transparent text-static-text-900 dark:text-static-text-50 placeholder:text-static-text-500 focus:outline-none text-lg"
                     />
                   </div>
                 </div>
 
-                {/* Paid By */}
+                {/* Paid by */}
                 <div>
                   <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
                     Paid by
@@ -1797,7 +1802,9 @@ export default function TripBudgetView({
                   <select
                     value={expensePaidBy}
                     onChange={(e) => setExpensePaidBy(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 focus:outline-none focus:border-static-accent-500 transition-colors appearance-none cursor-pointer"
+                    className={`w-full px-4 py-2.5 bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-static-accent-500 transition-colors appearance-none cursor-pointer ${
+                      expensePaidBy ? 'text-static-text-900 dark:text-static-text-50' : 'text-static-text-500'
+                    }`}
                     style={{ 
                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
                       backgroundPosition: 'right 0.75rem center',
@@ -1808,13 +1815,13 @@ export default function TripBudgetView({
                     <option value="">Select payer</option>
                     {members.map((member) => (
                       <option key={member.id} value={member.id}>
-                        {member.name} {member.id === currentUserId ? '(You)' : ''}
+                        {member.name}{member.id === currentUserId ? ' (You)' : ''}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                {/* Split Type */}
+                {/* Split */}
                 <div>
                   <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
                     Split
@@ -1825,20 +1832,20 @@ export default function TripBudgetView({
                         setExpenseSplitType('equal');
                         setCustomSplits({});
                       }}
-                      className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${
                         expenseSplitType === 'equal'
-                          ? 'bg-static-accent-500 text-white'
-                          : 'bg-gray-100 dark:bg-gray-800 text-static-text-700 dark:text-static-text-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          ? 'bg-static-accent-500 text-white shadow-md'
+                          : 'bg-gray-100 dark:bg-gray-700 text-static-text-700 dark:text-static-text-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                       }`}
                     >
                       Equally
                     </button>
                     <button
                       onClick={() => setExpenseSplitType('custom')}
-                      className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${
                         expenseSplitType === 'custom'
-                          ? 'bg-static-accent-500 text-white'
-                          : 'bg-gray-100 dark:bg-gray-800 text-static-text-700 dark:text-static-text-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          ? 'bg-static-accent-500 text-white shadow-md'
+                          : 'bg-gray-100 dark:bg-gray-700 text-static-text-700 dark:text-static-text-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                       }`}
                     >
                       Unequally
@@ -1846,7 +1853,7 @@ export default function TripBudgetView({
                   </div>
                 </div>
 
-                {/* Member Selection - Compact Pills */}
+                {/* Split between */}
                 <div>
                   <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
                     Split between
@@ -1860,7 +1867,6 @@ export default function TripBudgetView({
                       return (
                         <button
                           key={member.id}
-                          type="button"
                           onClick={() => {
                             if (expenseSplitType === 'equal') {
                               if (isSelected) {
@@ -1870,19 +1876,17 @@ export default function TripBudgetView({
                               }
                             }
                           }}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                             isSelected
-                              ? 'bg-static-accent-500 text-white'
-                              : 'bg-gray-100 dark:bg-gray-800 text-static-text-700 dark:text-static-text-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                              ? 'bg-static-accent-500 text-white ring-2 ring-static-accent-300 dark:ring-static-accent-500'
+                              : 'bg-gray-100 dark:bg-gray-700 text-static-text-700 dark:text-static-text-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                           }`}
                         >
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                            isSelected ? 'bg-white/20' : 'bg-gray-300 dark:bg-gray-600'
-                          }`}>
-                            {member.name.charAt(0).toUpperCase()}
+                          <div className={`w-5 h-5 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-semibold`}>
+                            {member.name?.[0]?.toUpperCase() || '?'}
                           </div>
-                          <span>{member.name}</span>
-                          {isSelected && (
+                          <span>{member.name?.split(' ')[0] || 'Unknown'}</span>
+                          {isSelected && expenseSplitType === 'equal' && (
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
@@ -1893,21 +1897,16 @@ export default function TripBudgetView({
                   </div>
                 </div>
 
-                {/* Custom Split Amounts */}
+                {/* Custom splits inputs */}
                 {expenseSplitType === 'custom' && (
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-static-text-900 dark:text-static-text-50 mb-2">
-                      Custom amounts
-                    </label>
+                  <div className="space-y-3 pt-2">
                     {members.map((member) => (
                       <div key={member.id} className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                          {member.name.charAt(0).toUpperCase()}
+                        <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0`}>
+                          {member.name?.[0]?.toUpperCase() || '?'}
                         </div>
-                        <span className="flex-1 text-sm font-medium text-static-text-900 dark:text-static-text-50 truncate">
-                          {member.name}
-                        </span>
-                        <div className="flex items-center gap-1 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 w-28">
+                        <span className="flex-1 text-sm text-static-text-900 dark:text-static-text-50">{member.name}</span>
+                        <div className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5">
                           <span className="text-xs text-static-text-500">{currency}</span>
                           <input
                             type="number"
@@ -1921,11 +1920,34 @@ export default function TripBudgetView({
                             placeholder="0.00"
                             step="0.01"
                             min="0"
-                            className="flex-1 bg-transparent text-static-text-900 dark:text-static-text-50 text-sm focus:outline-none w-full"
+                            className="w-20 bg-transparent text-static-text-900 dark:text-static-text-50 focus:outline-none text-sm"
                           />
                         </div>
                       </div>
                     ))}
+                    {(() => {
+                      const total = Object.values(customSplits).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+                      const expenseTotal = parseFloat(expenseAmount) || 0;
+                      const difference = Math.abs(total - expenseTotal);
+                      
+                      if (difference > 0.01 && expenseTotal > 0) {
+                        return (
+                          <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                              Total: {formatCurrency(total, currency)} / {formatCurrency(expenseTotal, currency)}
+                              <br />
+                              <span className="font-medium">
+                                {total < expenseTotal 
+                                  ? `${formatCurrency(expenseTotal - total, currency)} remaining`
+                                  : `${formatCurrency(total - expenseTotal, currency)} over`
+                                }
+                              </span>
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 )}
 
@@ -1937,7 +1959,9 @@ export default function TripBudgetView({
                   <select
                     value={expenseCategory}
                     onChange={(e) => setExpenseCategory(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg text-static-text-900 dark:text-static-text-50 focus:outline-none focus:border-static-accent-500 transition-colors appearance-none cursor-pointer"
+                    className={`w-full px-4 py-2.5 bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-static-accent-500 transition-colors appearance-none cursor-pointer ${
+                      expenseCategory ? 'text-static-text-900 dark:text-static-text-50' : 'text-static-text-500'
+                    }`}
                     style={{ 
                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
                       backgroundPosition: 'right 0.75rem center',
@@ -1946,10 +1970,10 @@ export default function TripBudgetView({
                     }}
                   >
                     <option value="">Select category</option>
-                    <option value="Food & Dining">🍽️ Food & Dining</option>
+                    <option value="Food">🍽️ Food & Drink</option>
                     <option value="Lodging">🛏️ Lodging</option>
-                    <option value="Transportation">🚗 Transportation</option>
-                    <option value="Activities">🎯 Activities</option>
+                    <option value="Transport">🚗 Transport</option>
+                    <option value="Activities">📸 See & Do</option>
                     <option value="Shopping">🛍️ Shopping</option>
                     <option value="Other">⋯ Other</option>
                   </select>
@@ -1971,11 +1995,14 @@ export default function TripBudgetView({
               </div>
             </div>
 
-            {/* Footer Buttons */}
+            {/* Footer Button */}
             <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 p-4">
               <button
-                onClick={handleCreateExpense}
-                disabled={!expenseDescription.trim() || !expenseAmount || parseFloat(expenseAmount) <= 0 || !expensePaidBy}
+                onClick={handleAddExpense}
+                disabled={!expenseDescription.trim() || !expenseAmount || parseFloat(expenseAmount) <= 0 || !expensePaidBy || (expenseSplitType === 'equal' && selectedMembers.length === 0) || (expenseSplitType === 'custom' && (() => {
+                  const total = Object.values(customSplits).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+                  return Math.abs(total - (parseFloat(expenseAmount) || 0)) > 0.01;
+                })())}
                 className="w-full px-4 py-3 bg-static-accent-500 hover:bg-static-accent-600 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
               >
                 {editingExpenseId ? 'Update Expense' : 'Add Expense'}
@@ -1985,7 +2012,22 @@ export default function TripBudgetView({
         </div>
       )}
 
-      {/* Scan Receipt Modal */}
+      {/* Add Member Modal - Placeholder */}
+              <button
+                onClick={() => {
+                  resetExpenseForm();
+                  setEditingExpenseId(null);
+                  setShowAddExpenseModal(false);
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Step Indicator */}
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-2">
                 <button
