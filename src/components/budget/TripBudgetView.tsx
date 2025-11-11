@@ -1249,7 +1249,7 @@ export default function TripBudgetView({
                                     <div className="text-xs font-semibold text-static-text-700 dark:text-static-text-300 px-2 mb-2">
                                       Individual Totals:
                                     </div>
-                                    <div className="space-y-0">
+                                    <div>
                                       {expense.shares.map((share, shareIdx) => {
                                         const member = members.find(m => m.id === share.memberId);
                                         const breakdown = expenseWithReceipt.receiptDetails?.memberBreakdowns?.[share.memberId];
@@ -1273,7 +1273,7 @@ export default function TripBudgetView({
                                         }
                                         
                                         return (
-                                          <div key={`${expense.id}-share-${shareIdx}`} className="py-2 px-3 border-b border-gray-200 dark:border-gray-800 last:border-b-0 bg-gray-50/50 dark:bg-gray-800/30 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors">
+                                          <div key={`${expense.id}-share-${shareIdx}`} className="py-2 px-3 mb-1 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors">
                                             <div className="flex justify-between items-center">
                                               <span className="text-xs font-medium text-static-text-800 dark:text-static-text-200">
                                                 {member?.name || `Unknown (${share.memberId})`}
