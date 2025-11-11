@@ -3767,19 +3767,29 @@ export default function TripBudgetView({
                     {expenseWithReceipt.receiptDetails.items.map((item: any, idx: number) => {
                       const assignedMembers = item.assignedTo || [];
                       const splits = item.splits || {};
-                      const hasSplits = Object.keys(splits).length > 0 && Object.values(splits).some(qty => (qty as number) > 0);
+                      // Check if splits has any sub-items with assigned members
+                      const hasSplits = Object.keys(splits).length > 0 && 
+                        Object.values(splits).some((subMembers: any) => 
+                          Array.isArray(subMembers) && subMembers.length > 0
+                        );
 
                       // Get assigned member names
                       let assignedText = '';
                       if (hasSplits) {
-                        assignedText = Object.entries(splits)
-                          .map(([memberId, qty]) => {
-                            const qtyNum = qty as number;
-                            if (qtyNum <= 0) return null;
+                        // splits structure: { 0: ['memberId1'], 1: ['memberId2'], ... }
+                        // Collect all unique member IDs across all sub-items
+                        const allMemberIds = new Set<string>();
+                        Object.values(splits).forEach((subItemMembers: any) => {
+                          if (Array.isArray(subItemMembers)) {
+                            subItemMembers.forEach(id => allMemberIds.add(id));
+                          }
+                        });
+                        
+                        assignedText = Array.from(allMemberIds)
+                          .map(memberId => {
                             const member = members.find(m => m.id === memberId);
                             return member?.name || 'Unknown';
                           })
-                          .filter(Boolean)
                           .join(', ');
                       } else if (assignedMembers.length > 0) {
                         assignedText = assignedMembers
