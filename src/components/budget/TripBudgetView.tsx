@@ -460,9 +460,13 @@ export default function TripBudgetView({
           const assignedMembers = finalAssignments[index];
           if (assignedMembers && assignedMembers.length > 0) {
             const perPerson = itemTotal / assignedMembers.length;
-            assignedMembers.forEach(memberId => {
-              allParticipants.add(memberId);
-              memberTotals[memberId] = (memberTotals[memberId] || 0) + perPerson;
+            assignedMembers.forEach(assignment => {
+              // Handle both string IDs and assignment objects
+              const memberId = typeof assignment === 'string' ? assignment : assignment?.memberId;
+              if (memberId) {
+                allParticipants.add(memberId);
+                memberTotals[memberId] = (memberTotals[memberId] || 0) + perPerson;
+              }
             });
           }
         }
@@ -539,11 +543,19 @@ export default function TripBudgetView({
 
     // Store receipt details as metadata (we'll add this to the expense)
     const receiptDetails = {
-      items: receiptSplitMode === 'itemized' ? scannedReceipt.items.map((item, index) => ({
-        ...item,
-        assignedTo: itemAssignments[index] || [],
-        splits: itemSplits[index] || {}, // Store the detailed splits
-      })) : scannedReceipt.items,
+      items: receiptSplitMode === 'itemized' ? scannedReceipt.items.map((item, index) => {
+        const assignments = itemAssignments[index] || [];
+        // Extract member IDs from assignments (handle both string IDs and objects)
+        const assignedTo = assignments.map((a: any) => 
+          typeof a === 'string' ? a : a?.memberId
+        ).filter(Boolean);
+        
+        return {
+          ...item,
+          assignedTo,
+          splits: itemSplits[index] || {}, // Store the detailed splits
+        };
+      }) : scannedReceipt.items,
       subtotal: scannedReceipt.subtotal,
       tax: scannedReceipt.tax,
       tip: tipAmount, // Only store manual tip (OCR tips are ignored)
