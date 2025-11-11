@@ -1254,6 +1254,16 @@ export default function TripBudgetView({
                                         const member = members.find(m => m.id === share.memberId);
                                         const breakdown = expenseWithReceipt.receiptDetails?.memberBreakdowns?.[share.memberId];
                                         
+                                        // Debug: Check if breakdown exists
+                                        console.log('🔍 Breakdown check:', {
+                                          memberId: share.memberId,
+                                          memberName: member?.name,
+                                          hasBreakdown: !!breakdown,
+                                          breakdown: breakdown,
+                                          hasReceiptDetails: !!expenseWithReceipt.receiptDetails,
+                                          hasMemberBreakdowns: !!expenseWithReceipt.receiptDetails?.memberBreakdowns
+                                        });
+                                        
                                         // Debug: log what we're looking for
                                         if (!member) {
                                           console.log('❌ Cannot find member:', {
