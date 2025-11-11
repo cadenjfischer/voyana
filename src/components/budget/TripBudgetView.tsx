@@ -45,6 +45,7 @@ export default function TripBudgetView({
   const [activeTab, setActiveTab] = useState<'expenses' | 'balance' | 'settlements'>('expenses');
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [expandedExpenseId, setExpandedExpenseId] = useState<string | null>(null);
+  const [showItemizedExpenseId, setShowItemizedExpenseId] = useState<string | null>(null);
   
   // Add member form state
   const [newMemberName, setNewMemberName] = useState('');
@@ -162,7 +163,7 @@ export default function TripBudgetView({
 
   // Initialize budget data from trip if not exists
   const expenses: Expense[] = (trip as any).expenses || [];
-  const members: GroupMember[] = (trip as any).budgetMembers || [
+  let members: GroupMember[] = (trip as any).budgetMembers || [
     {
       id: currentUserId,
       name: currentUserEmail.split('@')[0],
@@ -171,6 +172,24 @@ export default function TripBudgetView({
       joinedAt: new Date().toISOString(),
     }
   ];
+
+  // TEMP FIX: If expenses have member IDs that aren't in the members list, add them as unknown
+  // This prevents "Unknown" from showing up for valid member IDs
+  const allMemberIds = new Set(members.map(m => m.id));
+  expenses.forEach(expense => {
+    expense.shares?.forEach(share => {
+      const memberId = typeof share.memberId === 'string' ? share.memberId : String(share.memberId);
+      if (!allMemberIds.has(memberId)) {
+        members.push({
+          id: memberId,
+          name: memberId.substring(0, 8), // Use first 8 chars of ID as name
+          role: 'member' as const,
+          joinedAt: new Date().toISOString(),
+        });
+        allMemberIds.add(memberId);
+      }
+    });
+  });
 
   const currency = (trip as any).currency || 'USD';
 
@@ -1185,50 +1204,49 @@ export default function TripBudgetView({
                                   </button>
                                 )}
                                 
-                                <div className="space-y-0">
-                                  {expenseWithReceipt.receiptDetails.items.map((item: any, idx: number) => {
-                                    const assignedMembers = item.assignedTo || [];
-                                    const splits = item.splits || {};
-                                    const hasSplits = Object.keys(splits).length > 0 && Object.values(splits).some(qty => (qty as number) > 0);
-
-                                    return (
-                                      <div key={idx} className="text-xs py-1 px-2 border-b border-gray-200 dark:border-gray-800 last:border-b-0">
-                                        <div className="flex justify-between items-center">
-                                          <div className="flex items-center gap-2 min-w-0">
-                                            <span className="text-static-text-800 dark:text-static-text-200 font-medium truncate">
-                                              {item.name}
+                                {/* Per-person totals - shown by default */}
+                                {expense.shares && expense.shares.length > 0 && (
+                                  <div className="mb-3">
+                                    <div className="text-xs font-semibold text-static-text-700 dark:text-static-text-300 px-2 mb-2">
+                                      Individual Totals:
+                                    </div>
+                                    <div className="space-y-0">
+                                      {expense.shares.map((share, shareIdx) => {
+                                        const member = members.find(m => m.id === share.memberId);
+                                        // Debug: log what we're looking for
+                                        if (!member) {
+                                          console.log('❌ Cannot find member:', {
+                                            lookingFor: share.memberId,
+                                            availableMembers: members.map(m => ({ id: m.id, name: m.name }))
+                                          });
+                                        }
+                                        return (
+                                          <div key={`${expense.id}-share-${shareIdx}`} className="flex justify-between items-center py-1.5 px-2 border-b border-gray-200 dark:border-gray-800 last:border-b-0">
+                                            <span className="text-xs font-medium text-static-text-800 dark:text-static-text-200">
+                                              {member?.name || `Unknown (${share.memberId})`}
                                             </span>
-                                            <span className="text-static-text-500 dark:text-static-text-500 ml-2 truncate">
-                                              {hasSplits ? (
-                                                Object.entries(splits).map(([memberId, qty]) => {
-                                                  const qtyNum = qty as number;
-                                                  if (qtyNum <= 0) return null;
-                                                  const member = members.find(m => m.id === memberId);
-                                                  return `${member?.name || 'Unknown'} (${qtyNum})`;
-                                                }).filter(Boolean).join(', ')
-                                              ) : (
-                                                assignedMembers.map((memberId: string) => {
-                                                  const member = members.find(m => m.id === memberId);
-                                                  return member?.name || 'Unknown';
-                                                }).join(', ')
-                                              )}
+                                            <span className="text-xs font-bold text-static-text-900 dark:text-static-text-50 tabular-nums">
+                                              {formatCurrency(share.amount, currency)}
                                             </span>
                                           </div>
-                                          <span className="text-static-text-900 dark:text-static-text-50 font-semibold ml-2 whitespace-nowrap tabular-nums">
-                                            {formatCurrency(item.price * (item.quantity || 1), currency)}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                  
-                                  {/* Show suggested tax/tip if present */}
-                                  {(expenseWithReceipt.receiptDetails.tax || expenseWithReceipt.receiptDetails.tip) && (
-                                    <div className="text-xs text-static-text-500 italic px-2 py-1 border-t border-gray-200 dark:border-gray-800">
-                                      Note: Tax and tip (if any) are distributed proportionally among participants.
+                                        );
+                                      })}
                                     </div>
-                                  )}
-                                </div>
+                                  </div>
+                                )}
+
+                                {/* Button to show itemized breakdown */}
+                                <button
+                                  onClick={() => setShowItemizedExpenseId(showItemizedExpenseId === expense.id ? null : expense.id)}
+                                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors text-sm"
+                                >
+                                  <svg className="w-4 h-4 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                  </svg>
+                                  <span className="font-medium text-static-text-700 dark:text-static-text-300">
+                                    View itemized breakdown
+                                  </span>
+                                </button>
                               </div>
                             )}
                           </div>
@@ -2575,7 +2593,21 @@ export default function TripBudgetView({
                           <div className="text-xs text-static-text-500 dark:text-static-text-400">Split</div>
                           <div className="font-medium text-static-text-900 dark:text-static-text-50 truncate">
                             {receiptSplitMode === 'itemized' ? (() => {
-                              const assignedCount = scannedReceipt.items.filter((_, i) => itemAssignments[i]?.length > 0).length;
+                              const assignedCount = scannedReceipt.items.filter((item, i) => {
+                                const qty = item.quantity || 1;
+                                if (qty === 1) {
+                                  // Simple item: check itemAssignments
+                                  return itemAssignments[i]?.length > 0;
+                                } else {
+                                  // Quantity item: check if ALL sub-items in itemSplits are assigned
+                                  const splits = itemSplits[i];
+                                  if (!splits) return false;
+                                  for (let q = 0; q < qty; q++) {
+                                    if (!splits[q] || splits[q].length === 0) return false;
+                                  }
+                                  return true;
+                                }
+                              }).length;
                               const totalCount = scannedReceipt.items.length;
                               if (assignedCount === 0) return 'Assign items';
                               if (assignedCount === totalCount) return `All ${totalCount} assigned`;
@@ -2902,7 +2934,7 @@ export default function TripBudgetView({
                                         'fuchsia': 'bg-fuchsia-50/30 dark:bg-fuchsia-900/10 border-fuchsia-300 dark:border-fuchsia-700',
                                         'purple': 'bg-purple-50/30 dark:bg-purple-900/10 border-purple-300 dark:border-purple-700',
                                       };
-                                      return `border-2 ${colorMap[colorName] || 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700'}`;
+                                      return colorMap[colorName] || 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700';
                                     })()
                                   : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-750'
                               } ${quickAssignMemberId ? 'cursor-pointer' : 'cursor-default'}`}
@@ -3665,6 +3697,147 @@ export default function TripBudgetView({
           </div>
         </div>
       )}
+
+      {/* Itemized Breakdown Modal */}
+      {showItemizedExpenseId && (() => {
+        const expense = expenses.find(e => e.id === showItemizedExpenseId);
+        if (!expense) return null;
+        
+        const expenseWithReceipt = expense as any;
+        if (!expenseWithReceipt.receiptDetails?.items) return null;
+
+        return (
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowItemizedExpenseId(null)}
+          >
+            <div 
+              className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+                <h3 className="text-lg font-semibold text-static-text-900 dark:text-static-text-50">
+                  Itemized Breakdown
+                </h3>
+                <button
+                  onClick={() => setShowItemizedExpenseId(null)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5 text-static-text-600 dark:text-static-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Modal Body - with custom scrollbar */}
+              <div className="flex-1 overflow-y-auto min-h-0" style={{ 
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgb(75 85 99) transparent'
+              }}>
+                <style jsx>{`
+                  div::-webkit-scrollbar {
+                    width: 6px;
+                  }
+                  div::-webkit-scrollbar-track {
+                    background: transparent;
+                  }
+                  div::-webkit-scrollbar-thumb {
+                    background: rgb(75 85 99);
+                    border-radius: 3px;
+                  }
+                  div::-webkit-scrollbar-thumb:hover {
+                    background: rgb(107 114 128);
+                  }
+                `}</style>
+                <div className="p-4">
+                  <div className="space-y-0">
+                    {expenseWithReceipt.receiptDetails.items.map((item: any, idx: number) => {
+                      const assignedMembers = item.assignedTo || [];
+                      const splits = item.splits || {};
+                      const hasSplits = Object.keys(splits).length > 0 && Object.values(splits).some(qty => (qty as number) > 0);
+
+                      // Get assigned member names
+                      let assignedText = '';
+                      if (hasSplits) {
+                        assignedText = Object.entries(splits)
+                          .map(([memberId, qty]) => {
+                            const qtyNum = qty as number;
+                            if (qtyNum <= 0) return null;
+                            const member = members.find(m => m.id === memberId);
+                            return member?.name || 'Unknown';
+                          })
+                          .filter(Boolean)
+                          .join(', ');
+                      } else if (assignedMembers.length > 0) {
+                        assignedText = assignedMembers
+                          .map((memberId: string) => {
+                            const member = members.find(m => m.id === memberId);
+                            return member?.name || 'Unknown';
+                          })
+                          .join(', ');
+                      }
+
+                      return (
+                        <div key={idx} className="flex justify-between items-center py-2 px-3 border-b border-gray-200 dark:border-gray-800 last:border-b-0 gap-3">
+                          <div className="flex-1 min-w-0">
+                            <span className="font-medium text-static-text-900 dark:text-static-text-50">
+                              {item.name}
+                            </span>
+                            {assignedText && (
+                              <span className="ml-2 text-sm text-static-text-500 dark:text-static-text-400">
+                                ({assignedText})
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-lg font-bold text-static-text-900 dark:text-static-text-50 whitespace-nowrap tabular-nums">
+                            {formatCurrency(item.price * (item.quantity || 1), currency)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    
+                    {/* Add tax line if present */}
+                    {expenseWithReceipt.receiptDetails.tax && (
+                      <div className="flex justify-between items-center py-2 px-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                        <span className="font-medium text-static-text-700 dark:text-static-text-300">Tax</span>
+                        <span className="text-lg font-bold text-static-text-900 dark:text-static-text-50 tabular-nums">
+                          {formatCurrency(expenseWithReceipt.receiptDetails.tax, currency)}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Add tip line if present */}
+                    {expenseWithReceipt.receiptDetails.tip && (
+                      <div className="flex justify-between items-center py-2 px-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                        <span className="font-medium text-static-text-700 dark:text-static-text-300">Tip</span>
+                        <span className="text-lg font-bold text-static-text-900 dark:text-static-text-50 tabular-nums">
+                          {formatCurrency(expenseWithReceipt.receiptDetails.tip, currency)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Total */}
+                    <div className="flex justify-between items-center py-3 px-3 bg-blue-50 dark:bg-blue-900/20 border-t-2 border-blue-200 dark:border-blue-700">
+                      <span className="text-lg font-bold text-static-text-900 dark:text-static-text-50">Total</span>
+                      <span className="text-2xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">
+                        {formatCurrency(expense.totalAmount, currency)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Show note about distribution */}
+                  {(expenseWithReceipt.receiptDetails.tax || expenseWithReceipt.receiptDetails.tip) && (
+                    <div className="text-sm text-static-text-500 italic mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      Note: Tax and tip are distributed proportionally among participants based on their items.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
