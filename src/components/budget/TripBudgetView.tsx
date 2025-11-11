@@ -1263,7 +1263,7 @@ export default function TripBudgetView({
                                         }
                                         
                                         return (
-                                          <div key={`${expense.id}-share-${shareIdx}`} className="py-1.5 px-2 border-b border-gray-200 dark:border-gray-800 last:border-b-0">
+                                          <div key={`${expense.id}-share-${shareIdx}`} className="py-2 px-3 border-b border-gray-200 dark:border-gray-800 last:border-b-0 bg-gray-50/50 dark:bg-gray-800/30 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors">
                                             <div className="flex justify-between items-center">
                                               <span className="text-xs font-medium text-static-text-800 dark:text-static-text-200">
                                                 {member?.name || `Unknown (${share.memberId})`}
@@ -1273,7 +1273,7 @@ export default function TripBudgetView({
                                               </span>
                                             </div>
                                             {breakdown && (breakdown.tax > 0 || breakdown.tip > 0) && (
-                                              <div className="mt-0.5 text-[10px] text-static-text-500 dark:text-static-text-400 flex gap-3">
+                                              <div className="mt-1 text-[10px] text-static-text-500 dark:text-static-text-400 flex gap-3">
                                                 <span className="tabular-nums">Items: {formatCurrency(breakdown.items, currency)}</span>
                                                 {breakdown.tax > 0 && (
                                                   <span className="tabular-nums">Tax: {formatCurrency(breakdown.tax, currency)}</span>
