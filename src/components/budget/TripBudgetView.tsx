@@ -3900,46 +3900,57 @@ export default function TripBudgetView({
                     </div>
                   </div>
                   
-                  {/* Per-person tax and tip breakdown */}
+                  {/* Per-person tax and tip breakdown - compact table */}
                   {expenseWithReceipt.receiptDetails.memberBreakdowns && 
                    (expenseWithReceipt.receiptDetails.tax > 0 || expenseWithReceipt.receiptDetails.tip > 0) && (
                     <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       <div className="text-xs font-semibold text-static-text-700 dark:text-static-text-300 mb-2">
                         Per-Person Tax & Tip Breakdown:
                       </div>
-                      <div className="space-y-2">
-                        {Object.entries(expenseWithReceipt.receiptDetails.memberBreakdowns).map(([memberId, breakdown]: [string, any]) => {
-                          const member = members.find(m => m.id === memberId);
-                          return (
-                            <div key={memberId} className="text-xs">
-                              <div className="font-medium text-static-text-800 dark:text-static-text-200 mb-1">
-                                {member?.name || 'Unknown'}
-                              </div>
-                              <div className="ml-2 space-y-0.5 text-static-text-600 dark:text-static-text-400">
-                                <div className="flex justify-between">
-                                  <span>Items:</span>
-                                  <span className="tabular-nums">{formatCurrency(breakdown.items, currency)}</span>
-                                </div>
-                                {breakdown.tax > 0 && (
-                                  <div className="flex justify-between">
-                                    <span>Tax:</span>
-                                    <span className="tabular-nums">{formatCurrency(breakdown.tax, currency)}</span>
-                                  </div>
-                                )}
-                                {breakdown.tip > 0 && (
-                                  <div className="flex justify-between">
-                                    <span>Tip:</span>
-                                    <span className="tabular-nums">{formatCurrency(breakdown.tip, currency)}</span>
-                                  </div>
-                                )}
-                                <div className="flex justify-between font-semibold text-static-text-800 dark:text-static-text-200 pt-0.5 border-t border-gray-300 dark:border-gray-600">
-                                  <span>Total:</span>
-                                  <span className="tabular-nums">{formatCurrency(breakdown.total, currency)}</span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-[10px] border-collapse">
+                          <thead>
+                            <tr className="border-b border-gray-300 dark:border-gray-600">
+                              <th className="text-left py-1 px-2 font-semibold text-static-text-700 dark:text-static-text-300">Name</th>
+                              <th className="text-right py-1 px-2 font-semibold text-static-text-700 dark:text-static-text-300">Items</th>
+                              {expenseWithReceipt.receiptDetails.tax > 0 && (
+                                <th className="text-right py-1 px-2 font-semibold text-static-text-700 dark:text-static-text-300">Tax</th>
+                              )}
+                              {expenseWithReceipt.receiptDetails.tip > 0 && (
+                                <th className="text-right py-1 px-2 font-semibold text-static-text-700 dark:text-static-text-300">Tip</th>
+                              )}
+                              <th className="text-right py-1 px-2 font-semibold text-static-text-800 dark:text-static-text-200">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.entries(expenseWithReceipt.receiptDetails.memberBreakdowns).map(([memberId, breakdown]: [string, any]) => {
+                              const member = members.find(m => m.id === memberId);
+                              return (
+                                <tr key={memberId} className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+                                  <td className="py-1 px-2 font-medium text-static-text-800 dark:text-static-text-200">
+                                    {member?.name || 'Unknown'}
+                                  </td>
+                                  <td className="py-1 px-2 text-right tabular-nums text-static-text-600 dark:text-static-text-400">
+                                    {formatCurrency(breakdown.items, currency)}
+                                  </td>
+                                  {expenseWithReceipt.receiptDetails.tax > 0 && (
+                                    <td className="py-1 px-2 text-right tabular-nums text-static-text-600 dark:text-static-text-400">
+                                      {formatCurrency(breakdown.tax, currency)}
+                                    </td>
+                                  )}
+                                  {expenseWithReceipt.receiptDetails.tip > 0 && (
+                                    <td className="py-1 px-2 text-right tabular-nums text-static-text-600 dark:text-static-text-400">
+                                      {formatCurrency(breakdown.tip, currency)}
+                                    </td>
+                                  )}
+                                  <td className="py-1 px-2 text-right tabular-nums font-semibold text-static-text-800 dark:text-static-text-200">
+                                    {formatCurrency(breakdown.total, currency)}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}
