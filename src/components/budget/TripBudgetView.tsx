@@ -2187,11 +2187,9 @@ export default function TripBudgetView({
                       })}
 
                       {/* Info Message */}
-                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                        <p className="text-xs text-blue-800 dark:text-blue-200">
-                          💡 Last person auto-fills to 100%
-                        </p>
-                      </div>
+                      <p className="text-xs text-center text-static-text-500 dark:text-static-text-400 mt-2">
+                        Last person auto-fills to 100%
+                      </p>
                     </div>
                   ) : (
                     /* Custom Split - Amount Inputs */
@@ -2263,11 +2261,9 @@ export default function TripBudgetView({
                       })}
 
                       {/* Info Message */}
-                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                        <p className="text-xs text-blue-800 dark:text-blue-200">
-                          💡 Last person auto-fills to match total
-                        </p>
-                      </div>
+                      <p className="text-xs text-center text-static-text-500 dark:text-static-text-400 mt-2">
+                        Last person auto-fills to match total
+                      </p>
                     </div>
                   )}
                 </div>
