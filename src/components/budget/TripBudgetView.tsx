@@ -1273,22 +1273,13 @@ export default function TripBudgetView({
                                               </span>
                                             </div>
                                             {breakdown && (breakdown.tax > 0 || breakdown.tip > 0) && (
-                                              <div className="mt-1 text-[10px] text-static-text-500 dark:text-static-text-400 space-y-0.5">
-                                                <div className="flex justify-between">
-                                                  <span>Items:</span>
-                                                  <span className="tabular-nums">{formatCurrency(breakdown.items, currency)}</span>
-                                                </div>
+                                              <div className="mt-0.5 text-[10px] text-static-text-500 dark:text-static-text-400 flex gap-3">
+                                                <span className="tabular-nums">Items: {formatCurrency(breakdown.items, currency)}</span>
                                                 {breakdown.tax > 0 && (
-                                                  <div className="flex justify-between">
-                                                    <span>Tax:</span>
-                                                    <span className="tabular-nums">{formatCurrency(breakdown.tax, currency)}</span>
-                                                  </div>
+                                                  <span className="tabular-nums">Tax: {formatCurrency(breakdown.tax, currency)}</span>
                                                 )}
                                                 {breakdown.tip > 0 && (
-                                                  <div className="flex justify-between">
-                                                    <span>Tip:</span>
-                                                    <span className="tabular-nums">{formatCurrency(breakdown.tip, currency)}</span>
-                                                  </div>
+                                                  <span className="tabular-nums">Tip: {formatCurrency(breakdown.tip, currency)}</span>
                                                 )}
                                               </div>
                                             )}
