@@ -1846,16 +1846,21 @@ export default function TripBudgetView({
                         {expenseSplitType === 'equal' 
                           ? `${selectedMembers.length} ${selectedMembers.length === 1 ? 'person' : 'people'} equally`
                           : expenseSplitType === 'percentage'
-                          ? 'By percentage'
+                          ? `${Object.keys(percentageSplits).filter(id => percentageSplits[id] && parseFloat(percentageSplits[id]) > 0).length} ${Object.keys(percentageSplits).filter(id => percentageSplits[id] && parseFloat(percentageSplits[id]) > 0).length === 1 ? 'person' : 'people'} by percentage`
                           : 'Custom amounts'}
                       </span>
                       <svg className="w-4 h-4 text-static-text-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </button>
-                    {(expenseSplitType === 'equal' ? selectedMembers : Object.keys(customSplits).filter(id => customSplits[id] && parseFloat(customSplits[id]) > 0)).length > 0 && (
+                    {expenseSplitType === 'equal' && selectedMembers.length > 0 && (
                       <p className="text-xs text-static-text-500 dark:text-static-text-400 mt-1">
-                        {formatCurrency(parseFloat(expenseAmount || '0') / Math.max(1, (expenseSplitType === 'equal' ? selectedMembers : Object.keys(customSplits).filter(id => customSplits[id] && parseFloat(customSplits[id]) > 0)).length), currency)} per person
+                        {formatCurrency(parseFloat(expenseAmount || '0') / selectedMembers.length, currency)} per person
+                      </p>
+                    )}
+                    {expenseSplitType === 'custom' && Object.keys(customSplits).filter(id => customSplits[id] && parseFloat(customSplits[id]) > 0).length > 0 && (
+                      <p className="text-xs text-static-text-500 dark:text-static-text-400 mt-1">
+                        {formatCurrency(parseFloat(expenseAmount || '0') / Object.keys(customSplits).filter(id => customSplits[id] && parseFloat(customSplits[id]) > 0).length, currency)} per person
                       </p>
                     )}
                   </div>
