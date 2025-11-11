@@ -770,10 +770,19 @@ export default function TripBudgetView({
         amount: amountPerPerson,
         percentage: (amountPerPerson / totalAmount) * 100,
       }));
+    } else if (expenseSplitType === 'percentage') {
+      // Percentage split
+      shares = members.map(member => {
+        const percentage = parseFloat(percentageSplits[member.id]) || 0;
+        return {
+          memberId: member.id,
+          amount: (totalAmount * percentage) / 100,
+          percentage,
+        };
+      }).filter(share => share.percentage > 0);
     } else {
       // Custom split
       const totalAllocated = Object.entries(customSplits)
-        .filter(([id]) => selectedMembers.includes(id))
         .reduce((sum, [, val]) => sum + (parseFloat(val) || 0), 0);
 
       if (Math.abs(totalAllocated - totalAmount) > 0.01) {
@@ -781,14 +790,16 @@ export default function TripBudgetView({
         return;
       }
 
-      shares = selectedMembers.map(memberId => {
-        const amount = parseFloat(customSplits[memberId]) || 0;
-        return {
-          memberId,
-          amount,
-          percentage: (amount / totalAmount) * 100,
-        };
-      });
+      shares = Object.entries(customSplits)
+        .filter(([, val]) => parseFloat(val) > 0)
+        .map(([memberId, val]) => {
+          const amount = parseFloat(val);
+          return {
+            memberId,
+            amount,
+            percentage: (amount / totalAmount) * 100,
+          };
+        });
     }
 
     const newExpense: Expense = {
@@ -797,9 +808,9 @@ export default function TripBudgetView({
       description: expenseDescription.trim(),
       totalAmount,
       paidBy: expensePaidBy,
-      splitType: expenseSplitType === 'equal' ? 'equal' : 'custom',
+      splitType: expenseSplitType === 'equal' ? 'equal' : expenseSplitType === 'percentage' ? 'percentage' : 'custom',
       shares,
-      participants: selectedMembers,
+      participants: shares.map(s => s.memberId),
       category: expenseCategory || 'Other',
       date: expenseDate,
       createdBy: currentUserId,
@@ -1905,10 +1916,21 @@ export default function TripBudgetView({
                 </button>
                 <button
                   onClick={handleAddExpense}
-                  disabled={!expenseDescription.trim() || !expenseAmount || parseFloat(expenseAmount) <= 0 || !expensePaidBy || (expenseSplitType === 'equal' && selectedMembers.length === 0) || (expenseSplitType === 'custom' && (() => {
-                    const total = Object.values(customSplits).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-                    return Math.abs(total - (parseFloat(expenseAmount) || 0)) > 0.01;
-                  })())}
+                  disabled={
+                    !expenseDescription.trim() || 
+                    !expenseAmount || 
+                    parseFloat(expenseAmount) <= 0 || 
+                    !expensePaidBy || 
+                    (expenseSplitType === 'equal' && selectedMembers.length === 0) ||
+                    (expenseSplitType === 'percentage' && (() => {
+                      const totalPercentage = Object.values(percentageSplits).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+                      return totalPercentage === 0;
+                    })()) ||
+                    (expenseSplitType === 'custom' && (() => {
+                      const total = Object.values(customSplits).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+                      return Math.abs(total - (parseFloat(expenseAmount) || 0)) > 0.01;
+                    })())
+                  }
                   className="flex-1 px-4 py-2.5 bg-static-bg-700 hover:bg-static-bg-600 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed text-sm"
                 >
                   Save
@@ -2098,58 +2120,78 @@ export default function TripBudgetView({
                   ) : expenseSplitType === 'percentage' ? (
                     /* Percentage Split - Percentage Inputs */
                     <div className="space-y-3">
-                      {members.map((member) => (
-                        <div key={member.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                            {member.name?.[0]?.toUpperCase() || '?'}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-static-text-900 dark:text-static-text-50 text-sm truncate">
-                              {member.name}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-600">
-                            <input
-                              type="number"
-                              value={percentageSplits[member.id] || ''}
-                              onChange={(e) => {
-                                setPercentageSplits({
-                                  ...percentageSplits,
-                                  [member.id]: e.target.value
-                                });
-                              }}
-                              placeholder="0"
-                              step="1"
-                              min="0"
-                              max="100"
-                              className="w-16 bg-transparent text-static-text-900 dark:text-static-text-50 focus:outline-none text-sm"
-                            />
-                            <span className="text-xs text-static-text-500">%</span>
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* Validation Message */}
-                      {(() => {
-                        const totalPercentage = Object.values(percentageSplits).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-                        const expenseTotal = parseFloat(expenseAmount) || 0;
+                      {members.map((member, index) => {
+                        // Calculate auto-percentage for last member
+                        const isLastMember = index === members.length - 1;
+                        const otherMembersTotal = members
+                          .filter((_, i) => i !== index)
+                          .reduce((sum, m) => sum + (parseFloat(percentageSplits[m.id]) || 0), 0);
+                        const autoPercentage = isLastMember && otherMembersTotal < 100 
+                          ? Math.max(0, 100 - otherMembersTotal)
+                          : undefined;
                         
-                        if (Math.abs(totalPercentage - 100) > 0.1 && totalPercentage > 0) {
-                          return (
-                            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg mt-4">
-                              <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                                <span className="font-semibold">Total: {totalPercentage.toFixed(1)}% / 100%</span>
-                                <br />
-                                {totalPercentage < 100 
-                                  ? `${(100 - totalPercentage).toFixed(1)}% remaining`
-                                  : `${(totalPercentage - 100).toFixed(1)}% over`
-                                }
-                              </p>
+                        const displayValue = autoPercentage !== undefined 
+                          ? autoPercentage.toFixed(0)
+                          : percentageSplits[member.id] || '';
+
+                        return (
+                          <div key={member.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                              {member.name?.[0]?.toUpperCase() || '?'}
                             </div>
-                          );
-                        }
-                        return null;
-                      })()}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-static-text-900 dark:text-static-text-50 text-sm truncate">
+                                {member.name}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-600">
+                              <input
+                                type="number"
+                                value={displayValue}
+                                onChange={(e) => {
+                                  const newValue = e.target.value;
+                                  const newPercentage = parseFloat(newValue) || 0;
+                                  
+                                  if (newPercentage <= 100) {
+                                    const newSplits = {
+                                      ...percentageSplits,
+                                      [member.id]: newValue
+                                    };
+                                    
+                                    // Auto-calculate last member
+                                    if (!isLastMember) {
+                                      const totalOthers = members
+                                        .filter((_, i) => i !== index && i !== members.length - 1)
+                                        .reduce((sum, m) => sum + (parseFloat(newSplits[m.id]) || 0), 0);
+                                      const remaining = 100 - newPercentage - totalOthers;
+                                      if (remaining >= 0) {
+                                        const lastMember = members[members.length - 1];
+                                        newSplits[lastMember.id] = remaining.toString();
+                                      }
+                                    }
+                                    
+                                    setPercentageSplits(newSplits);
+                                  }
+                                }}
+                                disabled={isLastMember && otherMembersTotal < 100}
+                                placeholder="0"
+                                step="1"
+                                min="0"
+                                max="100"
+                                className="w-16 bg-transparent text-static-text-900 dark:text-static-text-50 focus:outline-none text-sm disabled:opacity-50"
+                              />
+                              <span className="text-xs text-static-text-500">%</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {/* Info Message */}
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <p className="text-xs text-blue-800 dark:text-blue-200">
+                          The last person's percentage is automatically calculated to reach 100%
+                        </p>
+                      </div>
                     </div>
                   ) : (
                     /* Custom Split - Amount Inputs */
