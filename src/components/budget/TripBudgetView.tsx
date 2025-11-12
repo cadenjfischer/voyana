@@ -1853,16 +1853,6 @@ export default function TripBudgetView({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </button>
-                    {expenseSplitType === 'equal' && selectedMembers.length > 0 && (
-                      <p className="text-xs text-static-text-500 dark:text-static-text-400 mt-1">
-                        {formatCurrency(parseFloat(expenseAmount || '0') / selectedMembers.length, currency)} per person
-                      </p>
-                    )}
-                    {expenseSplitType === 'custom' && Object.keys(customSplits).filter(id => customSplits[id] && parseFloat(customSplits[id]) > 0).length > 0 && (
-                      <p className="text-xs text-static-text-500 dark:text-static-text-400 mt-1">
-                        {formatCurrency(parseFloat(expenseAmount || '0') / Object.keys(customSplits).filter(id => customSplits[id] && parseFloat(customSplits[id]) > 0).length, currency)} per person
-                      </p>
-                    )}
                   </div>
                 </div>
 
