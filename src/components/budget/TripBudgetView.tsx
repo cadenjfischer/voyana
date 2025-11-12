@@ -1660,7 +1660,6 @@ export default function TripBudgetView({
                     className="w-full flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 -mx-2 rounded-lg transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-xl">{category.icon}</span>
                       <div className="text-left">
                         <p className="text-sm font-medium text-static-text-900 dark:text-static-text-50">
                           {category.name}
