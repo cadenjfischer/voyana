@@ -1886,12 +1886,12 @@ export default function TripBudgetView({
                     }}
                   >
                     <option value="">Select category</option>
-                    <option value="Food">🍽️ Food & Drink</option>
-                    <option value="Lodging">🛏️ Lodging</option>
-                    <option value="Transport">🚗 Transport</option>
-                    <option value="Activities">📸 See & Do</option>
-                    <option value="Shopping">🛍️ Shopping</option>
-                    <option value="Other">⋯ Other</option>
+                    <option value="Food">Food & Drink</option>
+                    <option value="Lodging">Lodging</option>
+                    <option value="Transport">Transport</option>
+                    <option value="Activities">See & Do</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
               </div>
