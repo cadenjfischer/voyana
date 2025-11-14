@@ -319,7 +319,7 @@ export default function AirlineDatePicker({
               ? "w-full h-14 px-4 flex items-center border border-static-gray-400 dark:border-static-bg-600 rounded-lg bg-white dark:bg-static-bg-800 hover:border-static-accent-500 dark:hover:border-static-accent-400 focus:ring-2 focus:ring-static-accent-500 focus:border-static-accent-500 transition-colors"
               : compact 
               ? "w-full h-14 px-4 flex flex-col justify-center text-left hover:bg-gray-50 dark:hover:bg-gray-800 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
-              : "w-full h-14 flex items-center justify-between px-4 border border-static-gray-400 dark:border-static-bg-600 rounded-xl bg-white dark:bg-static-bg-800 hover:border-static-accent-500 dark:hover:border-static-accent-400 focus:ring-2 focus:ring-static-accent-500 focus:border-static-accent-500 transition-colors duration-200"
+              : "w-full h-12 flex items-center justify-between px-4 border border-static-gray-400 dark:border-static-bg-600 rounded-xl bg-transparent hover:border-static-accent-500 dark:hover:border-static-accent-400 focus:ring-2 focus:ring-static-accent-500 focus:border-static-accent-500 transition-colors duration-200"
           }
         >
           {mobile ? (
@@ -347,7 +347,7 @@ export default function AirlineDatePicker({
           ) : (
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <Calendar className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-              <span className="text-sm truncate text-static-text-900 dark:text-static-text-50">
+              <span className="text-sm truncate text-static-text-900 dark:text-static-text-50 font-medium">
                 {formatDateRange()}
               </span>
             </div>

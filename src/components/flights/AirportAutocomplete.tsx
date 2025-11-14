@@ -204,8 +204,8 @@ export default function AirportAutocomplete({
           }}
           placeholder={placeholder}
           className={inline 
-            ? "w-full p-0 border-0 focus:ring-0 focus:outline-none focus-visible:outline-none uppercase text-static-text-900 dark:text-static-text-50 font-medium text-sm placeholder:text-static-text-900 dark:placeholder:text-static-text-100 placeholder:opacity-50 placeholder:font-normal placeholder:normal-case bg-transparent selection:bg-gray-200 dark:selection:bg-gray-700"
-            : "w-full pl-9 pr-9 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:ring-0 focus-visible:outline-none uppercase text-static-text-900 dark:text-static-text-50 font-semibold text-base placeholder:text-static-text-900 dark:placeholder:text-static-text-100 placeholder:opacity-50 placeholder:font-normal placeholder:normal-case transition-all selection:bg-gray-200 dark:selection:bg-gray-700 bg-transparent"
+            ? "w-full p-0 border-0 focus:ring-0 focus:outline-none focus-visible:outline-none text-static-text-900 dark:text-static-text-50 font-medium text-sm placeholder:text-static-text-900 dark:placeholder:text-static-text-50 placeholder:font-medium placeholder:lowercase bg-transparent selection:bg-gray-200 dark:selection:bg-gray-700"
+            : "w-full pl-9 pr-9 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:ring-0 focus-visible:outline-none uppercase text-static-text-900 dark:text-static-text-50 font-semibold text-base placeholder:text-static-text-900 dark:placeholder:text-static-text-50 placeholder:font-normal placeholder:normal-case transition-all selection:bg-gray-200 dark:selection:bg-gray-700 bg-transparent"
           }
           autoComplete="off"
         />

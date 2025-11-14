@@ -9,9 +9,13 @@ import TripBudgetView from '@/components/budget/TripBudgetView';
 import AddDestinationModal from '@/components/itinerary/AddDestinationModal';
 import AddActivityModal from '@/components/itinerary/AddActivityModal';
 import EditTripModal from '@/components/itinerary/EditTripModal';
+import CondensedFlightSearch from '@/components/flights/CondensedFlightSearch';
+import FlightResults from '@/components/flights/FlightResults';
+import MyBookings from '@/components/flights/MyBookings';
 import { Trip, Destination, Activity, generateDays } from '@/types/itinerary';
 import { PREMIUM_COLOR_PALETTE } from '@/utils/colors';
 import { ItineraryUIProvider } from '@/contexts/ItineraryUIContext';
+import { NormalizedFlight } from '@/lib/api/duffelClient';
 import Link from 'next/link';
 import type { User } from '@supabase/supabase-js';
 
@@ -32,6 +36,13 @@ export default function TripDetailPage() {
   const [showAddActivityModal, setShowAddActivityModal] = useState(false);
   const [showEditTripModal, setShowEditTripModal] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string>('');
+  
+  // Flight tab state
+  const [flightSearchResults, setFlightSearchResults] = useState<NormalizedFlight[]>([]);
+  const [isSearchingFlights, setIsSearchingFlights] = useState(false);
+  const [flightPassengerCount, setFlightPassengerCount] = useState(1);
+  const [flightSubTab, setFlightSubTab] = useState<'search' | 'bookings'>('search');
+  
   const [activeTab, setActiveTab] = useState<TabType>(() => {
     // Try to initialize from localStorage synchronously to avoid first-render flash
     if (typeof window === 'undefined') return 'plan';
@@ -596,14 +607,112 @@ export default function TripDetailPage() {
         )}
 
         {activeTab === 'flights' && (
-          <div className="h-screen flex items-center justify-center bg-static-bg-50 dark:bg-static-bg-900">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
-                Flights Tab
-              </h2>
-              <p className="text-static-text-600 dark:text-static-text-400">
-                Coming soon...
-              </p>
+          <div className="bg-static-bg-50 dark:bg-static-bg-900 min-h-screen">
+            <div className="p-4 md:p-8">
+              <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
+                    Flights
+                  </h2>
+                  <p className="text-static-text-600 dark:text-static-text-400">
+                    Search and book flights for your trip
+                  </p>
+                </div>
+
+                {/* Flight Search Component */}
+                <div className="mb-6">
+                  <CondensedFlightSearch
+                    initialOrigin={trip?.destinations?.[0]?.city || ''}
+                    initialDestination={trip?.destinations?.[1]?.city || ''}
+                    initialDepartureDate={trip?.startDate || ''}
+                    initialReturnDate={trip?.endDate || ''}
+                    initialPassengers={1}
+                    initialTripType={trip?.endDate ? 'round-trip' : 'one-way'}
+                  />
+                </div>
+
+                {/* Sub Tabs */}
+                <div className="bg-white dark:bg-static-bg-800 rounded-lg shadow-sm mb-6">
+                  <div className="flex border-b border-static-bg-200 dark:border-static-bg-700">
+                    <button
+                      onClick={() => setFlightSubTab('search')}
+                      className={`flex-1 py-3 px-4 font-semibold text-sm transition-all relative ${
+                        flightSubTab === 'search'
+                          ? 'text-static-accent-600 dark:text-static-accent-400'
+                          : 'text-static-text-500 hover:text-static-text-700 dark:text-static-text-400 dark:hover:text-static-text-300'
+                      }`}
+                    >
+                      Search Results
+                      {flightSubTab === 'search' && (
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-static-accent-600 dark:bg-static-accent-400"></div>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setFlightSubTab('bookings')}
+                      className={`flex-1 py-3 px-4 font-semibold text-sm transition-all relative ${
+                        flightSubTab === 'bookings'
+                          ? 'text-static-accent-600 dark:text-static-accent-400'
+                          : 'text-static-text-500 hover:text-static-text-700 dark:text-static-text-400 dark:hover:text-static-text-300'
+                      }`}
+                    >
+                      My Bookings
+                      {flightSubTab === 'bookings' && (
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-static-accent-600 dark:bg-static-accent-400"></div>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Content */}
+                {flightSubTab === 'search' ? (
+                  <div>
+                    {/* Loading State */}
+                    {isSearchingFlights && (
+                      <div className="bg-white dark:bg-static-bg-800 rounded-lg shadow-sm p-8 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <svg className="animate-spin h-10 w-10 text-static-accent-600 dark:text-static-accent-400" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          <div>
+                            <h3 className="text-lg font-bold text-static-text-900 dark:text-static-text-100 mb-1">Searching flights...</h3>
+                            <p className="text-sm text-static-text-600 dark:text-static-text-400">Comparing prices across multiple airlines</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Results */}
+                    {!isSearchingFlights && flightSearchResults.length > 0 && (
+                      <FlightResults 
+                        flights={flightSearchResults} 
+                        passengerCount={flightPassengerCount}
+                        onFlightBooked={() => setFlightSubTab('bookings')}
+                      />
+                    )}
+
+                    {/* No Results */}
+                    {!isSearchingFlights && flightSearchResults.length === 0 && (
+                      <div className="bg-white dark:bg-static-bg-800 rounded-lg shadow-sm p-12 text-center">
+                        <div className="flex flex-col items-center">
+                          <div className="p-4 bg-static-accent-50 dark:bg-static-accent-900/20 rounded-full mb-4">
+                            <svg className="w-12 h-12 text-static-accent-600 dark:text-static-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                            </svg>
+                          </div>
+                          <h3 className="text-xl font-bold text-static-text-900 dark:text-static-text-100 mb-2">Ready to fly?</h3>
+                          <p className="text-static-text-600 dark:text-static-text-400 max-w-md">
+                            Enter your travel details above to find the best flight deals
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <MyBookings />
+                )}
+              </div>
             </div>
           </div>
         )}

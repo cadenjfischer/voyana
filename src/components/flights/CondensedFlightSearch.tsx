@@ -132,7 +132,7 @@ export default function CondensedFlightSearch({
   };
 
   return (
-    <div className="bg-white border-b border-gray-200 shadow-sm">
+    <div className="bg-white dark:bg-static-bg-800 border-b border-static-bg-200 dark:border-static-bg-700 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <form onSubmit={handleSearch}>
           {/* Trip Type Tabs */}
@@ -142,8 +142,8 @@ export default function CondensedFlightSearch({
               onClick={() => setTripType('round-trip')}
               className={`text-sm font-semibold pb-2 border-b-2 transition-colors ${
                 tripType === 'round-trip'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                  ? 'border-static-accent-600 text-static-accent-600 dark:border-static-accent-400 dark:text-static-accent-400'
+                  : 'border-transparent text-static-text-600 hover:text-static-text-900 dark:text-static-text-400 dark:hover:text-static-text-100'
               }`}
             >
               Roundtrip
@@ -156,8 +156,8 @@ export default function CondensedFlightSearch({
               }}
               className={`text-sm font-semibold pb-2 border-b-2 transition-colors ${
                 tripType === 'one-way'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                  ? 'border-static-accent-600 text-static-accent-600 dark:border-static-accent-400 dark:text-static-accent-400'
+                  : 'border-transparent text-static-text-600 hover:text-static-text-900 dark:text-static-text-400 dark:hover:text-static-text-100'
               }`}
             >
               One-way
@@ -167,8 +167,8 @@ export default function CondensedFlightSearch({
               onClick={() => setTripType('multi-city')}
               className={`text-sm font-semibold pb-2 border-b-2 transition-colors ${
                 tripType === 'multi-city'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                  ? 'border-static-accent-600 text-static-accent-600 dark:border-static-accent-400 dark:text-static-accent-400'
+                  : 'border-transparent text-static-text-600 hover:text-static-text-900 dark:text-static-text-400 dark:hover:text-static-text-100'
               }`}
             >
               Multi-city
@@ -179,12 +179,12 @@ export default function CondensedFlightSearch({
           <div className="grid grid-cols-1 lg:grid-cols-[1.7fr_auto_1.7fr_1.6fr_1.4fr_auto] gap-2 items-end">
             {/* Origin */}
             <div className="flex-[1.7]">
-              <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+              <label className="block text-xs font-semibold text-static-text-700 dark:text-static-text-300 mb-2 uppercase tracking-wide">
                 Leaving from
               </label>
               <div className="relative">
-                <div className="flex items-center h-12 border border-gray-300 rounded-xl bg-white px-4 hover:border-gray-400 focus-within:border-blue-500 transition-colors">
-                  <MapPin className="w-4 h-4 text-gray-400 mr-3" />
+                <div className="flex items-center h-12 border border-static-gray-400 dark:border-static-bg-600 rounded-xl bg-transparent px-4 hover:border-static-accent-500 dark:hover:border-static-accent-400 focus-within:border-static-accent-500 dark:focus-within:border-static-accent-400 transition-colors">
+                  <MapPin className="w-4 h-4 text-gray-500 dark:text-gray-400 mr-3" />
                   <AirportAutocomplete
                     id="origin-condensed"
                     label=""
@@ -206,19 +206,19 @@ export default function CondensedFlightSearch({
             <button
               type="button"
               onClick={handleSwap}
-              className="mb-1 -mx-3 h-10 w-10 flex items-center justify-center border border-gray-300 rounded-full bg-white hover:border-gray-400 transition-colors shadow-sm flex-shrink-0 z-20 ring-4 ring-white"
+              className="mb-1 -mx-3 h-10 w-10 flex items-center justify-center border border-static-gray-400 dark:border-static-bg-600 rounded-full bg-white dark:bg-static-bg-800 hover:bg-static-bg-100 dark:hover:bg-static-bg-700 transition-colors shadow-sm flex-shrink-0 z-20"
             >
-              <ArrowLeftRight className="w-4 h-4 text-gray-600" />
+              <ArrowLeftRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
             </button>
 
             {/* Destination */}
             <div className="flex-[1.7]">
-              <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+              <label className="block text-xs font-semibold text-static-text-700 dark:text-static-text-300 mb-2 uppercase tracking-wide">
                 Going to
               </label>
               <div className="relative">
-                <div className="flex items-center h-12 border border-gray-300 rounded-xl bg-white px-4 hover:border-gray-400 focus-within:border-blue-500 transition-colors">
-                  <MapPin className="w-4 h-4 text-gray-400 mr-3" />
+                <div className="flex items-center h-12 border border-static-gray-400 dark:border-static-bg-600 rounded-xl bg-transparent px-4 hover:border-static-accent-500 dark:hover:border-static-accent-400 focus-within:border-static-accent-500 dark:focus-within:border-static-accent-400 transition-colors">
+                  <MapPin className="w-4 h-4 text-gray-500 dark:text-gray-400 mr-3" />
                   <AirportAutocomplete
                     id="destination-condensed"
                     label=""
@@ -238,7 +238,7 @@ export default function CondensedFlightSearch({
 
             {/* Dates */}
             <div className="flex-[1.6]">
-              <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+              <label className="block text-xs font-semibold text-static-text-700 dark:text-static-text-300 mb-2 uppercase tracking-wide">
                 {tripType === 'one-way' ? 'Date' : 'Dates'}
               </label>
               <AirlineDatePicker
@@ -252,7 +252,7 @@ export default function CondensedFlightSearch({
 
             {/* Travelers */}
             <div className="flex-[1.4]">
-              <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+              <label className="block text-xs font-semibold text-static-text-700 dark:text-static-text-300 mb-2 uppercase tracking-wide">
                 Travelers
               </label>
               <TravelersSelector value={travelers} onChange={setTravelers} />
@@ -261,7 +261,7 @@ export default function CondensedFlightSearch({
             {/* Search Button */}
             <button
               type="submit"
-              className="flex-shrink-0 h-12 px-10 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors shadow-lg mb-1 ml-6"
+              className="flex-shrink-0 h-12 px-10 bg-static-accent-600 hover:bg-static-accent-700 dark:bg-static-accent-500 dark:hover:bg-static-accent-600 text-white font-bold rounded-xl transition-colors shadow-lg mb-1 ml-6"
             >
               Search
             </button>

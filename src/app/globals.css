@@ -376,7 +376,7 @@ body {
 }
 
 .dark ::placeholder {
-  color: var(--color-static-text-600);
+  color: var(--color-static-text-50);
   opacity: 1;
 }
 
