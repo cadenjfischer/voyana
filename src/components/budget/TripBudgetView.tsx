@@ -1506,9 +1506,9 @@ export default function TripBudgetView({
         {/* Right Sidebar - Total Trip Cost & Categories */}
         <div className="hidden lg:block lg:fixed lg:right-8 lg:top-24 lg:w-80 xl:w-96">
           {/* Budget Goal Progress */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-static-text-900 dark:text-static-text-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
                 {budgetGoal > 0 ? 'Budget Goal' : 'Trip Spending'}
               </h3>
               <button
@@ -1524,16 +1524,16 @@ export default function TripBudgetView({
 
             <div className="flex flex-col">
               {/* Amount Display */}
-              <div className="text-center mb-6">
-                <p className="text-5xl font-bold text-static-text-900 dark:text-static-text-50 mb-2">
+              <div className="text-center mb-3">
+                <p className="text-3xl font-bold text-static-text-900 dark:text-static-text-50 mb-1">
                   {formatCurrency(totalExpenses, currency)}
                 </p>
                 {budgetGoal > 0 ? (
-                  <p className="text-sm text-static-text-500 dark:text-static-text-500">
+                  <p className="text-xs text-static-text-500 dark:text-static-text-500">
                     {budgetUsedPercentage.toFixed(0)}% of {formatCurrency(budgetGoal, currency)} goal
                   </p>
                 ) : (
-                  <p className="text-sm text-static-text-500 dark:text-static-text-500">
+                  <p className="text-xs text-static-text-500 dark:text-static-text-500">
                     Total spent • No goal set
                   </p>
                 )}
@@ -1541,8 +1541,8 @@ export default function TripBudgetView({
 
               {/* Progress Bar */}
               {budgetGoal > 0 && (
-                <div className="w-full mb-6">
-                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div className="w-full mb-3">
+                  <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
                         budgetUsedPercentage > 100
@@ -1557,8 +1557,8 @@ export default function TripBudgetView({
                     />
                   </div>
                   {budgetUsedPercentage > 100 && (
-                    <p className="text-xs text-red-500 dark:text-red-400 mt-2 text-center font-medium">
-                      ⚠️ Over budget by {formatCurrency(totalExpenses - budgetGoal, currency)}
+                    <p className="text-xs text-red-500 dark:text-red-400 mt-1 text-center font-medium">
+                      Over budget by {formatCurrency(totalExpenses - budgetGoal, currency)}
                     </p>
                   )}
                 </div>
@@ -1566,16 +1566,16 @@ export default function TripBudgetView({
 
               {/* Budget Status */}
               {budgetGoal > 0 && (
-                <div className="w-full space-y-2 mb-4">
+                <div className="w-full space-y-1.5 mb-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-static-text-600 dark:text-static-text-400">Spent</span>
-                    <span className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
+                    <span className="text-xs text-static-text-600 dark:text-static-text-400">Spent</span>
+                    <span className="text-xs font-semibold text-static-text-900 dark:text-static-text-50">
                       {formatCurrency(totalExpenses, currency)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-static-text-600 dark:text-static-text-400">Remaining</span>
-                    <span className={`text-sm font-semibold ${
+                    <span className="text-xs text-static-text-600 dark:text-static-text-400">Remaining</span>
+                    <span className={`text-xs font-semibold ${
                       budgetGoal - totalExpenses < 0
                         ? 'text-red-600 dark:text-red-400'
                         : 'text-green-600 dark:text-green-400'
@@ -1587,18 +1587,18 @@ export default function TripBudgetView({
               )}
 
               {/* Smart Insights */}
-              <div className="w-full pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+              <div className="w-full pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
                 {expenses.length > 0 && (
                   <>
                     <div className="flex items-start gap-2">
-                      <span className="text-lg">💡</span>
+                      <span className="text-sm">💡</span>
                       <p className="text-xs text-static-text-600 dark:text-static-text-400">
                         <span className="font-semibold">{formatCurrency(dailyAverage, currency)}/day</span> average spending
                       </p>
                     </div>
                     {biggestCategory && (
                       <div className="flex items-start gap-2">
-                        <span className="text-lg">📊</span>
+                        <span className="text-sm">📊</span>
                         <p className="text-xs text-static-text-600 dark:text-static-text-400">
                           <span className="font-semibold">{biggestCategory.name}</span> is {biggestCategory.percentage.toFixed(0)}% of total
                         </p>
@@ -1606,7 +1606,7 @@ export default function TripBudgetView({
                     )}
                     {spendingByPerson.length > 0 && (
                       <div className="flex items-start gap-2">
-                        <span className="text-lg">👥</span>
+                        <span className="text-sm">👥</span>
                         <p className="text-xs text-static-text-600 dark:text-static-text-400">
                           <span className="font-semibold">{spendingByPerson[0].name}</span> paid {spendingByPerson[0].percentage.toFixed(0)}%
                         </p>
@@ -1620,22 +1620,22 @@ export default function TripBudgetView({
 
           {/* Spending by Person */}
           {spendingByPerson.length > 1 && (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 mb-6">
-              <h3 className="font-semibold text-static-text-900 dark:text-static-text-50 mb-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700 mb-4">
+              <h3 className="text-sm font-semibold text-static-text-900 dark:text-static-text-50 mb-3">
                 Who's Paying
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {spendingByPerson.map((person, idx) => (
                   <div key={idx}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-static-text-900 dark:text-static-text-50">
+                      <span className="text-xs text-static-text-900 dark:text-static-text-50">
                         {person.name}
                       </span>
-                      <span className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
+                      <span className="text-xs font-semibold text-static-text-900 dark:text-static-text-50">
                         {formatCurrency(person.amount, currency)}
                       </span>
                     </div>
-                    <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-static-bg-600 to-static-bg-700 rounded-full"
                         style={{ width: `${person.percentage}%` }}
@@ -1648,33 +1648,32 @@ export default function TripBudgetView({
           )}
 
           {/* Categories Breakdown - Interactive */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-            <h3 className="font-semibold text-static-text-900 dark:text-static-text-50 mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm font-semibold text-static-text-900 dark:text-static-text-50 mb-3">
               Categories
             </h3>
-            <div className="space-y-3">
-              {categories.map((category) => (
+            <div className="space-y-2">{categories.map((category) => (
                 <div key={category.name}>
                   <button
                     onClick={() => setExpandedCategory(expandedCategory === category.name ? null : category.name)}
-                    className="w-full flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 -mx-2 rounded-lg transition-colors"
+                    className="w-full flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 p-1.5 -mx-1.5 rounded-lg transition-colors"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <div className="text-left">
-                        <p className="text-sm font-medium text-static-text-900 dark:text-static-text-50">
+                        <p className="text-xs font-medium text-static-text-900 dark:text-static-text-50">
                           {category.name}
                         </p>
-                        <p className="text-xs text-static-text-500">
+                        <p className="text-[10px] text-static-text-500">
                           {category.count} expense{category.count !== 1 ? 's' : ''}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
+                      <span className="text-xs font-semibold text-static-text-900 dark:text-static-text-50">
                         {formatCurrency(category.total, currency)}
                       </span>
                       <svg
-                        className={`w-4 h-4 text-static-text-400 transition-transform ${
+                        className={`w-3 h-3 text-static-text-400 transition-transform ${
                           expandedCategory === category.name ? 'rotate-180' : ''
                         }`}
                         fill="none"
@@ -1688,16 +1687,16 @@ export default function TripBudgetView({
 
                   {/* Expanded Category Details */}
                   {expandedCategory === category.name && (
-                    <div className="mt-2 ml-11 space-y-2 pb-2">
+                    <div className="mt-1.5 ml-8 space-y-1.5 pb-1.5">
                       {/* Progress bar for percentage */}
-                      <div className="mb-3">
-                        <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="mb-2">
+                        <div className="h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-static-bg-700 rounded-full"
                             style={{ width: `${category.percentage}%` }}
                           />
                         </div>
-                        <p className="text-xs text-static-text-500 mt-1">
+                        <p className="text-[10px] text-static-text-500 mt-0.5">
                           {category.percentage.toFixed(1)}% of total spending
                         </p>
                       </div>
@@ -1706,7 +1705,7 @@ export default function TripBudgetView({
                       {category.expenses.slice(0, 3).map((expense) => {
                         const payer = members.find(m => m.id === expense.paidBy);
                         return (
-                          <div key={expense.id} className="flex items-center justify-between text-xs">
+                          <div key={expense.id} className="flex items-center justify-between text-[10px]">
                             <span className="text-static-text-600 dark:text-static-text-400 truncate">
                               {expense.description}
                             </span>
@@ -1717,7 +1716,7 @@ export default function TripBudgetView({
                         );
                       })}
                       {category.expenses.length > 3 && (
-                        <p className="text-xs text-static-text-500 italic">
+                        <p className="text-[10px] text-static-text-500 italic">
                           +{category.expenses.length - 3} more
                         </p>
                       )}
