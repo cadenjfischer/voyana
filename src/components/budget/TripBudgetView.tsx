@@ -1389,7 +1389,7 @@ export default function TripBudgetView({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xl font-bold">
+                        <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${getMemberColor(balance.memberId, members)} flex items-center justify-center text-white text-xl font-bold`}>
                           {balance.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -1463,7 +1463,7 @@ export default function TripBudgetView({
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             {/* From Avatar */}
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-pink-600 flex items-center justify-center text-white font-bold">
+                            <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${getMemberColor(settlement.from, members)} flex items-center justify-center text-white font-bold`}>
                               {fromMember?.name.charAt(0).toUpperCase()}
                             </div>
                             
@@ -1473,7 +1473,7 @@ export default function TripBudgetView({
                             </svg>
                             
                             {/* To Avatar */}
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-teal-600 flex items-center justify-center text-white font-bold">
+                            <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${getMemberColor(settlement.to, members)} flex items-center justify-center text-white font-bold`}>
                               {toMember?.name.charAt(0).toUpperCase()}
                             </div>
 
