@@ -40,7 +40,7 @@ export default function TripLayout({
       />
       
       {/* Main Content - offset by sidebar (112px = w-28) */}
-      <main className="flex-1 h-screen overflow-hidden ml-28">
+      <main className="flex-1 h-screen overflow-y-auto ml-28">
         {children}
       </main>
     </div>
