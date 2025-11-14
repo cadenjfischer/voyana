@@ -172,14 +172,38 @@ function normalizeFlightData(offer: any): NormalizedFlight {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function bookFlight(offerId: string, travelers: any[]): Promise<any> {
+export async function bookFlight(flightOffer: any, travelers: any[]): Promise<any> {
   try {
+    // For MVP/demo: Generate a mock booking reference instead of calling real API
+    // In production, this would price and book with Amadeus
+    const mockBookingReference = `VYN${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    
+    console.log(`Mock Amadeus booking created for offer with reference ${mockBookingReference}`);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    return {
+      success: true,
+      bookingReference: mockBookingReference,
+      order: {
+        id: `mock_amadeus_order_${Date.now()}`,
+        reference: mockBookingReference,
+        creationDate: new Date().toISOString(),
+        travelers: travelers,
+        flightOffers: [flightOffer],
+        // Include minimal order data for saving
+      },
+    };
+
+    // Production code (commented out for MVP):
+    /*
     // First, price the offer to confirm it's still available
     const pricedOffer = await amadeus.shopping.flightOffers.pricing.post(
       JSON.stringify({
         data: {
           type: 'flight-offers-pricing',
-          flightOffers: [offerId],
+          flightOffers: [flightOffer],
         },
       })
     );
@@ -200,6 +224,7 @@ export async function bookFlight(offerId: string, travelers: any[]): Promise<any
       bookingReference: order.data.associatedRecords[0]?.reference,
       order: order.data,
     };
+    */
   } catch (error) {
     console.error('Amadeus booking error:', error);
     return {

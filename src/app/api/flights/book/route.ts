@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
     if (flight.apiSource === 'duffel') {
       bookingResult = await duffelClient.bookFlight(flight.id, passengers);
     } else if (flight.apiSource === 'amadeus') {
-      bookingResult = await amadeusClient.bookFlight(flight.rawData, passengers);
+      // For Amadeus, pass the rawData which contains the full offer
+      bookingResult = await amadeusClient.bookFlight(flight.rawData || flight, passengers);
     } else {
       return NextResponse.json(
         { error: 'Invalid flight source' },

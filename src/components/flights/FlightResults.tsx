@@ -8,6 +8,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import type { User } from '@supabase/supabase-js';
 import PassengerInfoModal, { PassengerInfo } from './PassengerInfoModal';
 import FareClassModal from './FareClassModal';
+import BookingSuccessModal from './BookingSuccessModal';
 
 interface FlightResultsProps {
   flights: NormalizedFlight[];
@@ -27,6 +28,8 @@ export default function FlightResults({
   const [bookingFlight, setBookingFlight] = useState<string | null>(null);
   const [fareModalOpen, setFareModalOpen] = useState(false);
   const [passengerModalOpen, setPassengerModalOpen] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [bookingReference, setBookingReference] = useState<string>('');
   const [selectedFlight, setSelectedFlight] = useState<NormalizedFlight | null>(null);
   const [selectedFareClass, setSelectedFareClass] = useState<any>(null);
   const [sortBy, setSortBy] = useState<SortOption>('best');
@@ -104,7 +107,8 @@ export default function FlightResults({
       const data = await response.json();
 
       if (data.success) {
-        alert(`Flight booked successfully! Reference: ${data.bookingReference}`);
+        setBookingReference(data.bookingReference);
+        setSuccessModalOpen(true);
         onFlightBooked?.();
       } else {
         alert(`Booking failed: ${data.message || data.error}`);
@@ -114,8 +118,13 @@ export default function FlightResults({
       alert('Failed to book flight. Please try again.');
     } finally {
       setBookingFlight(null);
-      setSelectedFlight(null);
     }
+  };
+
+  const handleCloseSuccessModal = () => {
+    setSuccessModalOpen(false);
+    setSelectedFlight(null);
+    setSelectedFareClass(null);
   };
 
   const formatDuration = (duration: string) => {
@@ -592,6 +601,16 @@ export default function FlightResults({
           flight={selectedFlight}
           passengerCount={passengerCount}
           onConfirm={handleConfirmBooking}
+        />
+      )}
+
+      {/* Booking Success Modal */}
+      {selectedFlight && (
+        <BookingSuccessModal
+          isOpen={successModalOpen}
+          onClose={handleCloseSuccessModal}
+          bookingReference={bookingReference}
+          flight={selectedFlight}
         />
       )}
     </div>

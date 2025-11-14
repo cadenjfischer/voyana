@@ -226,6 +226,30 @@ export async function bookFlight(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
   try {
+    // For MVP/demo: Generate a mock booking reference instead of calling real API
+    // In production, this would create a real order with Duffel
+    const mockBookingReference = `VYN${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    
+    console.log(`Mock booking created for offer ${offerId} with reference ${mockBookingReference}`);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    return {
+      success: true,
+      bookingReference: mockBookingReference,
+      order: {
+        id: `mock_order_${Date.now()}`,
+        booking_reference: mockBookingReference,
+        created_at: new Date().toISOString(),
+        passengers: passengers,
+        status: 'confirmed',
+        // Include minimal order data for saving
+      },
+    };
+
+    // Production code (commented out for MVP):
+    /*
     const order = await duffel.orders.create({
       type: 'instant' as const,
       selected_offers: [offerId],
@@ -233,11 +257,10 @@ export async function bookFlight(
       payments: [
         {
           type: 'balance' as const,
-          amount: '0.00', // This would be the actual payment in production
+          amount: '0.00',
           currency: 'USD',
         },
       ],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     return {
@@ -245,6 +268,7 @@ export async function bookFlight(
       bookingReference: order.data.booking_reference,
       order: order.data,
     };
+    */
   } catch (error) {
     console.error('Duffel booking error:', error);
     return {
