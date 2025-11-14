@@ -635,7 +635,7 @@ export default function TripDetailPage() {
         )}
 
         {activeTab === 'flights' && (
-          <div className="bg-static-bg-50 dark:bg-static-bg-900 min-h-screen">
+          <div className="bg-static-bg-50 dark:bg-static-bg-900 min-h-screen pb-8">
             <div className="p-4 md:p-8">
               <div className="max-w-7xl mx-auto">
                 {/* Header */}
