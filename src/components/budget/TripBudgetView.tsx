@@ -1505,140 +1505,124 @@ export default function TripBudgetView({
 
         {/* Right Sidebar - Total Trip Cost & Categories */}
         <div className="hidden lg:block lg:fixed lg:right-8 lg:top-24 lg:w-80 xl:w-96">
-          {/* Trip Spending - Moved to top */}
+          {/* Trip Spending / Budget Goal Progress */}
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700 mb-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
-                Trip Spending
+                {budgetGoal > 0 ? 'Budget Goal' : 'Trip Spending'}
               </h3>
-              {budgetGoal > 0 && (
-                <button
-                  onClick={() => {
-                    setBudgetGoalInput(budgetGoal.toString());
-                    setShowBudgetGoalModal(true);
-                  }}
-                  className="text-xs text-static-text-700 dark:text-static-text-300 hover:text-static-text-900 dark:hover:text-static-text-100 font-medium"
-                >
-                  Set Goal
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  setBudgetGoalInput(budgetGoal > 0 ? budgetGoal.toString() : '');
+                  setShowBudgetGoalModal(true);
+                }}
+                className="text-xs text-static-text-700 dark:text-static-text-300 hover:text-static-text-900 dark:hover:text-static-text-100 font-medium"
+              >
+                {budgetGoal > 0 ? 'Edit' : 'Set Goal'}
+              </button>
             </div>
 
-            {/* Amount Display */}
-            <div className="text-center mb-3">
-              <p className="text-3xl font-bold text-static-text-900 dark:text-static-text-50 mb-1">
-                {formatCurrency(totalExpenses, currency)}
-              </p>
-              <p className="text-xs text-static-text-500 dark:text-static-text-500">
-                Total spent • No goal set
-              </p>
-            </div>
-
-            {/* Smart Insights */}
-            <div className="w-full pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
-              {expenses.length > 0 && (
-                <>
-                  <div className="flex items-start gap-2">
-                    <svg className="w-3.5 h-3.5 text-static-text-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    <p className="text-xs text-static-text-600 dark:text-static-text-400">
-                      <span className="font-semibold">{formatCurrency(dailyAverage, currency)}/day</span> average spending
-                    </p>
-                  </div>
-                  {biggestCategory && (
-                    <div className="flex items-start gap-2">
-                      <svg className="w-3.5 h-3.5 text-static-text-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                      <p className="text-xs text-static-text-600 dark:text-static-text-400">
-                        <span className="font-semibold">{biggestCategory.name}</span> is {biggestCategory.percentage.toFixed(0)}% of total
-                      </p>
-                    </div>
-                  )}
-                  {spendingByPerson.length > 0 && (
-                    <div className="flex items-start gap-2">
-                      <svg className="w-3.5 h-3.5 text-static-text-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                      <p className="text-xs text-static-text-600 dark:text-static-text-400">
-                        <span className="font-semibold">{spendingByPerson[0].name}</span> paid {spendingByPerson[0].percentage.toFixed(0)}%
-                      </p>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Budget Goal Progress - Now second */}
-          {budgetGoal > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700 mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-static-text-900 dark:text-static-text-50">
-                  Budget Goal
-                </h3>
-                <button
-                  onClick={() => {
-                    setBudgetGoalInput(budgetGoal.toString());
-                    setShowBudgetGoalModal(true);
-                  }}
-                  className="text-xs text-static-text-700 dark:text-static-text-300 hover:text-static-text-900 dark:hover:text-static-text-100 font-medium"
-                >
-                  Edit
-                </button>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="w-full mb-3">
-                <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      budgetUsedPercentage > 100
-                        ? 'bg-gradient-to-r from-red-500 to-red-600'
-                        : budgetUsedPercentage > 90
-                        ? 'bg-gradient-to-r from-red-400 to-red-500'
-                        : budgetUsedPercentage > 75
-                        ? 'bg-gradient-to-r from-yellow-400 to-yellow-500'
-                        : 'bg-gradient-to-r from-orange-400 to-orange-600'
-                    }`}
-                    style={{ width: `${Math.min(budgetUsedPercentage, 100)}%` }}
-                  />
-                </div>
-                {budgetUsedPercentage > 100 && (
-                  <p className="text-xs text-red-500 dark:text-red-400 mt-1 text-center font-medium">
-                    Over budget by {formatCurrency(totalExpenses - budgetGoal, currency)}
+            <div className="flex flex-col">
+              {/* Amount Display */}
+              <div className="text-center mb-3">
+                <p className="text-3xl font-bold text-static-text-900 dark:text-static-text-50 mb-1">
+                  {formatCurrency(totalExpenses, currency)}
+                </p>
+                {budgetGoal > 0 ? (
+                  <p className="text-xs text-static-text-500 dark:text-static-text-500">
+                    {budgetUsedPercentage.toFixed(0)}% of {formatCurrency(budgetGoal, currency)} goal
+                  </p>
+                ) : (
+                  <p className="text-xs text-static-text-500 dark:text-static-text-500">
+                    Total spent • No goal set
                   </p>
                 )}
               </div>
 
+              {/* Progress Bar */}
+              {budgetGoal > 0 && (
+                <div className="w-full mb-3">
+                  <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        budgetUsedPercentage > 100
+                          ? 'bg-gradient-to-r from-red-500 to-red-600'
+                          : budgetUsedPercentage > 90
+                          ? 'bg-gradient-to-r from-red-400 to-red-500'
+                          : budgetUsedPercentage > 75
+                          ? 'bg-gradient-to-r from-yellow-400 to-yellow-500'
+                          : 'bg-gradient-to-r from-orange-400 to-orange-600'
+                      }`}
+                      style={{ width: `${Math.min(budgetUsedPercentage, 100)}%` }}
+                    />
+                  </div>
+                  {budgetUsedPercentage > 100 && (
+                    <p className="text-xs text-red-500 dark:text-red-400 mt-1 text-center font-medium">
+                      Over budget by {formatCurrency(totalExpenses - budgetGoal, currency)}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Budget Status */}
-              <div className="w-full space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-static-text-600 dark:text-static-text-400">Spent</span>
-                  <span className="text-xs font-semibold text-static-text-900 dark:text-static-text-50">
-                    {formatCurrency(totalExpenses, currency)}
-                  </span>
+              {budgetGoal > 0 && (
+                <div className="w-full space-y-1.5 mb-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-static-text-600 dark:text-static-text-400">Spent</span>
+                    <span className="text-xs font-semibold text-static-text-900 dark:text-static-text-50">
+                      {formatCurrency(totalExpenses, currency)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-static-text-600 dark:text-static-text-400">Remaining</span>
+                    <span className={`text-xs font-semibold ${
+                      budgetGoal - totalExpenses < 0
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-green-600 dark:text-green-400'
+                    }`}>
+                      {formatCurrency(budgetGoal - totalExpenses, currency)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-static-text-600 dark:text-static-text-400">Remaining</span>
-                  <span className={`text-xs font-semibold ${
-                    budgetGoal - totalExpenses < 0
-                      ? 'text-red-600 dark:text-red-400'
-                      : 'text-green-600 dark:text-green-400'
-                  }`}>
-                    {formatCurrency(budgetGoal - totalExpenses, currency)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between pt-1.5 border-t border-gray-200 dark:border-gray-700">
-                  <span className="text-xs text-static-text-600 dark:text-static-text-400">Goal</span>
-                  <span className="text-xs font-semibold text-static-text-900 dark:text-static-text-50">
-                    {formatCurrency(budgetGoal, currency)}
-                  </span>
-                </div>
+              )}
+
+              {/* Smart Insights */}
+              <div className="w-full pt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                {expenses.length > 0 && (
+                  <>
+                    <div className="flex items-start gap-2">
+                      <svg className="w-3.5 h-3.5 text-static-text-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                      <p className="text-xs text-static-text-600 dark:text-static-text-400">
+                        <span className="font-semibold">{formatCurrency(dailyAverage, currency)}/day</span> average spending
+                      </p>
+                    </div>
+                    {biggestCategory && (
+                      <div className="flex items-start gap-2">
+                        <svg className="w-3.5 h-3.5 text-static-text-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <p className="text-xs text-static-text-600 dark:text-static-text-400">
+                          <span className="font-semibold">{biggestCategory.name}</span> is {biggestCategory.percentage.toFixed(0)}% of total
+                        </p>
+                      </div>
+                    )}
+                    {spendingByPerson.length > 0 && (
+                      <div className="flex items-start gap-2">
+                        <svg className="w-3.5 h-3.5 text-static-text-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <p className="text-xs text-static-text-600 dark:text-static-text-400">
+                          <span className="font-semibold">{spendingByPerson[0].name}</span> paid {spendingByPerson[0].percentage.toFixed(0)}%
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
-          )}
+          </div>
 
           {/* Spending by Person */}
           {spendingByPerson.length > 1 && (
