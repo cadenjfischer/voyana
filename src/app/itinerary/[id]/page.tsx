@@ -101,6 +101,34 @@ export default function TripDetailPage() {
     }
   };
 
+  // Handle flight search within the trip page
+  const handleFlightSearch = async (params: URLSearchParams) => {
+    setIsSearchingFlights(true);
+    setFlightSubTab('search'); // Switch to search results tab
+    
+    try {
+      const response = await fetch(`/api/flights/search?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error('Failed to search flights');
+      }
+      
+      const data = await response.json();
+      setFlightSearchResults(data.flights || []);
+      
+      // Update passenger count from search params
+      const adults = parseInt(params.get('adults') || '1');
+      const children = parseInt(params.get('children') || '0');
+      const infantsLap = parseInt(params.get('infantsLap') || '0');
+      const infantsSeat = parseInt(params.get('infantsSeat') || '0');
+      setFlightPassengerCount(adults + children + infantsLap + infantsSeat);
+    } catch (error) {
+      console.error('Error searching flights:', error);
+      setFlightSearchResults([]);
+    } finally {
+      setIsSearchingFlights(false);
+    }
+  };
+
   // Function to geocode existing destinations that don't have coordinates
   const geocodeExistingDestinations = async (currentTrip: Trip, destinations: Destination[]) => {
     let updated = false;
@@ -623,12 +651,13 @@ export default function TripDetailPage() {
                 {/* Flight Search Component */}
                 <div className="mb-6">
                   <CondensedFlightSearch
-                    initialOrigin={trip?.destinations?.[0]?.city || ''}
-                    initialDestination={trip?.destinations?.[1]?.city || ''}
+                    initialOrigin={trip?.destinations?.[0]?.name || ''}
+                    initialDestination={trip?.destinations?.[1]?.name || ''}
                     initialDepartureDate={trip?.startDate || ''}
                     initialReturnDate={trip?.endDate || ''}
                     initialPassengers={1}
                     initialTripType={trip?.endDate ? 'round-trip' : 'one-way'}
+                    onSearch={handleFlightSearch}
                   />
                 </div>
 

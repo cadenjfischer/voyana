@@ -14,6 +14,7 @@ interface CondensedFlightSearchProps {
   initialReturnDate?: string;
   initialPassengers?: number;
   initialTripType?: 'one-way' | 'round-trip' | 'multi-city';
+  onSearch?: (params: URLSearchParams) => void; // Optional callback for inline search
 }
 
 export default function CondensedFlightSearch({
@@ -23,6 +24,7 @@ export default function CondensedFlightSearch({
   initialReturnDate = '',
   initialPassengers = 1,
   initialTripType = 'round-trip',
+  onSearch,
 }: CondensedFlightSearchProps) {
   const router = useRouter();
   // Store both display name and code for airports
@@ -68,7 +70,12 @@ export default function CondensedFlightSearch({
         params.append(`date${segmentNum}`, flight.date);
       });
 
-      router.push(`/flights?${params.toString()}`);
+      // If onSearch callback provided, call it; otherwise navigate
+      if (onSearch) {
+        onSearch(params);
+      } else {
+        router.push(`/flights?${params.toString()}`);
+      }
       return;
     }
     
@@ -87,7 +94,12 @@ export default function CondensedFlightSearch({
       params.append('returnDate', returnDate);
     }
 
-    router.push(`/flights?${params.toString()}`);
+    // If onSearch callback provided, call it; otherwise navigate
+    if (onSearch) {
+      onSearch(params);
+    } else {
+      router.push(`/flights?${params.toString()}`);
+    }
   };
 
   const handleSwap = () => {
