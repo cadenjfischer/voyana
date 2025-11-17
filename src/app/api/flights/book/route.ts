@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as duffelClient from '@/lib/api/duffelClient';
-import * as amadeusClient from '@/lib/api/amadeusClient';
 import { saveFlightBooking } from '@/lib/services/itineraryService';
 
 // Mark this route as dynamic to prevent static optimization
@@ -22,20 +21,8 @@ export async function POST(request: NextRequest) {
 
     console.log(`Booking flight ${flight.flightNumber} for user ${userId}`);
 
-    // Determine which API to use based on the flight source
-    let bookingResult;
-    
-    if (flight.apiSource === 'duffel') {
-      bookingResult = await duffelClient.bookFlight(flight.id, passengers);
-    } else if (flight.apiSource === 'amadeus') {
-      // For Amadeus, pass the rawData which contains the full offer
-      bookingResult = await amadeusClient.bookFlight(flight.rawData || flight, passengers);
-    } else {
-      return NextResponse.json(
-        { error: 'Invalid flight source' },
-        { status: 400 }
-      );
-    }
+    // Use Duffel API for booking
+    const bookingResult = await duffelClient.bookFlight(flight.id, passengers);
 
     // Check if booking was successful
     if (!bookingResult.success) {

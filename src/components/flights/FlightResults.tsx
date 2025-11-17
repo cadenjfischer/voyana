@@ -379,7 +379,7 @@ export default function FlightResults({
                     ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
                     : 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300'
                 }`}>
-                  {flight.apiSource === 'duffel' ? 'Duffel' : 'Amadeus'}
+                  Duffel
                 </span>
                 
                 {/* Amenities Icons */}

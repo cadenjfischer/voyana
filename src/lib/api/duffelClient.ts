@@ -20,7 +20,7 @@ export interface NormalizedFlight {
   currency: string;
   cabinClass: string;
   stops: number;
-  apiSource: 'duffel' | 'amadeus';
+  apiSource: 'duffel';
   amenities?: {
     wifi?: boolean;
     power?: boolean;

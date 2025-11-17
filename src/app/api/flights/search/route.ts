@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as duffelClient from '@/lib/api/duffelClient';
-import * as amadeusClient from '@/lib/api/amadeusClient';
-import { mergeFlights, groupOffersByRoute } from '@/lib/utils/mergeFlights';
+import { groupOffersByRoute } from '@/lib/utils/mergeFlights';
 
 // Mark this route as dynamic to prevent static optimization
 export const dynamic = 'force-dynamic';
@@ -39,72 +38,31 @@ export async function GET(request: NextRequest) {
     console.log(`Searching flights: ${origin} → ${destination} on ${departureDate}`);
     console.log(`Passengers: ${adults} adults, ${children} children, ${infantsLap} infants (lap), ${infantsSeat} infants (seat)`);
 
-    // Search both APIs in parallel - WITHOUT cabin class filter to get all fare options
-    const [duffelResults, amadeusResults] = await Promise.allSettled([
-      duffelClient.searchFlights({
-        origin,
-        destination,
-        departureDate,
-        returnDate,
-        adults,
-        children,
-        infantsLap,
-        infantsSeat,
-        // No cabinClass - returns all cabin classes
-      }),
-      amadeusClient.searchFlights({
-        origin,
-        destination,
-        departureDate,
-        returnDate,
-        adults,
-        children,
-        infantsLap,
-        infantsSeat,
-        // No cabinClass - returns all cabin classes
-      }),
-    ]);
+    // Search Duffel API - returns all cabin classes for fare options
+    const duffelFlights = await duffelClient.searchFlights({
+      origin,
+      destination,
+      departureDate,
+      returnDate,
+      adults,
+      children,
+      infantsLap,
+      infantsSeat,
+      // No cabinClass - returns all cabin classes
+    });
 
-    // Extract successful results
-    const duffelFlights = duffelResults.status === 'fulfilled' ? duffelResults.value : [];
-    const amadeusFlights = amadeusResults.status === 'fulfilled' ? amadeusResults.value : [];
-
-    console.log(`Duffel results: ${duffelFlights.length}, Amadeus results: ${amadeusFlights.length}`);
+    console.log(`Duffel results: ${duffelFlights.length} offers`);
     
     // Log cabin class breakdown
     const duffelCabins = duffelFlights.reduce((acc: Record<string, number>, f) => {
       acc[f.cabinClass] = (acc[f.cabinClass] || 0) + 1;
       return acc;
     }, {});
-    const amadeusCabins = amadeusFlights.reduce((acc: Record<string, number>, f) => {
-      acc[f.cabinClass] = (acc[f.cabinClass] || 0) + 1;
-      return acc;
-    }, {});
     
     console.log('Duffel cabin classes:', duffelCabins);
-    console.log('Amadeus cabin classes:', amadeusCabins);
-    console.log('Sample Amadeus flights:', amadeusFlights.slice(0, 3).map(f => ({
-      id: f.id,
-      carrier: f.carrier,
-      flight: f.flightNumber,
-      cabin: f.cabinClass,
-      price: f.price,
-      apiSource: f.apiSource
-    })));
-
-    // Merge all results (keeping all fare options)
-    const mergedFlights = mergeFlights([duffelFlights, amadeusFlights]);
-    
-    console.log('Merged flights sample:', mergedFlights.slice(0, 3).map(f => ({
-      id: f.id,
-      carrier: f.carrier,
-      flightNumber: f.flightNumber,
-      price: f.price,
-      cabinClass: f.cabinClass,
-    })));
 
     // Group offers by route to identify different fare classes for same flight
-    const groupedOffers = groupOffersByRoute(mergedFlights);
+    const groupedOffers = groupOffersByRoute(duffelFlights);
     
     console.log(`Grouped into ${groupedOffers.size} unique routes`);
     
@@ -125,16 +83,15 @@ export async function GET(request: NextRequest) {
       return result;
     });
 
-    console.log(`Merged results: ${mergedFlights.length} offers, ${displayFlights.length} unique flights`);
+    console.log(`Results: ${duffelFlights.length} offers, ${displayFlights.length} unique flights`);
 
     return NextResponse.json({
       success: true,
       count: displayFlights.length,
       flights: displayFlights,
-      totalOffers: mergedFlights.length,
+      totalOffers: duffelFlights.length,
       sources: {
         duffel: duffelFlights.length,
-        amadeus: amadeusFlights.length,
       },
     });
   } catch (error) {

@@ -21,7 +21,7 @@ export interface FlightBooking {
   cabinClass: string;
   stops: number;
   duration: string;
-  source: 'duffel' | 'amadeus';
+  source: 'duffel';
   bookingReference?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rawData?: any;
