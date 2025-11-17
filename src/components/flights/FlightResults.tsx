@@ -185,9 +185,9 @@ export default function FlightResults({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 space-y-4">
       {/* Sort and Filter Bar - Compact */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 flex items-center justify-between">
+      <div className="bg-static-bg-50 dark:bg-gray-900 rounded-lg shadow-sm p-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Sort Tabs */}
           <button
@@ -239,7 +239,7 @@ export default function FlightResults({
 
       {/* Filters Panel - Compact */}
       {showFilters && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 space-y-4">
+        <div className="bg-static-bg-50 dark:bg-gray-900 rounded-lg shadow-sm p-4 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-static-text-900 dark:text-static-text-100">Filters</h3>
             <button
@@ -306,7 +306,7 @@ export default function FlightResults({
       {processedFlights.map((flight) => (
         <div
           key={flight.id}
-          className="bg-white dark:bg-gray-800 border border-static-bg-200 dark:border-gray-700 rounded-lg p-4 hover:border-static-accent-300 dark:hover:border-static-accent-600 hover:shadow-md transition-all"
+          className="bg-static-bg-50 dark:bg-gray-900 border border-static-bg-200 dark:border-gray-700 rounded-lg p-4 hover:border-static-accent-300 dark:hover:border-static-accent-600 hover:shadow-md transition-all"
         >
           <div className="flex items-center justify-between">
             {/* Left: Flight Info */}
@@ -347,7 +347,7 @@ export default function FlightResults({
                   </p>
                   <div className="w-full relative">
                     <div className="h-0.5 bg-static-bg-300 dark:bg-static-bg-600 w-full"></div>
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 px-1">
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-static-bg-50 dark:bg-gray-900 px-1">
                       <Plane className="h-3 w-3 text-static-text-400 dark:text-static-text-500 transform rotate-90" />
                     </div>
                   </div>
@@ -552,7 +552,7 @@ export default function FlightResults({
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 px-3 py-2 bg-static-bg-50 dark:bg-gray-800 border border-static-bg-200 dark:border-gray-700 rounded-lg">
+                      <div className="flex items-center gap-2 px-3 py-2 bg-static-bg-100 dark:bg-gray-950 border border-static-bg-200 dark:border-gray-700 rounded-lg">
                         <Luggage className="h-5 w-5 text-static-text-400 dark:text-static-text-500" />
                         <div>
                           <p className="text-sm font-semibold text-static-text-700 dark:text-static-text-300">No checked bags included</p>
@@ -569,7 +569,7 @@ export default function FlightResults({
       ))}
 
       {processedFlights.length === 0 && (
-        <div className="bg-white dark:bg-gray-800 border-2 border-dashed border-static-bg-300 dark:border-gray-700 rounded-lg p-8 text-center">
+        <div className="bg-static-bg-50 dark:bg-gray-900 border-2 border-dashed border-static-bg-300 dark:border-gray-700 rounded-lg p-8 text-center">
           <Plane className="h-12 w-12 text-static-text-400 dark:text-static-text-500 mx-auto mb-3" />
           <h3 className="text-lg font-bold text-static-text-900 dark:text-static-text-100 mb-1">No flights found</h3>
           <p className="text-sm text-static-text-600 dark:text-static-text-400">Try adjusting your filters to see more results</p>
