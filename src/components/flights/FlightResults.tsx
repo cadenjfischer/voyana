@@ -186,8 +186,8 @@ export default function FlightResults({
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 space-y-4">
-      {/* Sort and Filter Bar - Compact */}
-      <div className="bg-static-bg-50 dark:bg-gray-900 rounded-lg shadow-sm p-3 flex items-center justify-between">
+      {/* Sort and Filter Bar - Simple, No Background */}
+      <div className="flex items-center justify-between pb-3">
         <div className="flex items-center gap-2">
           {/* Sort Tabs */}
           <button
@@ -239,7 +239,7 @@ export default function FlightResults({
 
       {/* Filters Panel - Compact */}
       {showFilters && (
-        <div className="bg-static-bg-50 dark:bg-gray-900 rounded-lg shadow-sm p-4 space-y-4">
+        <div className="pb-4 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-static-text-900 dark:text-static-text-100">Filters</h3>
             <button
@@ -569,7 +569,7 @@ export default function FlightResults({
       ))}
 
       {processedFlights.length === 0 && (
-        <div className="bg-static-bg-50 dark:bg-gray-900 border-2 border-dashed border-static-bg-300 dark:border-gray-700 rounded-lg p-8 text-center">
+        <div className="border-2 border-dashed border-gray-600 dark:border-gray-700 rounded-lg p-8 text-center">
           <Plane className="h-12 w-12 text-static-text-400 dark:text-static-text-500 mx-auto mb-3" />
           <h3 className="text-lg font-bold text-static-text-900 dark:text-static-text-100 mb-1">No flights found</h3>
           <p className="text-sm text-static-text-600 dark:text-static-text-400">Try adjusting your filters to see more results</p>

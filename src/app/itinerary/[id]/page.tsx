@@ -651,19 +651,19 @@ export default function TripDetailPage() {
                 {/* Flight Search Component */}
                 <div className="mb-6">
                   <CondensedFlightSearch
-                    initialOrigin={trip?.destinations?.[0]?.name || ''}
-                    initialDestination={trip?.destinations?.[1]?.name || ''}
-                    initialDepartureDate={trip?.startDate || ''}
-                    initialReturnDate={trip?.endDate || ''}
+                    initialOrigin={''}
+                    initialDestination={''}
+                    initialDepartureDate={''}
+                    initialReturnDate={''}
                     initialPassengers={1}
-                    initialTripType={trip?.endDate ? 'round-trip' : 'one-way'}
+                    initialTripType={'round-trip'}
                     onSearch={handleFlightSearch}
                   />
                 </div>
 
                 {/* Sub Tabs */}
-                <div className="bg-white dark:bg-static-bg-800 rounded-lg shadow-sm mb-6">
-                  <div className="flex border-b border-static-bg-200 dark:border-static-bg-700">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-6">
+                  <div className="flex border-b border-gray-200 dark:border-gray-700">
                     <button
                       onClick={() => setFlightSubTab('search')}
                       className={`flex-1 py-3 px-4 font-semibold text-sm transition-all relative ${
@@ -723,7 +723,7 @@ export default function TripDetailPage() {
 
                     {/* No Results */}
                     {!isSearchingFlights && flightSearchResults.length === 0 && (
-                      <div className="bg-white dark:bg-static-bg-800 rounded-lg shadow-sm p-12 text-center">
+                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-12 text-center">
                         <div className="flex flex-col items-center">
                           <div className="p-4 bg-static-accent-50 dark:bg-static-accent-900/20 rounded-full mb-4">
                             <svg className="w-12 h-12 text-static-accent-600 dark:text-static-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

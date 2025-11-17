@@ -144,7 +144,7 @@ export default function CondensedFlightSearch({
   };
 
   return (
-    <div className="bg-white dark:bg-static-bg-800 border-b border-static-bg-200 dark:border-static-bg-700 shadow-sm">
+    <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <form onSubmit={handleSearch}>
           {/* Trip Type Tabs */}
