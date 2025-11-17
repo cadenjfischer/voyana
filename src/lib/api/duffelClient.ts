@@ -58,6 +58,14 @@ interface SearchParams {
 
 export async function searchFlights(params: SearchParams): Promise<NormalizedFlight[]> {
   try {
+    // Check if API key is available
+    if (!process.env.DUFFEL_API_KEY) {
+      console.error('❌ DUFFEL_API_KEY is not set!');
+      return [];
+    }
+
+    console.log('✅ DUFFEL_API_KEY is set:', process.env.DUFFEL_API_KEY.substring(0, 20) + '...');
+
     // Use new passenger breakdown or fall back to legacy passengers param
     const adults = params.adults || params.passengers || 1;
     const children = params.children || 0;
@@ -120,7 +128,11 @@ export async function searchFlights(params: SearchParams): Promise<NormalizedFli
 
     return offers.data.map(offer => normalizeFlightData(offer));
   } catch (error) {
-    console.error('Duffel search error:', error);
+    console.error('❌ Duffel search error:', error);
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
     return [];
   }
 }
